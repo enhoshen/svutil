@@ -1,0 +1,31 @@
+#
+# 1. Modify this file to fit your own environment.
+# 2. Copy this file synopsys_dc.setup to .synopsys_dc.setup
+#    and put this file in tool's invoking directory or your home directory.
+#	
+
+
+set company {NTUGIEE}
+set designer {EnHo}
+set memdb_path ~/research/lpAccel/src/MEM/memdb
+set memdb_list [ glob  ${memdb_path}/*.db ] 
+#glob return each names of files that matches the pattern
+echo $memdb_list
+set search_path [concat  [list . /opt/CAD/cell_lib/CBDK_TSMC90GUTM_Arm_f1.0/CIC/SynopsysDC/db .] $search_path $memdb_path]
+echo $search_path
+#set search_path [concat  [list . /opt/CAD/cell_lib/CBDK_IC_Contest_v2.1/SynopsysDC/db .] $search_path]
+set link_library [list "dw_foundation.sldb" "typical.db" "slow.db" "fast.db" ]
+set link_library [concat $link_library $memdb_list ]         
+set target_library [list "typical.db" "slow.db" "fast.db"]
+set target_library [concat $target_library $memdb_list]          
+
+set symbol_library [list "generic.sdb"]
+set synthetic_library [list "dw_foundation.sldb"]
+set default_schematic_options {-size infinite}
+
+set hdlin_translate_off_skip_text "TRUE"
+set edifout_netlist_only "TRUE"
+set verilogout_no_tri true	
+set plot_command {lpr -Plw}
+set hdlin_auto_save_templates "TRUE"
+set compile_fix_multiple_port_nets "TRUE"

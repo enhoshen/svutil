@@ -1,0 +1,10 @@
+sh fsdb2saif.sh ../sim/PE_3ns_ultra_cg_070322_PEtest.fsdb        
+DESIGN=PE_2-5ns_ultra_cg_070323 TEST=PEtest MODULE=PE pt_shell   
+sh fsdb2saif.sh ../sim/PE_3ns_ultra_cg_070322_PEtest.fsdb        
+DESIGN=PE_3ns_ultra_cg_070322 TEST=PEtest MODULE=PE pt_shell     
+DESIGN=PE_3ns_ultra_cg_070322 TEST=PEtest MODULE=PE sh simple_power.sh
+DESIGN=BufferTest_3ns_ultra_cg_071216_syn TEST=Buftest MODULE=BufferTest sh simple_power.sh
+DESIGN=PE_3_ultra_cg_070813_syn TEST=PEtest MODULE=PE COND=_5ns sh simple_power.sh
+DESIGN=PE_3ns_ultra_cg_noug_072208_syn TEST=PEtest MODULE=PE sh simple_power.sh
+DESIGN=PE_3ns_ultra_cg_noug_072208_syn TEST=PEtest MODULE=PE COND=alex5_8b sh simple_power.sh
+DESIGN=BufferTest_3ns_ultra_cg_noug_072303_syn TEST=Buftest MODULE=BufferTest  COND=row_all_gb sh simple_power.sh

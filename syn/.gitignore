@@ -1,0 +1,6 @@
+*.ddc
+*.sdf
+*.v
+*.sdc
+*.txt
+!_syn.sdc

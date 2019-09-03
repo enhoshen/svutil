@@ -1,0 +1,3 @@
+#ignore everything for industrial files
+*
+!.gitignore
