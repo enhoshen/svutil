@@ -196,6 +196,8 @@ class MySlaveTwoWire(TwoWire.Slave):
         self.ack.Write()
         yield self.clk
 def FileParse(inc=True):
+    if SVparse.parsed == True:
+        return
     p = SV if inc == True else [SV]
     SVparse.ParseFiles(p,inc)
 def RdyAckBuses ( names ):

@@ -66,14 +66,14 @@ class SVhier ():
             print(f'{io:<{w}}'f'{n:<{w}}'f'{dim.__repr__():<{w}}'f'{tp:<{w}}')
     @property
     def ShowConnect(self,*conf):
-        s = '.*,\n'
+        s = '.*\n'
         for t , n in self.protoPorts:
             if t == 'rdyack':
-                s += '`rdyack_connect('+n+',),\n'
+                s += ',`rdyack_connect('+n+',)\n'
             if t == 'dval':
-                s += '`dval_connect('+n+',),\n'
+                s += ',`dval_connect('+n+',)\n'
         for io , n , *_ in self.ports:
-            s += '.'+n+'(),\n'
+            s += ',.'+n+'()\n'
         s = s[:-2]
         ToClip(s)
         print(s)
@@ -108,14 +108,18 @@ class SVhier ():
                 f'{"ports":^15}:{[io[0]+" "+n for io,n,*_ in self.ports] !r:^}\n'
         
 class SVparse():
+    parsed = False
     package = {}
     hiers = {}
     paths = []
     gb_hier = SVhier('files',None)
     gb_hier.types =  {'integer':None,'int':None,'logic':None}
-    cur_scope = ''
-    base_path = '/home/enhoshen/research/lpAccel/'
-    include_path = '/home/enhoshen/research/lpAccel/include/'
+    _top =  environ.get("TOPMODULE") 
+    top = _top if _top != None else ''
+    base_path = environ.get("PWD").rstrip('/sim')+'/'
+    cur_scope = '' 
+    cur_path= ''
+    include_path = base_path + 'include/'
     def __getattr__(self , n ):
         return hiers[n]
     def __init__(self,name,scope):
@@ -125,27 +129,27 @@ class SVparse():
         self.keyword = { 'logic':self.LogicParse , 'parameter':self.ParamParse, 'localparam':self.ParamParse,\
                         'typedef':self.TypeParse , 'struct':self.StructParse  , 'package':self.HierParse , 'enum': self.EnumParse,\
                         'module':self.HierParse , 'import':self.ImportParse, 'input':self.PortParse , 'output':self.PortParse,\
-                        '`rdyack_input':self.RdyackParse, '`rdyack_output':self.RdyackParse}
+                        '`include':self.IncludeRead ,'`rdyack_input':self.RdyackParse, '`rdyack_output':self.RdyackParse}
     @classmethod
     def ParseFiles(cls , path , inc=True ):
-        _top =  environ.get("TOPMODULE") 
-        _top = _top if _top != None else ''
         paths = cls.IncludeFileParse(path) if inc == True else path
         cls.paths += paths
         for p in paths:
-            print(p)
-            n = p.rsplit('/',maxsplit=1)[1]
+            n = p.rsplit('/',maxsplit=1)[1].replace('.','_')
             cur_parse = SVparse( n , cls.gb_hier)
             cur_parse.Readfile(p)
+        cls.parsed = True
     @classmethod 
     def IncludeFileParse(cls , path):
         f = open(cls.include_path+path)
         paths = []
+        '''
         while 1:
             line = f.readline()
             if '`else' in line:
                 break
             #TODO this part is very unpolished
+        '''
         for line in f.readlines():
             line = line.split('//')[0]
             if '`include' in line:
@@ -153,10 +157,9 @@ class SVparse():
                 paths.append( cls.include_path+line)
         return paths
     def Readfile(self , path):
-        try:
-            self.f = open(path)
-        except:
-            return
+        print(path)
+        self.f = open(path)
+        cur_path = path
         self.lines = iter(self.f.readlines())
         _s = self.Rdline(self.lines)
         while(1):
@@ -168,9 +171,20 @@ class SVparse():
                 continue 
             _w = _s.lsplit()
             _catch = None
-            if _w in {'typedef','package','import','module'}:
+            if _w in {'typedef','package','import','module','`include'}:
                 self.cur_key = _w
                 _catch = self.keyword[_w](_s,self.lines) 
+    def IncludeRead( self, s , lines):
+        parent_path = cur_path
+        parent_parse = cur_parse
+        _s = s.split('`include')[1].split()[0].replace('"','')
+        path = cur_path + _s
+        n = path.rsplit('/',maxsplit=1)[1].replace('.','_')
+        cur_parse = SVparse( n , cur_parse )
+        cur_parse.Readfile(path)
+        cur_parse = parent_parse
+        cur_path = parent_path
+        return
     def LogicParse(self, s ,lines):
         bw = s.BracketParse()
         bw = SVstr(''if bw == () else bw[0])
@@ -207,6 +221,8 @@ class SVparse():
             s.lsplit()
         bw = s.BracketParse()
         bw = SVstr('' if bw==() else bw[0])    
+        while '}' not in s:
+            s += self.Rdline(lines)
         _s = s.lsplit('}')
         _enum = SVstr(_s).ReplaceSplit(['{',','] )
         for i,p in enumerate(_enum):
@@ -282,6 +298,20 @@ class SVparse():
                 _catch = self.keyword[_w](s,lines)
                 self.cur_key = _k
         self.cur_hier = self.cur_hier.scope   
+    def ParamPortParse(self, s , lines):
+        while(1):
+            _w=''
+            if s.End():
+                s = self.Rdline(lines)
+                continue
+            _w = s.lsplit()
+            if _w == _end:
+                break 
+            if _w in self.keyword:
+                _k = self.cur_key
+                self.cur_key = _w
+                _catch = self.keyword[_w](s,lines)
+        
     def Rdline(self, lines):
         s = next(lines,None) 
         return SVstr(s.lstrip().split('//')[0].rstrip().strip(';')) if s != None else None
@@ -294,6 +324,11 @@ class SVstr():
         self.s = s
     def __repr__(self):
         return self.s
+    def __add__(self, foo ):
+        return SVstr( self.s+ foo.s )
+    def __iadd__(self,foo ):
+        self.s += foo.s
+        return self
     def split( self, sep=None, maxsplit=-1):
         return self.s.split(sep=sep,maxsplit=maxsplit)
     def lstrip(self,chars=None):
@@ -420,7 +455,7 @@ class SVstr():
         return st in self.s
     def End(self):
         return self.s==''
-class EAdict():
+class EAdict():  #easy access
     def __init__(self,dic):
         self.dic = dic
     def __getattr__(self, n):
