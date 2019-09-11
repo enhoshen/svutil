@@ -13,7 +13,8 @@ def ToClip(s):
         print( "xclip not found or whatever, copy it yourself")
 class SVhier ():
     def __init__(self,name,scope):
-        self.hier= name
+        self.hier= name # this is fucking ambiguous, but str method use it so it stays put
+        self.name = name
         self.params = {}
         self.types = {}
         self.child = {}
@@ -65,8 +66,8 @@ class SVhier ():
         for io , n ,dim,tp in self.ports:
             print(f'{io:<{w}}'f'{n:<{w}}'f'{dim.__repr__():<{w}}'f'{tp:<{w}}')
     @property
-    def ShowConnect(self,*conf):
-        s = '.*\n'
+    def ShowConnect(self,**conf):
+        s = '.*\n' if conf.get('explicit')==True else ''
         for t , n in self.protoPorts:
             if t == 'rdyack':
                 s += ',`rdyack_connect('+n+',)\n'
@@ -74,7 +75,7 @@ class SVhier ():
                 s += ',`dval_connect('+n+',)\n'
         for io , n , *_ in self.ports:
             s += ',.'+n+'()\n'
-        s = s[:-2]
+        s = s[:-1].replace(',',' ',1)
         ToClip(s)
         print(s)
     def TypeStr(self,n,l,w=13):
@@ -108,6 +109,7 @@ class SVhier ():
                 f'{"ports":^15}:{[io[0]+" "+n for io,n,*_ in self.ports] !r:^}\n'
         
 class SVparse():
+    # One SVparse object one file, and it's also SVhier
     parsed = False
     package = {}
     hiers = {}
@@ -123,7 +125,12 @@ class SVparse():
     def __getattr__(self , n ):
         return hiers[n]
     def __init__(self,name,scope):
-        self.cur_hier = SVhier(name,scope) if scope != None else SVhier(name,self.gb_hier) 
+        if scope != None: 
+            self.cur_hier = SVhier(name,scope) 
+            self.gb_hier.child[name] = self.cur_hier
+        else: 
+            SVhier(name,self.gb_hier) 
+            
         SVparse.hiers[name]= self.cur_hier
         self.cur_key = ''
         self.keyword = { 'logic':self.LogicParse , 'parameter':self.ParamParse, 'localparam':self.ParamParse,\
@@ -159,7 +166,7 @@ class SVparse():
     def Readfile(self , path):
         print(path)
         self.f = open(path)
-        cur_path = path
+        self.cur_path = path
         self.lines = iter(self.f.readlines())
         _s = self.Rdline(self.lines)
         while(1):
@@ -175,15 +182,13 @@ class SVparse():
                 self.cur_key = _w
                 _catch = self.keyword[_w](_s,self.lines) 
     def IncludeRead( self, s , lines):
-        parent_path = cur_path
-        parent_parse = cur_parse
-        _s = s.split('`include')[1].split()[0].replace('"','')
-        path = cur_path + _s
+        parent_path = self.cur_path
+        _s = s.s.replace('"','')
+        path = self.cur_path.rsplit('/',maxsplit=1)[0] + '/' + _s
         n = path.rsplit('/',maxsplit=1)[1].replace('.','_')
-        cur_parse = SVparse( n , cur_parse )
+        cur_parse = SVparse( n , self.cur_hier )
         cur_parse.Readfile(path)
-        cur_parse = parent_parse
-        cur_path = parent_path
+        self.cur_path = parent_path
         return
     def LogicParse(self, s ,lines):
         bw = s.BracketParse()
@@ -210,8 +215,9 @@ class SVparse():
             name = s.lsplit()
         else:
             name = temp
+        bw = SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier.Params)
         dim = self.Tuple2num(s.BracketParse())
-        self.cur_hier.ports.append( (self.cur_key,name,dim,tp) )
+        self.cur_hier.ports.append( (self.cur_key,name,dim,tp,bw) )
     def RdyackParse(self, s , lines):
         _ , args = s.FunctionParse()
         self.cur_hier.protoPorts.append(('rdyack',args[0]))
@@ -220,7 +226,7 @@ class SVparse():
         if 'logic' in s:
             s.lsplit()
         bw = s.BracketParse()
-        bw = SVstr('' if bw==() else bw[0])    
+        bw = SVstr('' if bw==() else bw[0] )
         while '}' not in s:
             s += self.Rdline(lines)
         _s = s.lsplit('}')
