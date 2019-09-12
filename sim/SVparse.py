@@ -5,6 +5,7 @@ from os import environ
 from collections import namedtuple
 from collections import deque
 from subprocess import Popen, PIPE
+from functools import reduce
 def ToClip(s):
     try:
         p = Popen(['xclip' ,'-selection' , 'clipboard'], stdin=PIPE)
@@ -63,7 +64,7 @@ class SVhier ():
         print(f'\n{"":=<{4*w}}')
         for io , n in self.protoPorts:
             print(f'{io:<{w}}'f'{n:<{w}}'f'{"()":<{w}}')
-        for io , n ,dim,tp in self.ports:
+        for io , n ,dim,tp , *_ in self.ports:
             print(f'{io:<{w}}'f'{n:<{w}}'f'{dim.__repr__():<{w}}'f'{tp:<{w}}')
     @property
     def ShowConnect(self,**conf):
@@ -196,6 +197,10 @@ class SVparse():
         name = s.IDParse()
         dim = s.BracketParse()  
         return (name,bw.Slice2num(self.cur_hier.Params),self.Tuple2num(dim),'logic')
+    def ArrayParse(self, s , lines):
+        dim = s.BracketParse()
+        name = s.IDParse()
+        return (name, '', self.Tuple2num(dim), '')
     def ParamParse(self, s ,lines):
         #TODO type parse (in SVstr) , array parameter 
         name = s.IDParse()
@@ -215,9 +220,12 @@ class SVparse():
             name = s.lsplit()
         else:
             name = temp
+        bwstr = self.Tuple2str(bw)
         bw = SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier.Params)
+        dim = s.BracketParse()
+        dimstr = self.Tuple2str(dim)
         dim = self.Tuple2num(s.BracketParse())
-        self.cur_hier.ports.append( (self.cur_key,name,dim,tp,bw) )
+        self.cur_hier.ports.append( (self.cur_key,name,dim,tp,bw,bwstr,dimstr) )
     def RdyackParse(self, s , lines):
         _ , args = s.FunctionParse()
         self.cur_hier.protoPorts.append(('rdyack',args[0]))
@@ -277,7 +285,14 @@ class SVparse():
                     break
     def TypeParse(self, s , lines):
         _w = s.lsplit()
-        _catch = self.keyword[_w](s , lines)
+        _m = self.keyword.get(_w)
+        _catch = () 
+        if _m != None:
+            _catch = _m(s , lines)
+        else :
+            _catch = self.ArrayParse(s,lines)
+            _catch = ( _catch[0],np.multiply.reduce(_catch[2])*self.cur_hier.types[_w][0][1]\
+                        ,_catch[2], _w)
         if _w == 'struct':
             self.cur_hier.types[_catch[0]] = _catch[1]
         else :
@@ -320,9 +335,12 @@ class SVparse():
         
     def Rdline(self, lines):
         s = next(lines,None) 
+        # line number TODO
         return SVstr(s.lstrip().split('//')[0].rstrip().strip(';')) if s != None else None
     def Tuple2num(self, t ):
         return tuple(map(lambda x : SVstr(x).S2num(params=self.cur_hier.Params) ,t))
+    def Tuple2str(self, t):
+        return reduce(lambda x,y : x+f'[{y}]' , t , '')
 class SVstr():
     sp_chars = ['=','{','}','[',']','::',';',',','(',')','#']
     op_chars = ['+','-','*','/','(',')']
