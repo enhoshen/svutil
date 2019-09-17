@@ -6,9 +6,6 @@ import numpy as np
 from nicotb.protocol import TwoWire
 from nicotb.protocol import OneWire 
 from nicotb.utils import RandProb
-TOP = os.environ.get("TOPMODULE")
-TEST = os.environ.get("TEST")
-SV = os.environ.get("SV")
 class StructBus:
     "name , bw , dim , type , enum literals"
     def __init__ (self, structName,signalName,attrs, buses):
@@ -77,15 +74,15 @@ class StructBusCreator():
         self.structName = structName
         self.attrs = attrs
     @classmethod
-    def Alltypes(cls,inc=True):
-        FileParse(inc)
+    def Alltypes(cls):
+        FileParse()
         for h in SVparse.hiers.values():
             for k,v in h.types.items():
                 StructBusCreator(k,v)
     @classmethod
-    def TopTypes(cls,inc=True):
-        FileParse(inc)
-        for T in SVparse.hiers[TOP].Types:
+    def TopTypes(cls):
+        FileParse( (False,TOPSV) )
+        for T in SVparse.hiers[TOPMODULE].Types: # TOPMODULE defined in SVparse
             for k,v in T.items():
                 StructBusCreator(k,v)
     @classmethod
@@ -195,11 +192,6 @@ class MySlaveTwoWire(TwoWire.Slave):
         self.ack.value[0]=0
         self.ack.Write()
         yield self.clk
-def FileParse(inc=True):
-    if SVparse.parsed == True:
-        return
-    p = SV if inc == True else [SV]
-    SVparse.ParseFiles(p,inc)
 def RdyAckBuses ( names ):
     return CreateBuses( [ () for n in names] )
 def clk_cnt():

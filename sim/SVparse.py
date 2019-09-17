@@ -6,6 +6,15 @@ from collections import namedtuple
 from collections import deque
 from subprocess import Popen, PIPE
 from functools import reduce
+#Nico makefile specified
+TOPMODULE = environ.get('TOPMODULE','')
+TEST = environ.get('TEST','')
+#SVutil optional specified
+SVutil = environ.get('SVutil','')
+TESTMODULE = environ.get('TESTMODULE','')
+SV = environ.get('SV','')
+TOPSV = environ.get('TOPSV','')
+INC = environ.get('INC','')
 def ToClip(s):
     try:
         p = Popen(['xclip' ,'-selection' , 'clipboard'], stdin=PIPE)
@@ -19,8 +28,10 @@ class SVhier ():
         self.params = {}
         self.types = {}
         self.child = {}
+        self.paramports = {} 
         self.ports = []
         self.protoPorts = []
+        self.imported = {} 
         self._scope = scope
         if scope != None:
             scope.child[name] = self
@@ -119,7 +130,8 @@ class SVparse():
     gb_hier.types =  {'integer':None,'int':None,'logic':None}
     _top =  environ.get("TOPMODULE") 
     top = _top if _top != None else ''
-    base_path = environ.get("PWD").rstrip('/sim')+'/'
+    base_path = environ.get("PWD").replace('/vcs','').replace('/verilator','').replace('/sim','')+'/'
+    print(base_path)
     cur_scope = '' 
     cur_path= ''
     include_path = base_path + 'include/'
@@ -139,13 +151,14 @@ class SVparse():
                         'module':self.HierParse , 'import':self.ImportParse, 'input':self.PortParse , 'output':self.PortParse,\
                         '`include':self.IncludeRead ,'`rdyack_input':self.RdyackParse, '`rdyack_output':self.RdyackParse}
     @classmethod
-    def ParseFiles(cls , path , inc=True ):
-        paths = cls.IncludeFileParse(path) if inc == True else path
-        cls.paths += paths
+    def ParseFiles(cls , paths=[(True,INC)] ):
         for p in paths:
-            n = p.rsplit('/',maxsplit=1)[1].replace('.','_')
+            cls.paths.append(f'{cls.include_path}{p[1]}.sv' if p[0] else p[1] )
+        print(cls.paths)
+        for p in cls.paths:
+            n = (p.rsplit('/',maxsplit=1)[1] if '/' in p else p ).replace('.','_')
             cur_parse = SVparse( n , cls.gb_hier)
-            cur_parse.Readfile(p)
+            cur_parse.Readfile(p if '/' in p else f'./{p}')
         cls.parsed = True
     @classmethod 
     def IncludeFileParse(cls , path):
@@ -164,6 +177,7 @@ class SVparse():
                 line = line.split('`include')[1].split()[0].replace('"','')
                 paths.append( cls.include_path+line)
         return paths
+    #TODO Testbench sv file parse
     def Readfile(self , path):
         print(path)
         self.f = open(path)
@@ -192,11 +206,15 @@ class SVparse():
         self.cur_path = parent_path
         return
     def LogicParse(self, s ,lines):
+        #TODO signed keyword
+        s.lstrip()
+        sign = s.SignParse() 
         bw = s.BracketParse()
         bw = SVstr(''if bw == () else bw[0])
         name = s.IDParse()
         dim = s.BracketParse()  
-        return (name,bw.Slice2num(self.cur_hier.Params),self.Tuple2num(dim),'logic')
+        tp = ('signed ' if sign==True else '') + 'logic'
+        return (name,bw.Slice2num(self.cur_hier.Params),self.Tuple2num(dim),tp)
     def ArrayParse(self, s , lines):
         dim = s.BracketParse()
         name = s.IDParse()
@@ -207,6 +225,8 @@ class SVparse():
         dim = s.BracketParse()
         s.rstrip().rstrip(';').rstrip(',')
         _n=self.cur_hier.params[name]=s.lstrip('=').S2num(self.cur_hier.Params)
+        if self.flag_port == 'pport' :
+            self.cur_hier.paramports[name] = _n
         return name,_n
     def PortParse(self, s , lines):
         bw = s.BracketParse()
@@ -224,7 +244,8 @@ class SVparse():
         bw = SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier.Params)
         dim = s.BracketParse()
         dimstr = self.Tuple2str(dim)
-        dim = self.Tuple2num(s.BracketParse())
+        #dim = self.Tuple2num(s.BracketParse())
+        dim = self.Tuple2num(dim)
         self.cur_hier.ports.append( (self.cur_key,name,dim,tp,bw,bwstr,dimstr) )
     def RdyackParse(self, s , lines):
         _ , args = s.FunctionParse()
@@ -246,6 +267,7 @@ class SVparse():
     def ImportParse(self, s , lines):
         s = s.split(';')[0]
         _pkg , _param = s.rstrip().split('::')
+        self.cur_hier.imported[_pkg] = _param
         if _param == '*':
             for k,v in self.package[_pkg].params.items():
                 self.cur_hier.params[k] = v
@@ -305,12 +327,14 @@ class SVparse():
         _end = {'package':'endpackage' , 'module':'endmodule'}[self.cur_key]
         if self.cur_key == 'package':
             self.package[name] = new_hier
+        self.flag_port = ''
         while(1):
             _w=''
             if s.End():
                 s = self.Rdline(lines)
                 continue
             _w = s.lsplit()
+            self.PortFlag(_w)
             if _w == _end:
                 break 
             if _w in self.keyword:
@@ -319,24 +343,20 @@ class SVparse():
                 _catch = self.keyword[_w](s,lines)
                 self.cur_key = _k
         self.cur_hier = self.cur_hier.scope   
-    def ParamPortParse(self, s , lines):
-        while(1):
-            _w=''
-            if s.End():
-                s = self.Rdline(lines)
-                continue
-            _w = s.lsplit()
-            if _w == _end:
-                break 
-            if _w in self.keyword:
-                _k = self.cur_key
-                self.cur_key = _w
-                _catch = self.keyword[_w](s,lines)
-        
+    def PortFlag(self , w ):
+        if ';' in w and self.flag_port =='':
+            self.flag_port = 'end' 
+        if '#' in w and self.flag_port == '':
+            self.flag_port = 'pport' 
+        if ')' in w and self.flag_port =='pport':
+            self.flag_port = 'port' 
+        if ')' in w and self.flag_port == 'port':
+            self.flag_port = 'end'
     def Rdline(self, lines):
         s = next(lines,None) 
         # line number TODO
-        return SVstr(s.lstrip().split('//')[0].rstrip().strip(';')) if s != None else None
+        #return SVstr(s.lstrip().split('//')[0].rstrip().strip(';')) if s != None else None
+        return SVstr(s.lstrip().split('//')[0].rstrip()) if s != None else None
     def Tuple2num(self, t ):
         return tuple(map(lambda x : SVstr(x).S2num(params=self.cur_hier.Params) ,t))
     def Tuple2str(self, t):
@@ -405,6 +425,13 @@ class SVstr():
         _s = self.s.rstrip('\n').rstrip().split(maxsplit=1)
         self.s =  _s[1] if len(_s)>1 else ''
         return _s[0].rstrip(';')
+    def SignParse (self):
+        self.lstrip()
+        if 'signed' in self.s:
+            self.s = self.s.replace('signed','')
+            return True
+        else:
+            return False
     def BracketParse(self,  bracket = '[]' ):
         # find and convert every brackets at the start of the string
         self.s = self.s.lstrip()
@@ -486,9 +513,9 @@ class EAdict():  #easy access
         return self.dic[n]
 def ParseFirstArgument():
     import sys
-    SVparse.ParseFiles(sys.argv[1])
+    SVparse.ParseFiles([(True,sys.argv[1])])
 def Reset():
-    ParseFirstArgument()
+    SVparse.parsed = False
 def ShowFile(n,start=0,end=None):
     f=open(SVparse.paths[n])
     l=f.readlines()
@@ -498,6 +525,15 @@ def ShowFile(n,start=0,end=None):
 def ShowPaths():
     for i,v in enumerate(SVparse.paths):
         print (i ,':  ',v)
+def FileParse( paths = [(True,INC)]):
+    if SVparse.parsed == True:
+        return
+    paths = [paths] if type(paths) == tuple else paths
+    SVparse.ParseFiles( paths)
+    SVparse.parsed = True
+
+hiers = EAdict(SVparse.hiers)
+
 if __name__ == '__main__':
 
     #sv = SVparse('SVparse',None)
@@ -522,4 +558,3 @@ if __name__ == '__main__':
     #    print (i)
     #print(SVparse.hiers['PECtlCfg'])
     ParseFirstArgument()
-    hiers = EAdict(SVparse.hiers)

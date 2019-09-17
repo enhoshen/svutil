@@ -1,11 +1,5 @@
 from SVparse import * 
-from itertools import zip_longest
 import os
-TOPMODULE = os.environ.get("TOPMODULE")
-TESTMODULE = os.environ.get("TESTMODULE")
-TEST = os.environ.get("TEST")
-SV = os.environ.get("SV")
-hiers = EAdict(SVparse.hiers)
 class Ind():
     def __init__(self , n):
         self.n = n
@@ -24,8 +18,8 @@ class Ind():
     def Copy(self):
         return Ind(self.n)
 class SVgen():
-    def __init__(self ):
-        FileParse()
+    def __init__(self , paths=[(True,INC)] ):
+        FileParse(paths)
         self.genlist = {}    
         self.hclkmacro = 'HCYCLE'
         self.endcyclemacro = 'ENDCYCLE'
@@ -33,6 +27,7 @@ class SVgen():
         self.testname = TEST.rsplit('_tb')[0]
         self.fsdbname = self.testname + '_tb' #TODO
         self.topfile  = SV.rstrip('.sv')
+        self.incfile  = INC
         self.dutname = TESTMODULE 
         self.dut = hiers.dic[self.dutname]
         self.dutfile = hiers.dic[self.dutname+'_sv']
@@ -50,21 +45,21 @@ class SVgen():
         yield ''
         s = '\n'
         s += '`timescale 1ns/1ns\n'
-        s += '`include ' + f'"../include/{SV}"\n' #TODO
+        s += '`include ' + f'"../include/{self.incfile}.sv"\n' #TODO
         s += 'module ' + TOPMODULE + ';\n'
         s = s.replace('\n',f'\n{ind.b}')
         yield s
-        s = '\n`Pos(rst_out, rst)\n' +'`PosIf(ck_ev , clk, rst)\n' + '`WithFinish\n\n' 
+        s = '\nlogic clk, rst;\n`Pos(rst_out, rst)\n' +'`PosIf(ck_ev , clk, rst)\n' + '`WithFinish\n\n' 
         s += f'always #`{self.hclkmacro} clk= ~clk;\n\n'
         s += f'initial begin'
         s = s.replace('\n',f'\n{ind[1]}')
-        _s =  f'\n$fsdbDumpfile({self.fsdbname}.fsdb);\n' 
+        _s =  f'\n$fsdbDumpfile("{self.fsdbname}.fsdb");\n' 
         _s +=  f'$fsdbDumpvars(0,{TEST},"+all");\n'
         _s +=  'clk = 0;\n' + 'rst = 1;\n'
         _s +=  '#1 `NicotbInit\n' 
         _s +=  '#10 rst = 0;\n' +  '#10 rst = 1;\n'
-        _s +=  f'#(2*{self.hclkmacro+"*"+self.endcyclemacro}) $display("timeout");\n'
-        _s +=  '`NicotbFinal();\n' +  '$finish;'
+        _s +=  f'#(2*`{self.hclkmacro+"*`"+self.endcyclemacro}) $display("timeout");\n'
+        _s +=  '`NicotbFinal\n' +  '$finish;'
         _s = _s.replace('\n',f'\n{ind[2]}')
         _s += f'\n{ind[1]}end\n\n'
         yield s+_s
@@ -81,25 +76,39 @@ class SVgen():
     def LogicGen(self , module , **conf):
         ind = self.cur_ind.Copy()
         yield ''
-        s = ''
+        s = self.CommentBlock( 'Logics' , ind ) 
         for p in module.ports:
-            if p[3] == 'logic':
+            if p[3] == 'logic' or p[3] == 'signed logic':
                 s += f'{ind.b}{p[3]} {p[5]} {p[1]} {p[6]};\n'
             else:
                 s += f'{ind.b}{p[3]} {p[1]} {p[6]};\n' 
         yield s
+    def ParamGen(self , module , **conf):
+        ind = self.cur_ind.Copy()
+        yield ''
+        s = self.CommentBlock( 'Parameters' , ind)
+        for pkg,param  in module.scope.imported.items():
+            s += f'{ind.b}import {pkg}::{param};\n'
+        for param,v in module.paramports.items():
+            s += f'{ind.b}parameter {param} = {v};\n'
+        yield s
+    def CommentBlock(self , s , ind ,width=35):
+        return f'{ind.b}{"//":=<{width}}\n{ind.b}//{s:^{width}}\n{ind.b}{"//":=<{width}}\n'
     def InsGen(self , module , name='dut' ,  **conf):
         ind = self.cur_ind.Copy() 
         yield ''
         s = '\n'
         s += ind.base + module.hier + ' #(\n'
-        #TODO parameter ports
-        s += ind.base + '.*\n'
-        s += ind.base + ') ' + name + ' (\n' 
-        s += ind[1] + '.*\n'
-        for io , n , *_ in module.ports:
-            s += ind[1] + ',.' + n + '()\n'
-        s += ind.base + ');\n' 
+        s_param = ''
+        for param in module.paramports.keys():
+            s_param += f'{ind[1]},.{param}({param})\n'
+        s_param = s_param.replace(f'{ind[1]},' , ind[1]+' ', 1)
+        sb = f'{ind.b}) {name} (\n'
+        s_port =''
+        for io , n , dim , *_ in module.ports:
+            s_port += ind[1] + ',.' + n + (  (f'({n})\n') if dim ==() else (f'({{ >>{{{n}}} }})\n'))
+        s_port = s_port.replace(f'{ind[1]},' , ind[1]+' ' , 1)
+        s += s_param + sb + s_port + ind.base + ');\n' 
         yield s
 
     def TbPYGen(self):
@@ -111,18 +120,20 @@ class SVgen():
         yield s
         s =  f'{ind.b}rst_out, clk = CreateEvents(["rst_out" , "ck_ev"])\n\n'
         s += f'{ind.b}RegisterCoroutines([\n'
-        s += f'{ind[1]}main(),\n'
+        s += f'{ind[1]}main()\n'
         s += f'{ind.b}])'
         yield s
     def NicoutilImportGen(self):
         ind = self.cur_ind.Copy()
         yield ''
         s = '\n'
-        s +='from SVparse import SVparse\n'
+        s +='import sys\n'
+        s +='import os\n'
+        s +='sys.path.append(os.environ.get(\'SVutil\'))\n'
         s +='from itertools import repeat\n'
-        s +='from nicotb.primitives import JoinableFor\n'
+        s +='from nicotb.primitives import JoinableFork\n'
+        s +='from SVparse import SVparse,EAdict\n'
         s +='from NicoUtil import *\n'
-        s +='import os'
         s = s.replace('\n',f'\n{ind.b}') 
         yield s
     def PYbusinitGen(self,module):
@@ -132,12 +143,15 @@ class SVgen():
         s += f'{ind.b}def BusInit():\n'
         s += f'{ind[1]}SBC = StructBusCreator\n'
         s += f'{ind[1]}SBC.TopTypes()\n'
+        s += f'{ind[1]}dic = {{}}\n'
         for p in module.ports:
             tp = p[3]
-            if tp == 'logic':
-                s += f'{ind[1]}{p[1]} = CreateBus((\'\', \'{p[1]}\', {p[2] if p[2]!=() else "(1,)"},)\n'
+            if tp == 'logic' or tp == 'signed logic':
+                s += f'{ind[1]}dic[\'{p[1]}\'] = '
+                s += f'CreateBus(( (\'\', \'{p[1]}\', {p[2]},),  ))\n'
             else:
-                s += f'{ind[1]}{p[1]} = SBC.Get(\'{p[3]}\' , \'{p[1]}\')\n'     
+                s += f'{ind[1]}dic[\'{p[1]}\'] = SBC.Get(\'{p[3]}\' , \'{p[1]}\')\n'     
+        s += f'{ind[1]}return EAdict(dic) # access by name without quotes\n'
         yield s
             
     def PYmainGen(self):
@@ -175,38 +189,37 @@ class SVgen():
         return s if s != None else ''
     def ModuleTestSV(self , module , **conf):
         ins = g.InsGen(module)
+        pm = g.ParamGen(module)
         lg = g.LogicGen(module)
         tb = g.TbSVGen()
         ind = g.IndBlk()
-        return g.Genlist( [ (tb,) , tb , [ind,lg] , [ind,ins] , tb , tb]) 
-    def SVWrite(self): 
-        fpath = self.genpath + self.test + '.sv'
-        if os.path.isfile(fpath):
-            print( "file exists, make a copy")
-            f = open( self.genpath + self.test + '_new.sv','w')
-            f.write(self.ModuleTest(self.dut))
-            return
-        else:
-            f = open( fpath, 'w')
-            f.write(self.ModuleTest(self.dut))
-            print( f"Module test .sv written to {fpath}")
-        return
+        return g.Genlist( [ (tb,) , tb , [ind,pm] , [ind,lg] , [ind,ins] , tb , tb]) 
     def ModuleTestPY(self , module , **conf):
         tb = g.TbPYGen()
         nicoutil = g.NicoutilImportGen() 
         businit = g.PYbusinitGen(module)
         main = g.PYmainGen()
         return g.Genlist( [(tb,nicoutil,businit,main), tb ] )
+    def SVWrite(self , text ):
+        p = self.TbWrite(text,'sv') 
+        print ( "SV testbench written to ," , p )
+    def PYWrite(self , text ):
+        p = self.TbWrite(text,'py')
+        print ( "PY testbench written to ," , p )
+    def TbWrite(self , text , suf): 
+        fpath = self.genpath + self.test + '.' + suf
+        if os.path.isfile(fpath):
+            print( "file exists, make a copy, rename the file right away")
+            import time
+            fpath = self.genpath + self.test +'_'+ time.strftime('%m%d%H') +'.'+ suf 
+        else:
+            pass
+        f = open( fpath,'w')
+        f.write(text)
+        return fpath
 
-def FileParse(inc=True):
-    if SVparse.parsed == True:
-        return
-    p = SV if inc == True else [SV]
-    SVparse.ParseFiles(p,inc)
-def Reset():
-    FileParse()
 if __name__ == "__main__":
-    g=SVgen()
+    pass
     #dut = hiers.Ahb2ToReqAckWrap
     #ins = g.InsGen(dut, 'u1' )  
     #lg = g.LogicGen(dut)
