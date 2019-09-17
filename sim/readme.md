@@ -16,7 +16,8 @@ SVutil simulation utilites works mainly on several environment variables so it d
   * `HCLK/HCYCLE` define the half-clock cycle time in ns. 
 
 Folder hierarchy is strict, run SVgen,SVparse under `sim/`
-to avoid unexpected problems.
+to avoid unexpected problems. When working under `sim/vcs` or such, specify `TOPSV`
+for NicoUtil to work properly.
 
 ```
 include/
