@@ -1,31 +1,46 @@
 import numpy as np
 import parser as ps
 import re
-from os import environ
+import os
 from collections import namedtuple
 from collections import deque
 from subprocess import Popen, PIPE
 from functools import reduce
+from enum import Enum
 #Nico makefile specified
-TOPMODULE = environ.get('TOPMODULE','')
-TEST = environ.get('TEST','')
+TOPMODULE = os.environ.get('TOPMODULE','')
+TEST = os.environ.get('TEST','')
 #SVutil optional specified
-SVutil = environ.get('SVutil','')
-TESTMODULE = environ.get('TESTMODULE','')
-SV = environ.get('SV','')
-TOPSV = environ.get('TOPSV','')
-INC = environ.get('INC','')
+SVutil = os.environ.get('SVutil','')
+TESTMODULE = os.environ.get('TESTMODULE','')
+SV = os.environ.get('SV','')
+TOPSV = os.environ.get('TOPSV','')
+INC = os.environ.get('INC','')
 def ToClip(s):
     try:
         p = Popen(['xclip' ,'-selection' , 'clipboard'], stdin=PIPE)
         p.communicate(input=s.encode())
     except:
         print( "xclip not found or whatever, copy it yourself")
+class EAdict():  #easy access
+    def __init__(self, items ):
+        if type(items) == dict:
+            self.dic = items 
+        elif type(items) == list:
+            self.dic = { v:i for i,v in enumerate(items) }
+        else:
+            raise TypeError
+    def __getattr__(self, n):
+        return self.dic[n]
 class SVhier ():
+    paramfield = EAdict([ 'name' , 'dim' , 'tp', 'bw' , 'num' , 'bwstr' , 'dimstr', 'numstr' , 'paramtype'] )
+    typefield  = EAdict([ 'name' , 'bw' , 'dim' , 'tp' , 'enumliteral' ] )
+    portfield =  EAdict( [ 'direction' , 'name' , 'dim' , 'tp' , 'bw' , 'bwstr', 'dimstr' ] )
     def __init__(self,name,scope):
         self.hier= name # this is fucking ambiguous, but str method use it so it stays put
         self.name = name
         self.params = {}
+        self.paramsdetail = {}
         self.types = {}
         self.child = {}
         self.paramports = {} 
@@ -58,6 +73,12 @@ class SVhier ():
             _l = self._scope.Types
             _l.appendleft(self.types)
             return _l
+    @property
+    def SelfTypeKeys(self):
+        return { x for x in self.types.keys()} 
+    @property
+    def AllTypeKeys(self):
+        return { x for i in self.Types for x in i.keys() }  
     @property
     def ShowTypes(self):
         for k,v in self.types.items():
@@ -128,13 +149,16 @@ class SVparse():
     paths = []
     gb_hier = SVhier('files',None)
     gb_hier.types =  {'integer':None,'int':None,'logic':None}
-    _top =  environ.get("TOPMODULE") 
+    _top =  TOPMODULE
     top = _top if _top != None else ''
-    base_path = environ.get("PWD").replace('/vcs','').replace('/verilator','').replace('/sim','')+'/'
+    base_path = os.environ.get("PWD").replace('/vcs','').replace('/verilator','').replace('/sim','')+'/'
     print(base_path)
+    include_path = base_path + 'include/'
+    sim_path = base_path+'sim/'
+    src_path = base_path+'src/'
     cur_scope = '' 
     cur_path= ''
-    include_path = base_path + 'include/'
+    flags = { 'pport': False , 'module' : False } #TODO
     def __getattr__(self , n ):
         return hiers[n]
     def __init__(self,name,scope):
@@ -147,7 +171,7 @@ class SVparse():
         SVparse.hiers[name]= self.cur_hier
         self.cur_key = ''
         self.keyword = { 'logic':self.LogicParse , 'parameter':self.ParamParse, 'localparam':self.ParamParse,\
-                        'typedef':self.TypeParse , 'struct':self.StructParse  , 'package':self.HierParse , 'enum': self.EnumParse,\
+                        'typedef':self.TypedefParse , 'struct':self.StructParse  , 'package':self.HierParse , 'enum': self.EnumParse,\
                         'module':self.HierParse , 'import':self.ImportParse, 'input':self.PortParse , 'output':self.PortParse,\
                         '`include':self.IncludeRead ,'`rdyack_input':self.RdyackParse, '`rdyack_output':self.RdyackParse}
     @classmethod
@@ -162,7 +186,7 @@ class SVparse():
         cls.parsed = True
     @classmethod 
     def IncludeFileParse(cls , path):
-        f = open(cls.include_path+path)
+        f = open(cls.include_path+path ,'r')
         paths = []
         '''
         while 1:
@@ -180,7 +204,7 @@ class SVparse():
     #TODO Testbench sv file parse
     def Readfile(self , path):
         print(path)
-        self.f = open(path)
+        self.f = open(path , 'r')
         self.cur_path = path
         self.lines = iter(self.f.readlines())
         _s = self.Rdline(self.lines)
@@ -199,11 +223,14 @@ class SVparse():
     def IncludeRead( self, s , lines):
         parent_path = self.cur_path
         _s = s.s.replace('"','')
-        path = self.cur_path.rsplit('/',maxsplit=1)[0] + '/' + _s
-        n = path.rsplit('/',maxsplit=1)[1].replace('.','_')
-        cur_parse = SVparse( n , self.cur_hier )
-        cur_parse.Readfile(path)
-        self.cur_path = parent_path
+        p = [ self.include_path+_s , self.src_path+_s , self.sim_path+_s ]
+        for pp in p:
+            if ( os.path.isfile(pp) ):
+                #path = self.cur_path.rsplit('/',maxsplit=1)[0] + '/' + _s
+                path = pp
+                n = path.rsplit('/',maxsplit=1)[1].replace('.','_')
+                cur_parse = SVparse( n , self.cur_hier )
+                cur_parse.Readfile(path)
         return
     def LogicParse(self, s ,lines):
         #TODO signed keyword
@@ -221,23 +248,29 @@ class SVparse():
         return (name, '', self.Tuple2num(dim), '')
     def ParamParse(self, s ,lines):
         #TODO type parse (in SVstr) , array parameter 
+        tp = s.TypeParse(self.cur_hier.AllTypeKeys.union(self.gb_hier.SelfTypeKeys) )
+        bw = s.BracketParse()
+        bwstr = self.Tuple2str(bw)
+        bw = 32 if tp == 'int' and bw== () else self.Bw2num(bw) 
         name = s.IDParse()
         dim = s.BracketParse()
-        s.rstrip().rstrip(';').rstrip(',')
-        _n=self.cur_hier.params[name]=s.lstrip('=').S2num(self.cur_hier.Params)
+        dimstr = self.Tuple2str(dim)
+        numstr = s.rstrip().rstrip(';').rstrip(',').s.lstrip('=').lstrip()
+        num =self.cur_hier.params[name]=s.lstrip('=').S2num(self.cur_hier.Params)
+        self.cur_hier.paramsdetail[name] = ( name , self.Tuple2num(dim) , tp, bw , num , bwstr, dimstr, numstr ,self.cur_key )
         if self.flag_port == 'pport' :
-            self.cur_hier.paramports[name] = _n
-        return name,_n
+            self.cur_hier.paramports[name] = num 
+        return name , num
     def PortParse(self, s , lines):
         bw = s.BracketParse()
         tp = 'logic'
         temp = s.lsplit()
-        types = [ x for i in self.cur_hier.Types for x in i.keys() ]
-        types += [ x for x in self.gb_hier.types.keys()]
+        types = self.cur_hier.AllTypeKeys.union(self.gb_hier.SelfTypeKeys)
+        #TODO clean this up, why not IDparse for name?
         if temp in types or '::' in temp :
             tp = temp
             bw = s.BracketParse()
-            name = s.lsplit()
+            name = s.IDParse()
         else:
             name = temp
         bwstr = self.Tuple2str(bw)
@@ -305,7 +338,7 @@ class SVparse():
                     dim = _s.BracketParse()
                     attrlist.append( ( _n , np.sum([x[1] for x in t[_w] ]) ,self.Tuple2num(dim) , _w) )
                     break
-    def TypeParse(self, s , lines):
+    def TypedefParse(self, s , lines):
         _w = s.lsplit()
         _m = self.keyword.get(_w)
         _catch = () 
@@ -348,7 +381,7 @@ class SVparse():
             self.flag_port = 'end' 
         if '#' in w and self.flag_port == '':
             self.flag_port = 'pport' 
-        if ')' in w and self.flag_port =='pport':
+        if ('input' in w or 'output' in w) and self.flag_port =='pport':
             self.flag_port = 'port' 
         if ')' in w and self.flag_port == 'port':
             self.flag_port = 'end'
@@ -361,6 +394,8 @@ class SVparse():
         return tuple(map(lambda x : SVstr(x).S2num(params=self.cur_hier.Params) ,t))
     def Tuple2str(self, t):
         return reduce(lambda x,y : x+f'[{y}]' , t , '')
+    def Bw2num(self, bw):
+        return SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier.Params)
 class SVstr():
     sp_chars = ['=','{','}','[',']','::',';',',','(',')','#']
     op_chars = ['+','-','*','/','(',')']
@@ -443,8 +478,13 @@ class SVstr():
             num.append(self.s[1:rbrack] )
             self.s=self.s[rbrack+1:].lstrip()
         return tuple(num)
-    def TypeParse(self , params):
-        pass
+    def TypeParse(self , typekeylist ):
+        tp = ''
+        temp = SVstr(self.s).lsplit()
+        if temp in typekeylist or '::' in temp:
+            tp = temp
+            self.lsplit()
+        return tp
     def KeywordParse(self, key , rules ):
         _step = 0
         self.s = self.s.lsplit()
@@ -478,6 +518,7 @@ class SVstr():
         try:
             return eval(ps.expr(_s).compile('file.py'))
         except:
+            print("S2num failed, return original string")
             return _s
     def Slice2num(self,params):
         if self.s == '':
@@ -488,7 +529,7 @@ class SVstr():
         try:
             return SVstr(_s).S2num(params)-SVstr(_e).S2num(params)+1
         except(TypeError):
-            print('TypeError')
+            print('Slice2num fail, TypeError')
             print (self.s)
     def DeleteList(self,clist):
         _s = self.s
@@ -506,18 +547,13 @@ class SVstr():
         return st in self.s
     def End(self):
         return self.s==''
-class EAdict():  #easy access
-    def __init__(self,dic):
-        self.dic = dic
-    def __getattr__(self, n):
-        return self.dic[n]
 def ParseFirstArgument():
     import sys
     SVparse.ParseFiles([(True,sys.argv[1])])
 def Reset():
     SVparse.parsed = False
 def ShowFile(n,start=0,end=None):
-    f=open(SVparse.paths[n])
+    f=open(SVparse.paths[n],'r')
     l=f.readlines()
     end = start+40 if end==None else end
     for i,v in enumerate([ x+start for x in range(end-start)]):

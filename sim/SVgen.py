@@ -45,7 +45,7 @@ class SVgen():
         yield ''
         s = '\n'
         s += '`timescale 1ns/1ns\n'
-        s += '`include ' + f'"../include/{self.incfile}.sv"\n' #TODO
+        s += '`include ' + f'"{self.incfile}.sv"\n' #TODO
         s += 'module ' + TOPMODULE + ';\n'
         s = s.replace('\n',f'\n{ind.b}')
         yield s
@@ -76,32 +76,43 @@ class SVgen():
     def LogicGen(self , module , **conf):
         ind = self.cur_ind.Copy()
         yield ''
-        s = self.CommentBlock( 'Logics' , ind ) 
+        s = self.CommentBlkStr ( 'Logics' , ind)
+        pfield = SVhier.portfield 
         for p in module.ports:
-            if p[3] == 'logic' or p[3] == 'signed logic':
-                s += f'{ind.b}{p[3]} {p[5]} {p[1]} {p[6]};\n'
+            if p[pfield.tp] == 'logic' or p[pfield.tp] == 'signed logic':
+                s += f'{ind.b}{p[pfield.tp]} {p[pfield.bwstr]} {p[pfield.name]} {p[pfield.dimstr]};\n'
             else:
-                s += f'{ind.b}{p[3]} {p[1]} {p[6]};\n' 
+                s += f'{ind.b}{p[pfield.tp]} {p[pfield.name]} {p[pfield.dimstr]};\n' 
         yield s
     def ParamGen(self , module , **conf):
         ind = self.cur_ind.Copy()
         yield ''
-        s = self.CommentBlock( 'Parameters' , ind)
+        s = self.CommentBlkStr(  'Parameters' , ind )
         for pkg,param  in module.scope.imported.items():
             s += f'{ind.b}import {pkg}::{param};\n'
+        pmfield = SVhier.paramfield
         for param,v in module.paramports.items():
-            s += f'{ind.b}parameter {param} = {v};\n'
+            detail = module.paramsdetail[param]
+            tpstr = detail[pmfield.tp] + ' ' if detail[pmfield.tp] != '' else ''
+            bwstr = detail[pmfield.bwstr] + ' ' if detail[pmfield.bwstr] != '' else ''
+            pmtp  = detail[pmfield.paramtype]
+            s += f'{ind.b}{pmtp} {tpstr}{bwstr}{param} = {detail[pmfield.numstr]};\n'
         yield s
-    def CommentBlock(self , s , ind ,width=35):
-        return f'{ind.b}{"//":=<{width}}\n{ind.b}//{s:^{width}}\n{ind.b}{"//":=<{width}}\n'
+    def CommentBlkGen(self , s  ,width=35):
+        ind = self.cur_ind.Copy()
+        yield ''
+        yield f'{ind.b}//{"":=<{width}}\n{ind.b}//{s:^{width}}\n{ind.b}//{"":=<{width}}\n'
+    def CommentBlkStr(self, s , ind , width=35):
+        return f'{ind.b}//{"":=<{width}}\n{ind.b}//{s:^{width}}\n{ind.b}//{"":=<{width}}\n'
     def InsGen(self , module , name='dut' ,  **conf):
         ind = self.cur_ind.Copy() 
         yield ''
         s = '\n'
         s += ind.base + module.hier + ' #(\n'
         s_param = ''
-        for param in module.paramports.keys():
-            s_param += f'{ind[1]},.{param}({param})\n'
+        for param,v in module.paramports.items():
+            if module.paramsdetail[param][SVhier.paramfield.paramtype] == 'parameter':
+                s_param += f'{ind[1]},.{param}({param})\n'
         s_param = s_param.replace(f'{ind[1]},' , ind[1]+' ', 1)
         sb = f'{ind.b}) {name} (\n'
         s_port =''
@@ -118,7 +129,7 @@ class SVgen():
         s += f'{ind.b}from nicotb import *\n'
         s += f'{ind.b}import numpy as np \n'
         yield s
-        s =  f'{ind.b}rst_out, clk = CreateEvents(["rst_out" , "ck_ev"])\n\n'
+        s =  f'{ind.b}rst_out, ck_ev = CreateEvents(["rst_out" , "ck_ev"])\n\n'
         s += f'{ind.b}RegisterCoroutines([\n'
         s += f'{ind[1]}main()\n'
         s += f'{ind.b}])'
@@ -145,10 +156,11 @@ class SVgen():
         s += f'{ind[1]}SBC.TopTypes()\n'
         s += f'{ind[1]}dic = {{}}\n'
         for p in module.ports:
-            tp = p[3]
+            pfield = SVhier.portfield
+            tp = p[pfield.tp]
             if tp == 'logic' or tp == 'signed logic':
-                s += f'{ind[1]}dic[\'{p[1]}\'] = '
-                s += f'CreateBus(( (\'\', \'{p[1]}\', {p[2]},),  ))\n'
+                s += f'{ind[1]}dic[\'{p[pfield.name]}\'] = '
+                s += f'CreateBus(( (\'\', \'{p[pfield.name]}\', {p[pfield.dim]},),  ))\n'
             else:
                 s += f'{ind[1]}dic[\'{p[1]}\'] = SBC.Get(\'{p[3]}\' , \'{p[1]}\')\n'     
         s += f'{ind[1]}return EAdict(dic) # access by name without quotes\n'
@@ -160,6 +172,7 @@ class SVgen():
         s = '\n'
         s += f'{ind.b}def main():\n'
         s += f'{ind[1]}yield rst_out\n'
+        s += f'{ind[1]}buses = BusInit()\n'
         s += f'{ind[1]}FinishSim()\n' 
         yield s
         
@@ -184,6 +197,14 @@ class SVgen():
             else :
                 o += self.Nextblk(strt)
         return o
+    def GenStr( self , gen):
+        s = ''
+        for _s in gen:
+            s += _s
+        return s
+    def Blkprint( self , gen):
+        s = ''
+        print ( self.GenStr(gen) )
     def Nextblk(self, blk):
         s = next(blk,None)
         return s if s != None else ''
@@ -200,6 +221,9 @@ class SVgen():
         businit = g.PYbusinitGen(module)
         main = g.PYmainGen()
         return g.Genlist( [(tb,nicoutil,businit,main), tb ] )
+    def WriteModuleTestALL(self, module , **conf):
+        self.SVWrite(self.ModuleTestSV(module,**conf))
+        self.PYWrite(self.ModuleTestPY(module,**conf)) 
     def SVWrite(self , text ):
         p = self.TbWrite(text,'sv') 
         print ( "SV testbench written to ," , p )
