@@ -80,6 +80,9 @@ class SVhier ():
     def AllTypeKeys(self):
         return { x for i in self.Types for x in i.keys() }  
     @property
+    def AllType(self):
+        return { k:v for i in self.Types for k,v in i.items() }
+    @property
     def ShowTypes(self):
         for k,v in self.types.items():
             self.TypeStr(k,v)

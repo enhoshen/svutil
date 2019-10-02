@@ -84,7 +84,7 @@ FSDBDumpMem = "$novasDumpMemNow(${SimDmpObj}, ${SimDmpBegin}, ${SimDmpSize});"
 [DesignTree]
 IfShowModule = {TRUE, FALSE}
 [DisabledMessages]
-version = Verdi_O-2018.09
+version = Verdi_P-2019.06-1
 [Editor]
 editorName = TurboEditor
 [Emacs]
@@ -167,16 +167,15 @@ Orientation = Landscape
 nWaveRestoreRCDirHistory = "\"/home/enhoshen/research/lpAccel/sim/Address.rc\"" "\"/home/enhoshen/research/lpAccel/sim/novas.rc\"" "\"/home/enhoshen/research/lpAccel/sim/Controls.rc\""
 nWaveOpenFsdbDirHistory = "\"/home/enhoshen/research/lpAccel/sim/loop.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072205_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_ug_072205\
 _syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest_5ns.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072206_syn_PEt\
-est.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/BufferTest_3ns_ultra_cg_ug_072207_syn_Buftest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_compile_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072208_syn_PEtest.fs\
-db\"" "\"/home/enhoshen/research/lpAccel/sim/BufferTest_3ns_ultra_cg_ug_072207_syn_Buftest_row.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/BufferTest_3ns_ultra_cg_noug_072302_syn_Buftest_row.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/BufferTest_3ns_\
-ultra_cg_noug_072303_syn_Buftest_row.fsdb\""
+est.fsdb\"" "\"/home/enho.shen/Slave-wrapper/sim/vcs/Ahb_tb.fsdb\""
 [Form]
-version = Verdi_O-2018.09
+version = Verdi_P-2019.06-1
+wave/unknownSave.fm = 100,100,520,275
 [General]
 autoSaveSession = FALSE
 TclAutoSource = 
 SyncBrowserDir = TRUE
-version = Verdi_O-2018.09
+version = Verdi_P-2019.06-1
 SignalCaseInSensitive = FALSE
 cmd_enter_form = FALSE
 ShowWndCtntDuringResizing = FALSE
@@ -233,6 +232,9 @@ VIR_STAR_SRAM_SP = shsd1_[0-9]*x[0-9]*cm4sw0
 [NavigationField]
 DisplayInWaveformSignalPane = FALSE
 SearchFilterMatchCase = FALSE
+FindWholeWordsOnly = FALSE
+UsingRegularExpression = FALSE
+UsingWildcard = FALSE
 [OldFontRC]
 Wave_legend_window_font = -f COURIER12 -c ID_CYAN5
 Wave_value_window_font = -f COURIER12 -c ID_CYAN5
@@ -254,20 +256,27 @@ PrinterName = lp
 FileName = test.ps
 PaperSize = A4 - 210x297 (mm)
 ColorPrint = FALSE
+[PropertyTools]
+Dnd_Sig_To_Wave = FALSE
+Dnd_Sig_To_Wave_With_Exp_Group = TRUE
+Mask_Non_Active_Time_on_Wave = FALSE
+Show_Cycle_Info = TRUE
 [QtDialog]
 aboutVerdiDialog = 221,85,773,641
 VirtualFileEditorDialog = 297,235,637,403
 QwQuestionMsgDlg = 444,366,324,110
-QwShortcutDialog = 206,97,800,600
 saveSigDlg = 332,244,551,386
 restoreSigDlg = 305,220,551,438
 QwWarnMsgDlg = 2594,57,600,250
 QwUserAskDlg = 2594,57,324,134
-openFileDlg = 207,836,1374,484
 CreateBusDialog = 886,724,788,709
 SetWindowTimeUnitDialog = 1063,1035,433,86
 ActiveFileDialog = 1005,942,549,272
-qWaveSignalDialog = 824,776,1405,499
+QwShortcutDialog = 1731,1217,800,600
+QwInfoMsgDlg = 1655,1455,750,250
+gridOptionsDialog = 1829,1477,421,269
+openFileDlg = 1353,1369,1374,484
+qWaveSignalDialog = 1337,1327,1405,569
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile1]
 shortcut = 
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile3]
@@ -478,8 +487,9 @@ PiecewiseConstant = FALSE
 PointStyle = FALSE
 SetDefaultRadix = TRUE
 FilterTextField = FALSE
-getSignalForm = 824 776 1405 499 662 401 497 113
-viewPort = 0 570 2560 1017 218 65
+anaAuto100VertFit = FALSE
+getSignalForm = 1337 1327 1405 569 442 471 913 228
+viewPort = 1080 1100 893 93 205 65
 signalSpacing = 5
 digitalSignalHeight = 15
 analogSignalHeight = 98
@@ -515,8 +525,8 @@ region(Re-NBA)Background = -c ID_RED3
 region(VHDL-Delta)Background = -c ID_ORANGE3
 region(Dump-Off)Background = -c ID_GRAY4
 High_Light = -c ID_GRAY2
-Input_Signal = -c ID_RED5
-Output_Signal = -c ID_GREEN5
+Input_Signal = -c ID_ORANGE5
+Output_Signal = -c ID_GREEN2
 InOut_Signal = -c ID_BLUE5
 Net_Signal = -c ID_YELLOW5
 Register_Signal = -c ID_PURPLE5
@@ -527,6 +537,7 @@ Dump_Off_Color = -c ID_BLUE2
 Compress_Bar_Color = -c ID_YELLOW4
 Vector_Dense_Block_Color = -c ID_ORANGE8
 Scalar_Dense_Block_Color = -c ID_GREEN6
+Analog_Dense_Block_Color = -c ID_PURPLE2
 Composite_Dense_Block_Color = -c ID_RED5
 RPTR_Power_Off_Layer = -c ID_CYAN3 -stipple dots
 DB_Power_Off_Layer = -c ID_BLUE4 -stipple dots
@@ -651,7 +662,7 @@ dispCompErr = TRUE
 showMsgDes = TRUE
 anaAutoFit = FALSE
 anaAutoPattn = FALSE
-anaAuto100VertFit = FALSE
+verticalFitWhenZoomAll = FALSE
 displayDeltaY = FALSE
 centerCursor = FALSE
 denseBlockDrawing = TRUE
@@ -666,7 +677,7 @@ doubleClickToExpandTransaction = TRUE
 expandTransactionAssociatedSignals = TRUE
 expandTransactionAttributeSignals = FALSE
 WaveExtendLastTick = TRUE
-InOutSignal = FALSE
+InOutSignal = TRUE
 NetRegisterSignal = FALSE
 VerilogVHDLSignal = FALSE
 LabelMarker = TRUE
@@ -705,6 +716,7 @@ OverwriteAliasWithRC = TRUE
 overlay_added_analog_signals = FALSE
 case_insensitive = FALSE
 vhdlVariableCalculate = TRUE
+showError = TRUE
 signal_vertical_scroll_bar = TRUE
 showPortNameForDroppedInstance = FALSE
 truncateFilePathInTitleBar = TRUE
@@ -720,12 +732,12 @@ maskIsolation = TRUE
 maskRetention = TRUE
 maskDrivingPowerOff = TRUE
 maskToggle = TRUE
-autoBackupSignals = off 5 "\"/home/enhoshen/nWaveLog\"" "\"novas_autosave_sig\""
+autoBackupSignals = off 5 "\"/home/enho.shen/Slave-wrapper/sim/vcs/nWaveLog\"" "\"novas_autosave_sig\""
 signal_rc_attribute = 65535
 signal_rc_alias_attribute = 0
 ConvertAttr1 = -inc FALSE
 ConvertAttr2 = -hier FALSE
-ConvertAttr3 = -ucase FALSE
+ConvertAttr3 = -ucase TRUE
 ConvertAttr4 = -lcase FALSE
 ConvertAttr5 = -org FALSE
 ConvertAttr6 = -mem 24
@@ -746,16 +758,16 @@ printDest = -printer {}
 printSignature = {%f %h %t} {}
 curveWindow_Drag&Drop_Mode = TRUE
 hspiceIncOpenMode = TRUE
-pcSelectMode = TRUE
+pcSelectMode = FALSE
 hierarchyDelimiter = /
-RecentFile1 = "\"/home/enhoshen/research/lpAccel/sim/BufferTest_3ns_ultra_cg_noug_072303_syn_Buftest_row.fsdb\""
-RecentFile2 = "\"/home/enhoshen/research/lpAccel/sim/BufferTest_3ns_ultra_cg_noug_072302_syn_Buftest_row.fsdb\""
-RecentFile3 = "\"/home/enhoshen/research/lpAccel/sim/BufferTest_3ns_ultra_cg_ug_072207_syn_Buftest_row.fsdb\""
-RecentFile4 = "\"/home/enhoshen/research/lpAccel/sim/PEtest.fsdb\""
-RecentFile5 = "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072208_syn_PEtest.fsdb\""
+RecentFile1 = "\"/home/enho.shen/Slave-wrapper/sim/vcs/Ahb_tb.fsdb\""
+RecentFile2 = "\"/home/enhoshen/research/lpAccel/sim/BufferTest_3ns_ultra_cg_noug_072303_syn_Buftest_row.fsdb\""
+RecentFile3 = "\"/home/enhoshen/research/lpAccel/sim/BufferTest_3ns_ultra_cg_noug_072302_syn_Buftest_row.fsdb\""
+RecentFile4 = "\"/home/enhoshen/research/lpAccel/sim/BufferTest_3ns_ultra_cg_ug_072207_syn_Buftest_row.fsdb\""
+RecentFile5 = "\"/home/enhoshen/research/lpAccel/sim/PEtest.fsdb\""
 open_file_time_range = FALSE
 value_window_aligment = Right
-signal_window_alignment = Auto
+signal_window_alignment = Left
 ShowDeltaTime = TRUE
 legend_window_font = -f COURIER12 -c ID_CYAN5
 value_window_font = -f COURIER12 -c ID_CYAN5
@@ -785,6 +797,10 @@ SEQAddDriverLoadInSameGroup = TRUE
 autoSyncCursorMarker = FALSE
 autoSyncHorizontalRange = FALSE
 autoSyncVerticalScroll = FALSE
+displayVerticalRuler = FALSE
+displayHorizontalRuler = FALSE
+displayVerticalGrid = FALSE
+displayHorizontalGrid = FALSE
 [finsim]
 TPLanguage = Verilog
 TPName = Super-FinSim

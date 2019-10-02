@@ -102,13 +102,16 @@ class StructBusCreator():
                 buses.append ( self.structlist[t].CreateStructBus( signalName+'.'+n , hier, DIM+dim ) )
         return StructBus(self.structName,signalName,attrs,buses)
 global ck_ev
-class ProtoBus ():
+class ProtoCreateBus ():
+    # this class member functions help createbuses, if you've already connected buses, 
+    # ArgParse is not needed
     def __init__(self):
         pass
     def ArgParse(self, protoCallback, portCallback,*args , clk  , **kwargs):
         # args[0] is the data bus, it could be a list, ex: [hrdata,hwdata] in AHB
         # portCallback should return list of buses for protocl buses
         # protoCallback should create the protocal object, ex: TwoWire.Master
+        # see NicoProtocol inherited protobus classes
         kw = dict(kwargs)
         if len(args) == 0:
             self.data = kw['data'] 
@@ -120,7 +123,8 @@ class ProtoBus ():
             kw.pop('name')
             if kw.get('hier'):
                 kw.pop('hier')
-            self.proto = protoCallback( *(protolist),self.data ,clk=clk ,**kw)
+            datalist = self.data if type(self.data) == list else [self.data] 
+            self.proto = protoCallback( *(protolist),*datalist ,clk=clk ,**kw)
         else:
             self.proto = protoCallback( *args , clk=clk ,**kw)
     def SideChoose (self, side='master'):
@@ -145,55 +149,14 @@ class ProtoBus ():
     @property
     def values(self):
         return [ x.values for x in self.data]
-class TwoWireBus ( ProtoBus):
-    def __init__( self , *args ,clk , side='master' , **kwargs ):
-        protoCallback = TwoWire.Master if side == 'master' else MySlaveTwoWire
-        self.ArgParse(protoCallback, self.PortParse, *args, clk=clk, **kwargs)
-        self.SideChoose(side)
-    def PortParse(self, name , hier=''):
-        self.rdy , self.ack = CreateBuses( [((hier,name+'_rdy',),) , ((hier,name+'_ack',),) ])
-        return [self.rdy , self.ack]
-class OneWireBus ( ProtoBus): 
-    def __init__(self, *args, clk , side = 'master' , **kwargs):
-        protoCallback = OneWire.Master if side == 'master' else OneWire.Slave
-        self.ArgParse(protoCallback, self.PortParse, *args , clk=clk , **kwargs)
-        self.SideChoose(side)
-    def PortParse(self,name,hier=''):
-        self.dval = CreateBus( (hier,name+'_dval',))
-        return [self.dval]
-class MySlaveTwoWire(TwoWire.Slave):
-    def __init__(
-            self, rdy: Bus, ack: Bus, data: Bus,
-            clk: int, A=1, B=5, callbacks=list()
-    ):
-        super(TwoWire.Slave, self).__init__(callbacks)
-        self.rdy = GetBus(rdy)
-        self.ack = GetBus(ack)
-        self.data = GetBus(data)
-        self.clk = GetEvent(clk)
-        self.A = A
-        self.B = B
-        self.ack.value[0] = RandProb(self.A, self.B)
-        self.ack.Write()
-    def MyMonitor(self,n):
-        for i in range(n):
-            while True:
-                yield self.clk
-                self.rdy.Read()
-                if self.rdy.x[0] != 0 or self.rdy.value[0] == 0:
-                    continue
-                if self.ack.value[0] != 0:
-                    self.data.Read()
-                    super(TwoWire.Slave, self).Get(self.data)
-                    break
-                self.ack.value[0] = RandProb(self.A, self.B)
-                self.ack.Write()            
-        print( "monitor done")
-        self.ack.value[0]=0
-        self.ack.Write()
-        yield self.clk
-def RdyAckBuses ( names ):
-    return CreateBuses( [ () for n in names] )
+class Busdict (EAdict):
+    def Read(self):
+        [ i.Read() for i in self.dic.values() ]
+    def Write(self):
+        [ i.Write() for i in self.dic.values() ]
+    def SetTo(self,n):
+        [ i.SetToN() for i in self.dic.values() ]
+        [ i.SetTo(n) for i in self.dic.values() ]
 def clk_cnt():
 
     global n_clk

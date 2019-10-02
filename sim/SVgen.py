@@ -15,6 +15,8 @@ class Ind():
         self.n -= n
         self.base = '' if self.n==0 else f'{" ":{4*self.n}}'
         return self 
+    def __add__ (self, n):
+        return Ind(self.n+n)
     def Copy(self):
         return Ind(self.n)
 class SVgen():
@@ -23,6 +25,8 @@ class SVgen():
         self.genlist = {}    
         self.hclkmacro = 'HCYCLE'
         self.endcyclemacro = 'ENDCYCLE'
+        self.clkstr = 'clk'
+        self.rststr = 'rst'
         self.test = TEST
         self.testname = TEST.rsplit('_tb')[0]
         self.fsdbname = self.testname + '_tb' #TODO
@@ -49,13 +53,13 @@ class SVgen():
         s += 'module ' + TOPMODULE + ';\n'
         s = s.replace('\n',f'\n{ind.b}')
         yield s
-        s = '\nlogic clk, rst;\n`Pos(rst_out, rst)\n' +'`PosIf(ck_ev , clk, rst)\n' + '`WithFinish\n\n' 
-        s += f'always #`{self.hclkmacro} clk= ~clk;\n\n'
+        s = f'\nlogic {self.clkstr}, {self.rststr};\n`Pos(rst_out, {self.rststr})\n' +f'`PosIf(ck_ev , {self.clkstr}, {self.rststr})\n' + '`WithFinish\n\n' 
+        s += f'always #`{self.hclkmacro} {self.clkstr}= ~{self.clkstr};\n\n'
         s += f'initial begin'
         s = s.replace('\n',f'\n{ind[1]}')
         _s =  f'\n$fsdbDumpfile("{self.fsdbname}.fsdb");\n' 
         _s +=  f'$fsdbDumpvars(0,{TEST},"+all");\n'
-        _s +=  'clk = 0;\n' + 'rst = 1;\n'
+        _s +=  f'{self.clkstr} = 0;\n' + f'{self.rststr} = 1;\n'
         _s +=  '#1 `NicotbInit\n' 
         _s +=  '#10 rst = 0;\n' +  '#10 rst = 1;\n'
         _s +=  f'#(2*`{self.hclkmacro+"*`"+self.endcyclemacro}) $display("timeout");\n'
@@ -117,7 +121,13 @@ class SVgen():
         sb = f'{ind.b}) {name} (\n'
         s_port =''
         for io , n , dim , *_ in module.ports:
-            s_port += ind[1] + ',.' + n + (  (f'({n})\n') if dim ==() else (f'({{ >>{{{n}}} }})\n'))
+            if 'clk' in n:
+                s_port += ind[1] + ',.' + n + f'({self.clkstr})\n'
+            elif 'rst' in n:
+                s_port += ind[1] + ',.' + n + f'({self.rststr})\n'
+            else:
+                s_port += ind[1] + ',.' + n + (  (f'({n})\n') if dim ==() else (f'({{ >>{{{n}}} }})\n'))
+                
         s_port = s_port.replace(f'{ind[1]},' , ind[1]+' ' , 1)
         s += s_param + sb + s_port + ind.base + ');\n' 
         yield s
@@ -140,7 +150,7 @@ class SVgen():
         s = '\n'
         s +='import sys\n'
         s +='import os\n'
-        s +='sys.path.append(os.environ.get(\'SVutil\'))\n'
+        s +='sys.path.append(os.environ.get(\'SVutil\')+\'/sim\')\n'
         s +='from itertools import repeat\n'
         s +='from nicotb.primitives import JoinableFork\n'
         s +='from SVparse import SVparse,EAdict\n'
@@ -163,7 +173,7 @@ class SVgen():
                 s += f'CreateBus(( (\'\', \'{p[pfield.name]}\', {p[pfield.dim]},),  ))\n'
             else:
                 s += f'{ind[1]}dic[\'{p[1]}\'] = SBC.Get(\'{p[3]}\' , \'{p[1]}\')\n'     
-        s += f'{ind[1]}return EAdict(dic) # access by name without quotes\n'
+        s += f'{ind[1]}return Busdict(dic) # access by name without quotes\n'
         yield s
             
     def PYmainGen(self):
@@ -171,8 +181,8 @@ class SVgen():
         yield '' 
         s = '\n'
         s += f'{ind.b}def main():\n'
-        s += f'{ind[1]}yield rst_out\n'
         s += f'{ind[1]}buses = BusInit()\n'
+        s += f'{ind[1]}yield rst_out\n'
         s += f'{ind[1]}FinishSim()\n' 
         yield s
         
@@ -197,6 +207,15 @@ class SVgen():
             else :
                 o += self.Nextblk(strt)
         return o
+    def Str2Blk(self, strcallback, *arg):
+        ind = self.cur_ind.Copy()
+        yield ''
+        yield strcallback( *arg , ind=ind)
+    def BlkGroup (self, *arg):
+        ind = self.cur_ind.Copy()
+        yield ''
+        s = self.Genlist( [ tuple(arg) ])
+        yield s 
     def GenStr( self , gen):
         s = ''
         for _s in gen:
@@ -209,18 +228,18 @@ class SVgen():
         s = next(blk,None)
         return s if s != None else ''
     def ModuleTestSV(self , module , **conf):
-        ins = g.InsGen(module)
-        pm = g.ParamGen(module)
-        lg = g.LogicGen(module)
-        tb = g.TbSVGen()
-        ind = g.IndBlk()
-        return g.Genlist( [ (tb,) , tb , [ind,pm] , [ind,lg] , [ind,ins] , tb , tb]) 
+        ins = self.InsGen(module)
+        pm = self.ParamGen(module)
+        lg = self.LogicGen(module)
+        tb = self.TbSVGen()
+        ind = self.IndBlk()
+        return self.Genlist( [ (tb,) , tb , [ind,pm] , [ind,lg] , [ind,ins] , tb , tb]) 
     def ModuleTestPY(self , module , **conf):
-        tb = g.TbPYGen()
-        nicoutil = g.NicoutilImportGen() 
-        businit = g.PYbusinitGen(module)
-        main = g.PYmainGen()
-        return g.Genlist( [(tb,nicoutil,businit,main), tb ] )
+        tb = self.TbPYGen()
+        nicoutil = self.NicoutilImportGen() 
+        businit = self.PYbusinitGen(module)
+        main = self.PYmainGen()
+        return self.Genlist( [(tb,nicoutil,businit,main), tb ] )
     def WriteModuleTestALL(self, module , **conf):
         self.SVWrite(self.ModuleTestSV(module,**conf))
         self.PYWrite(self.ModuleTestPY(module,**conf)) 
