@@ -18,7 +18,8 @@ TOPSV = os.environ.get('TOPSV','')
 INC = os.environ.get('INC','')
 def ToClip(s):
     try:
-        p = Popen(['xclip' ,'-selection' , 'clipboard'], stdin=PIPE)
+        clip = os.environ.get('XCLIP')
+        p = Popen([clip ,'-selection' , 'clipboard'], stdin=PIPE)
         p.communicate(input=s.encode())
     except:
         print( "xclip not found or whatever, copy it yourself")

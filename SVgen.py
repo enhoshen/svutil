@@ -150,7 +150,7 @@ class SVgen():
         s = '\n'
         s +='import sys\n'
         s +='import os\n'
-        s +='sys.path.append(os.environ.get(\'SVutil\')+\'/sim\')\n'
+        s +='sys.path.append(os.environ.get(\'SVutil\'))\n'
         s +='from itertools import repeat\n'
         s +='from nicotb.primitives import JoinableFork\n'
         s +='from SVparse import SVparse,EAdict\n'
