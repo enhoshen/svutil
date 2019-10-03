@@ -75,10 +75,8 @@ class Master():
         self.buses.Write()
     def SendIter(self, a , d, l):
         pass
-    #def Write(self, a, d, l):
-    #    yield from self.Issue(True, a, d, l)
     def Read(self, a, l):
-        ret = yield from self.Issue(False, a, 0, l)
+        ret = yield from self.IssueCommands([(False, a, 0,)])
         return ret[0]
              
     def Write(self, a ,d ):
