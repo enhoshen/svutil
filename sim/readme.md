@@ -1,19 +1,19 @@
-# Simulation utilities 
+# Simulation utilities
 
 SVutil simulation utilites works mainly on several environment variables so it doesn't messed with nicotb Makefiles:
 
 [//]: <> (* --SV variable define the simulated .sv source file path)
 
 * Nicotb set variables
-  * `TEST` sets the testbench module `EX`: AhbWrap_tb 
+  * `TEST` sets the testbench module `EX`: AhbWrap_tb
     * +define TEST macro for the tool.
   * `TESTMODULE` sets the tested module name `EX`: Ahb3ToReqAckWrap
 * SVutil set variables
   * `INC` sets the include file name `EX`:Ahb_include
   * `TOPSV` set the top/testbench module file `EX`:../Ahb_tb.sv
-  * `GATE_LEVEL` post-sim simulation mode, define the gate level design and +define+ GATE_LEVEL macro for the tool. 
+  * `GATE_LEVEL` post-sim simulation mode, define the gate level design and +define+ GATE_LEVEL macro for the tool.
   * `SIM` pre-sim simulation mode.
-  * `HCLK/HCYCLE` define the half-clock cycle time in ns. 
+  * `HCLK/HCYCLE` define the half-clock cycle time in ns.
 
 Folder hierarchy is strict, run SVgen,SVparse under `sim/`
 to avoid unexpected problems. When working under `sim/vcs` or such, specify `TOPSV`
@@ -31,10 +31,14 @@ Please export `SVutil` enviroment variable for your SVutil repo base
 folder.
 
 ## SVparse
+
 SVparse see verilog module, file, package as **hier**, as they are ones that contain `typedef`, `logic`, `port` and `parameter`. And they are ones that need constant review and reference while writing verilog codes.  
 This module parse the mentioned **hier** into a tree-like structure, so visible parameters and types from the a hier's vertical relations with its parent hiers could be directly accessed and easily examined in the provided helper functions.
+
 ### Interactive python shell usage
+
 Simply type `python -i SVparse.py includefilepath` in the console. The included files then parsed into the class SVparse for further usages.
+
 ## EAdict
 
 stands for easy access dictionary, SVparse initializes one for
@@ -46,6 +50,7 @@ SVparse.hiers and can be accessed by `hiers`
 * hiers.hier_name.ShowConnect
   All of the parsed hierarchies are stored in `SVparse.hiers` dictionary, I provide a instance `hiers` for easier access to the hiers inside the dictionary.  
   The Above commands essentially was of `SVparse.hiers['hier_name'].ShowTypes` form.
+
   ```shell
   $python -i SVparse.py PE_compile.sv
   >>> hiers.PE
@@ -68,7 +73,7 @@ SVparse.hiers and can be accessed by `hiers`
   .i_Input(),
   .i_Weight(),
   .o_Psum()
-  >>>   
+  >>>
   ```
   
   If the X server display variable is properly set, ShowConnect attribute also copy it to the clipboard, works on MobaXterm, but not ConEmu sadly ( I can't figure out how to set X forwarding for ConEmu).
@@ -76,6 +81,7 @@ SVparse.hiers and can be accessed by `hiers`
 ### SVhier class and its structure
 
 `TODO`
+
 * `name`
 * `params`
   * accessed by `ShowParams`
@@ -91,6 +97,7 @@ SVparse.hiers and can be accessed by `hiers`
   * `protoPorts` is used for text macro simple protocols 
   * accessed by `ShowPorts` `ShowConnect`
 * `imported` marks if a file or module imported any packages or parameters
+
 ### helper functions
 
 * ShowPaths()
@@ -100,9 +107,13 @@ SVparse.hiers and can be accessed by `hiers`
 * FileParse(paths=[(True,INC)])
   * parse a list of path enclosed in a tuple (bool,path)
   * the bool marks if the path is under `include/`
+  
 ### Class Structure
+
 `TODO`
+
 #### hiers
+
 #### SVstr
 
 ---
@@ -110,6 +121,7 @@ SVparse.hiers and can be accessed by `hiers`
 ## NicoUtil
 
 is built upon SVparse, so make sure `$SVutil` is set for package import
+
 ### StructBus
 
 `TODO`
@@ -123,6 +135,7 @@ is built upon SVparse, so make sure `$SVutil` is set for package import
 ProtoBus wraps similar protocol class in `Nicotb.protocols`, including argument parser for easier protocol bus initialization, easier data/control generator with master and slave selections.
 
 ### Methods
+
 ---
 
 ## SVgen
@@ -132,19 +145,23 @@ files, it generally works on env `$TESTMODULE`, `$INC`, `$TEST`
 `usage`: TESTMODULE=Module INC=Module_include TEST=Apb_tb TOPMODULE=Apb_tb python -i SVgen.py
 
 The Files you need to prepare:
+
 ```
 include/test_include.sv
 ```
+
 After parsing the include file of related modules, packages etc, the
 Library can generates single module testbench for you, connecting
 ports, declaring parameters, creating buses for Nicotb and so on in py and sv files.
-### Structure 
+
+### Structure
 
 SVgen building blocks are **generators** generating strings accessed by
 next() built-in function. Users can choose desirable block and
 combine them into a file description list:  
 `EX`: [ (A,B) , A , (C,) , [ind , D , E] , A]  
 generates a file structure of such
+
 ```
 A
 B
@@ -167,6 +184,7 @@ content in a hierarchical structure
 Why generators? Code often comes with building blocks, each `next()`
 call produces a part of the blocks, enable easy combinations bewteen
 blocks
+
 ```
 yield -> A  always_comb begin
 yield -> B    logic a;
@@ -191,9 +209,10 @@ string in the building block
 #### building block example
 
 the following blocks generates a connected module instance for you
+
 ```python
     def InsGen(self , module , name='dut' ,  **conf):
-        ind = self.cur_ind.Copy() 
+        ind = self.cur_ind.Copy()
         yield ''
         s = '\n'
         s += ind.base + module.hier + ' #(\n'
@@ -206,7 +225,7 @@ the following blocks generates a connected module instance for you
         for io , n , dim , *_ in module.ports:
             s_port += ind[1] + ',.' + n + (  (f'({n})\n') if dim ==() else (f'({{ >>{{{n}}} }})\n'))
         s_port = s_port.replace(f'{ind[1]},' , ind[1]+' ' , 1)
-        s += s_param + sb + s_port + ind.base + ');\n' 
+        s += s_param + sb + s_port + ind.base + ');\n'
         yield s
 ```
 
@@ -218,7 +237,6 @@ The building block generators makes indentation generation easier.
 * IndObj.b returns the base indentation of the Ind object as a string
 * IndObj[n] adds n indentation to the base indentation and returns
 a string of such number of spaces
-
 
 ### Module Test structure
 
@@ -247,4 +265,3 @@ g.PYWrite(g.ModuleTestPY(g.dut))
 * `fsdbname`
 * `cond` is the configuration for this test, used to be appended at
 fsdb files or synthesized files.
-
