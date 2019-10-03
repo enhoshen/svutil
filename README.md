@@ -123,6 +123,12 @@ SVparse.hiers and can be accessed by `hiers`
 
 #### SVstr
 
+### ToClip
+
+`ToClip` global function makes use of package `xclip`, by specifying
+environment variable `XCLIP` pointing to `xclip` binary executable, so
+you can benefit from string to clipboard convenience.
+
 ---
 
 ## NicoUtil
@@ -143,11 +149,6 @@ ProtoBus wraps similar protocol class in `Nicotb.protocols`, including argument 
 
 ### Methods
 
-### ToClip
-
-`ToClip` global function makes use of package `xclip`, by specifying
-environment variable `XCLIP` pointing to `xclip` binary executable, so
-you can benefit from string to clipboard convenience.
 
 ---
 
