@@ -17,12 +17,14 @@ SV = os.environ.get('SV','')
 TOPSV = os.environ.get('TOPSV','')
 INC = os.environ.get('INC','')
 def ToClip(s):
+    clip = os.environ.get('XCLIP')
+    clip = 'xclip' if not clip else clip 
     try:
-        clip = os.environ.get('XCLIP')
         p = Popen([clip ,'-selection' , 'clipboard'], stdin=PIPE)
         p.communicate(input=s.encode())
     except:
         print( "xclip not found or whatever, copy it yourself")
+        print( "try install xclip and export XCLIP variable for the executable path")
 class EAdict():  #easy access
     def __init__(self, items ):
         if type(items) == dict:
@@ -66,6 +68,14 @@ class SVhier ():
             _l.appendleft(self.params)
             return _l
     @property
+    def ParamsDetail(self):
+        if self._scope == None:
+            return deque([h.paramsdetail for _ , h in self.child.items()]) 
+        else:
+            _l = self._scope.ParamsDetail
+            _l.appendleft(self.paramsdetail)
+            return _l
+    @property
     def Types(self):
         if self._scope == None:
             _l = deque([h.types for _ , h in self.child.items()] )
@@ -74,6 +84,9 @@ class SVhier ():
             _l = self._scope.Types
             _l.appendleft(self.types)
             return _l
+    ########################
+    # types
+    ########################
     @property
     def SelfTypeKeys(self):
         return { x for x in self.types.keys()} 
@@ -88,10 +101,38 @@ class SVhier ():
         for k,v in self.types.items():
             self.TypeStr(k,v)
     @property
+    def ShowAllTypes(self):
+        for k,v in self.AllType.items():
+            self.TypeStr(k,v)
+    #########################
+    # parameters
+    #########################
+    @property
+    def AllParamKeys(self):
+        return { x for i in self.Params for x in i.keys() }  
+    @property
+    def AllParam(self):
+        return { k:v for i in self.Params for k,v in i.items() }
+    @property
+    def AllParamsDetail(self):
+        return { k:v for i in self.ParamsDetail for k,v in i.items() }
+    @property
     def ShowParams(self):
-        w=17
+        w= 30
         print(f'{self.hier+" Parameters":-^{2*w}}' )
-        self.ParamStr(w)
+        self.ParamStr(self.params, w)
+    @property
+    def ShowAllParams(self):
+        w =30 
+        print(f'{self.hier+" All Parameters":-^{2*w}}')
+        self.ParamStr(self.AllParam, w)
+    @property
+    def ShowAllParamsDetail(self):
+        w = 20 
+        print(f'{self.hier+" All Parameters detail":-^{2*w}}')
+        self.FieldStr(self.paramfield,w)
+        self.DictStr(self.AllParamsDetail,w)
+    ##########################
     @property
     def ShowPorts(self):
         w=15
@@ -127,15 +168,23 @@ class SVhier ():
                 else:
                     print(f'\n{x.__repr__():^{4*w}}',end=' ')
             print()
-    def ParamStr(self,w=13):
+    def ParamStr(self,dic,w=13):
         for i in ['name','value']:
             print(f'{i:^{w}}' , end=' ')
         print(f'\n{"":=<{2*w}}')
-        l = self.params
-        for k,v in l.items():
+        #l = self.params
+        for k,v in dic.items():
             print (f'{k:^{w}}'f'{v.__repr__():^{w}}', end=' ')
             print()
-       
+    def FieldStr(self,field,w=13):
+        for i in field.dic:
+            print ( f'{i:^{w}}', end=' ')
+        print(f'\n{"":=<{len(field.dic)*w}}')
+    def DictStr(self, dic, w=13):
+        for t in dic.values():
+            for v in t:
+                print (f'{v.__repr__():^{w}}', end=' ')
+            print()
     def __repr__(self):
         sc = self._scope.hier if self._scope!=None else None
         return f'\n{self.hier:-^52}\n'+\
@@ -299,6 +348,7 @@ class SVparse():
         _enum = SVstr(_s).ReplaceSplit(['{',','] )
         for i,p in enumerate(_enum):
             self.cur_hier.params[p]= i
+            self.cur_hier.paramsdetail[p] = ( p , () , '', 1 , i , '', '', '','enum literal')
         name = s.IDParse()
         return ( name ,bw.Slice2num(self.cur_hier.Params),() , 'enum' , _enum  )
     def ImportParse(self, s , lines):
@@ -308,11 +358,15 @@ class SVparse():
         if _param == '*':
             for k,v in self.package[_pkg].params.items():
                 self.cur_hier.params[k] = v
+            for k,v in self.package[_pkg].paramsdetail.items():
+                self.cur_hier.paramsdetail[k]=v
             for k,v in self.package[_pkg].types.items():
                 self.cur_hier.types[k] = v
         else:
             if _param in self.package[_pkg].params:
                 self.cur_hier.params[_param] = self.package[_pkg].params[_param]  
+            if _param in self.package[_pkg].paramsdetail:
+                self.cur_hier.paramsdetail[_param] = self.package[_pkg].paramsdetail[_param]  
             if _param in self.package[_pkg].types:
                 self.cur_hier.types[_param] = self.package[_pkg].types[_param] 
     def StructParse(self ,s ,lines ):

@@ -199,7 +199,7 @@ class DrawioGen(SVgen):
         for p in module.ports:
             s += self.PortArrowStr(module, p, parent, flip, ind) 
         return s
-    def BlockDiagramGen (self, module, flip):
+    def InterfaceDiagramGen (self, module, flip):
         indblk = self.IndBlk()
         mxg = self.mxPageBlk()
         rt  = self.RootBlk()
@@ -208,7 +208,7 @@ class DrawioGen(SVgen):
         return self.Genlist( [ (mxg,rt) , [indblk,port] , [indblk,modblk], rt, mxg] )
     def DutPortToFile ( self, path, flip=False):
         f = open( path, 'w')
-        s = self.BlockDiagramGen(g.dut,flip) 
+        s = self.InterfaceDiagramGen(g.dut,flip) 
         ToClip(s)
         f.write(s)
 if __name__ == '__main__':

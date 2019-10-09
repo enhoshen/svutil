@@ -227,28 +227,39 @@ class SVgen():
     def Nextblk(self, blk):
         s = next(blk,None)
         return s if s != None else ''
-    def ModuleTestSV(self , module , **conf):
+    def ModuleTestSV(self , module=None , **conf):
+        module = self.dut if not module else module
         ins = self.InsGen(module)
         pm = self.ParamGen(module)
         lg = self.LogicGen(module)
         tb = self.TbSVGen()
         ind = self.IndBlk()
-        return self.Genlist( [ (tb,) , tb , [ind,pm] , [ind,lg] , [ind,ins] , tb , tb]) 
-    def ModuleTestPY(self , module , **conf):
+        s = self.Genlist( [ (tb,) , tb , [ind,pm] , [ind,lg] , [ind,ins] , tb , tb]) 
+        if (conf.get('copy')==True):
+            ToClip(s)
+        return s
+        
+    def ModuleTestPY(self , module=None , **conf):
+        module = self.dut if not module else module
         tb = self.TbPYGen()
         nicoutil = self.NicoutilImportGen() 
         businit = self.PYbusinitGen(module)
         main = self.PYmainGen()
-        return self.Genlist( [(tb,nicoutil,businit,main), tb ] )
-    def WriteModuleTestALL(self, module , **conf):
+        s = self.Genlist( [(tb,nicoutil,businit,main), tb ] )
+        if (conf.get('copy')==True):
+            ToClip(s)
+        return s
+    def WriteModuleTestALL(self, module=None , **conf):
+        module = self.dut if not module else module
+        conf['copy']=False
         self.SVWrite(self.ModuleTestSV(module,**conf))
         self.PYWrite(self.ModuleTestPY(module,**conf)) 
     def SVWrite(self , text ):
         p = self.TbWrite(text,'sv') 
-        print ( "SV testbench written to ," , p )
+        print ( "SV testbench written to " , p )
     def PYWrite(self , text ):
         p = self.TbWrite(text,'py')
-        print ( "PY testbench written to ," , p )
+        print ( "PY testbench written to " , p )
     def TbWrite(self , text , suf): 
         fpath = self.genpath + self.test + '.' + suf
         if os.path.isfile(fpath):
@@ -262,6 +273,7 @@ class SVgen():
         return fpath
 
 if __name__ == "__main__":
+    g = SVgen()
     pass
     #dut = hiers.Ahb2ToReqAckWrap
     #ins = g.InsGen(dut, 'u1' )  
