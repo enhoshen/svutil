@@ -167,7 +167,7 @@ Orientation = Landscape
 nWaveRestoreRCDirHistory = "\"/home/enhoshen/research/lpAccel/sim/Address.rc\"" "\"/home/enhoshen/research/lpAccel/sim/novas.rc\"" "\"/home/enhoshen/research/lpAccel/sim/Controls.rc\""
 nWaveOpenFsdbDirHistory = "\"/home/enhoshen/research/lpAccel/sim/loop.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072205_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_ug_072205\
 _syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest_5ns.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072206_syn_PEt\
-est.fsdb\"" "\"/home/enho.shen/Slave-wrapper/sim/vcs/Ahb_tb.fsdb\""
+est.fsdb\"" "\"/home/enho.shen/Slave-wrapper/sim/vcs/Ahb_tb.fsdb\"" "\"/home/enho.shen/Slave-wrapper/sim/vcs/Apb3_tb.fsdb\""
 [Form]
 version = Verdi_P-2019.06-1
 wave/unknownSave.fm = 100,100,520,275
@@ -268,13 +268,13 @@ QwQuestionMsgDlg = 444,366,324,110
 saveSigDlg = 332,244,551,386
 restoreSigDlg = 305,220,551,438
 QwWarnMsgDlg = 2594,57,600,250
-QwUserAskDlg = 2594,57,324,134
 CreateBusDialog = 886,724,788,709
 SetWindowTimeUnitDialog = 1063,1035,433,86
 ActiveFileDialog = 1005,942,549,272
 QwShortcutDialog = 1731,1217,800,600
 QwInfoMsgDlg = 1655,1455,750,250
 gridOptionsDialog = 1829,1477,421,269
+QwUserAskDlg = 1322,1345,324,134
 openFileDlg = 1353,1369,1374,484
 qWaveSignalDialog = 1337,1327,1405,569
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile1]
@@ -488,8 +488,8 @@ PointStyle = FALSE
 SetDefaultRadix = TRUE
 FilterTextField = FALSE
 anaAuto100VertFit = FALSE
-getSignalForm = 1337 1327 1405 569 442 471 913 228
-viewPort = 1080 1100 893 93 205 65
+getSignalForm = 1337 1327 1405 569 343 471 816 112
+viewPort = 0 0 1136 698 205 65
 signalSpacing = 5
 digitalSignalHeight = 15
 analogSignalHeight = 98
@@ -760,11 +760,11 @@ curveWindow_Drag&Drop_Mode = TRUE
 hspiceIncOpenMode = TRUE
 pcSelectMode = FALSE
 hierarchyDelimiter = /
-RecentFile1 = "\"/home/enho.shen/Slave-wrapper/sim/vcs/Ahb_tb.fsdb\""
-RecentFile2 = "\"/home/enhoshen/research/lpAccel/sim/BufferTest_3ns_ultra_cg_noug_072303_syn_Buftest_row.fsdb\""
-RecentFile3 = "\"/home/enhoshen/research/lpAccel/sim/BufferTest_3ns_ultra_cg_noug_072302_syn_Buftest_row.fsdb\""
-RecentFile4 = "\"/home/enhoshen/research/lpAccel/sim/BufferTest_3ns_ultra_cg_ug_072207_syn_Buftest_row.fsdb\""
-RecentFile5 = "\"/home/enhoshen/research/lpAccel/sim/PEtest.fsdb\""
+RecentFile1 = "\"/home/enho.shen/Slave-wrapper/sim/vcs/Apb3_tb.fsdb\""
+RecentFile2 = "\"/home/enho.shen/Slave-wrapper/sim/vcs/Ahb_tb.fsdb\""
+RecentFile3 = "\"/home/enhoshen/research/lpAccel/sim/BufferTest_3ns_ultra_cg_noug_072303_syn_Buftest_row.fsdb\""
+RecentFile4 = "\"/home/enhoshen/research/lpAccel/sim/BufferTest_3ns_ultra_cg_noug_072302_syn_Buftest_row.fsdb\""
+RecentFile5 = "\"/home/enhoshen/research/lpAccel/sim/BufferTest_3ns_ultra_cg_ug_072207_syn_Buftest_row.fsdb\""
 open_file_time_range = FALSE
 value_window_aligment = Right
 signal_window_alignment = Left

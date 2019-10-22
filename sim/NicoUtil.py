@@ -151,12 +151,12 @@ class ProtoCreateBus ():
         return [ x.values for x in self.data]
 class Busdict (EAdict):
     def Read(self):
-        [ i.Read() for i in self.dic.values() ]
+        [ x.Read() for x in self.dic.values() ]
     def Write(self):
-        [ i.Write() for i in self.dic.values() ]
+        [ x.Write() for x in self.dic.values() ]
     def SetTo(self,n):
-        [ i.SetToN() for i in self.dic.values() ]
-        [ i.SetTo(n) for i in self.dic.values() ]
+        [ x.SetToN() if isinstance(x,StructBus) else [s._x.fill(0) for s in x.signals]  for x in self.dic.values()]
+        [ x.SetTo(n) if isinstance(x,StructBus) else [s._value.fill(n) for s in x.signals] for x in self.dic.values() ]
 def clk_cnt():
 
     global n_clk

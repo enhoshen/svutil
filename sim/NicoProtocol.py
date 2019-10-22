@@ -81,16 +81,18 @@ class MySlaveTwoWire(TwoWire.Slave):
     def MyMonitor(self,n):
         for i in range(n):
             while True:
-                self.ack.value[0] = RandProb(self.A, self.B) and self.rdy.value[0]
-                self.ack.Write()            
                 yield self.clk
                 self.rdy.Read()
-                if self.rdy.x[0] != 0 or self.rdy.value[0] == 0:
-                    continue
+                if self.rdy.x[0] != 0 or self.rdy.value[0] == 0: 
+                    continue  
                 if self.ack.value[0] != 0:
                     self.data.Read()
                     super(TwoWire.Slave, self).Get(self.data)
                     break
+                self.ack.value[0] = RandProb(self.A, self.B)
+                self.ack.Write()
+            self.ack.value[0] = 0
+            self.ack.Write()
         print( "monitor done")
         self.ack.value[0]=0
         self.ack.Write()

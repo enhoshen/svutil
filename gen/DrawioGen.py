@@ -36,6 +36,9 @@ class DrawioGen(SVgen):
         self.arr_text_dist = 10
         self.arrow_ofs = 20
         self.center_ofs = 300
+        self.center_x = 300
+        self.center_y = 50
+        self.prev_y_ofs = 0
         self.rec_txt_width = 145
         self.rec_txt_ofs = Shape( 25, 20, 145, 20)
         self.cur_ind = ind
@@ -121,8 +124,8 @@ class DrawioGen(SVgen):
         return s
     def ModuleBlockStr(self, module, parent, flip, ind):
         # use after port arrow making use of self.port_ofs
-        x = self.center_ofs if not flip else self.center_ofs-self.port_ofs/1.625
-        shape = Shape( x , self.center_ofs, self.port_ofs/1.625, self.port_ofs)
+        x = self.center_x if not flip else self.center_x-self.port_ofs/1.625
+        shape = Shape( x , self.center_y, self.port_ofs/1.625, self.port_ofs)
         return self.RectangleStr( module.name, shape, parent, ind)
     def PortArrowStr(self, module, port, parent, flip, ind):
         pfield = SVhier.portfield
@@ -145,8 +148,8 @@ class DrawioGen(SVgen):
                 curly_txt_sh = Shape(0, (curly_height-self.text_height)/2, self.text_width, self.text_height)
                 x_ofs = self.text_width + self.curly_width 
                 y_ofs = 0 
-                top_grp_x = self.center_ofs-2*self.text_width-self.curly_width-self.arr_text_dist-self.arrow_width
-                top_grp_y = self.port_ofs+self.center_ofs
+                top_grp_x = self.center_x-2*self.text_width-self.curly_width-self.arr_text_dist-self.arrow_width
+                top_grp_y = self.port_ofs+self.center_y
                 curly_txt_style = self.textstyle2
             else:
                 curly_ofs  = self.text_width + self.arrow_width + self.arr_text_dist
@@ -154,24 +157,25 @@ class DrawioGen(SVgen):
                 curly_txt_sh = Shape(curly_ofs+self.curly_width, (curly_height-self.text_height)/2, self.text_width, self.text_height)
                 x_ofs = 0 
                 y_ofs = 0 
-                top_grp_x = self.center_ofs 
-                top_grp_y = self.port_ofs+self.center_ofs
+                top_grp_x = self.center_x 
+                top_grp_y = self.port_ofs+self.center_y
                 curly_txt_style = self.textstyle2left
             top_grp_sh = Shape(top_grp_x, top_grp_y, total_w+self.text_width+self.curly_width, len(tp)*self.arrow_ofs)
             s += self.GroupStr( top_grp_sh, parent, ind)
             s += self.CurlyStr( curly_sh, portsparent, flip, ind+1) 
             s += self.TextStr( port[pfield.name], curly_txt_sh, curly_txt_style, portsparent, ind+1)
-            memlist = [ mem[tpfield.name] for mem in tp ]
+            memlist = [ (mem[tpfield.name],mem[tpfield.dim] != () or mem[tpfield.bw]!=1 ) for mem in tp ]
         else:
             if flip == False:
-                x_ofs = self.center_ofs-self.text_width-self.arr_text_dist-self.arrow_width
-                y_ofs = self.port_ofs+self.center_ofs
+                x_ofs = self.center_x-self.text_width-self.arr_text_dist-self.arrow_width
+                y_ofs = self.port_ofs+self.center_y
             else:
-                x_ofs = self.center_ofs
-                y_ofs = self.port_ofs+self.center_ofs
-            memlist = [ port[pfield.name]+port[pfield.dimstr] ] 
+                x_ofs = self.center_x
+                y_ofs = self.port_ofs+self.center_y
+            boldarrow = port[pfield.dim] != () or port[pfield.bw] != 1
+            memlist = [ (port[pfield.name]+port[pfield.dimstr], boldarrow) ] 
             #memlist = [ port[pfield.name]+port[pfield.bwstr]+port[pfield.dimstr] ]
-        for txt in memlist:
+        for txt,boldarrow in memlist:
             grp_sh = Shape(x_ofs , y_ofs, total_w, total_h)
             if flip == False:
                 txt_sh = Shape(0, 0, self.text_width, self.text_height) 
@@ -187,10 +191,11 @@ class DrawioGen(SVgen):
             txt_style = self.textstyle2 if not flip else self.textstyle2left
             s += self.TextStr(txt, txt_sh, txt_style, _p, ind+2)
             
-            arrow_style = self.arrowstyle1 if port[pfield.dim]==() and port[pfield.bw]==1 else self.arrowboldstyle1
+            arrow_style = self.arrowboldstyle1 if boldarrow else self.arrowstyle1 
             s += self.ClassicArrowStr( "", arrow_style, arr_sh, face , _p, ind+3) 
             self.port_ofs += self.arrow_ofs
             y_ofs += self.arrow_ofs
+        self.prev_y_ofs = y_ofs
         return s
     
     def ModulePortArrowStr ( self, module, parent, flip, ind):
@@ -206,6 +211,25 @@ class DrawioGen(SVgen):
         port = self.Str2Blk ( self.ModulePortArrowStr, module, '1', flip)
         modblk = self.Str2Blk( self.ModuleBlockStr , module, '1', flip)
         return self.Genlist( [ (mxg,rt) , [indblk,port] , [indblk,modblk], rt, mxg] )
+    def DutPortToClip ( self, flip=False):
+        ToClip(self.InterfaceDiagramGen(g.dut,flip))
+    def DutPortToClipTwoSide ( self ):
+        indblk = self.IndBlk()
+        mxg = self.mxPageBlk()
+        rt  = self.RootBlk()
+        port = self.Str2Blk ( self.ModulePortArrowStr, self.dut, '1', False)
+        modblk = self.Str2Blk( self.ModuleBlockStr , self.dut, '1', False)
+        portflip = self.Str2Blk ( self.ModulePortArrowStr, self.dut, '1', True)
+        modblkflip = self.Str2Blk( self.ModuleBlockStr , self.dut, '1', True)
+        s = self.Genlist( [ (mxg,rt) , [indblk,port] , [indblk,modblk] ])
+        self.center_y = self.prev_y_ofs + 10 
+        s += self.Genlist( [  [indblk,portflip], [indblk,modblkflip], rt, mxg] )
+        ToClip(s)
+        return s
+    def DutPortToFileTwoSide( path):
+        f = open( path, 'w')
+        s = self.DutPortToClipTwoSide() 
+        f.write(s)
     def DutPortToFile ( self, path, flip=False):
         f = open( path, 'w')
         s = self.InterfaceDiagramGen(g.dut,flip) 

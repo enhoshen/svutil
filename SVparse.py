@@ -315,17 +315,11 @@ class SVparse():
             self.cur_hier.paramports[name] = num 
         return name , num
     def PortParse(self, s , lines):
+        #bw = s.BracketParse()
+        tp = s.TypeParse(self.cur_hier.AllTypeKeys.union(self.gb_hier.SelfTypeKeys) ) 
+        tp = 'logic' if tp == '' else tp
         bw = s.BracketParse()
-        tp = 'logic'
-        temp = s.lsplit()
-        types = self.cur_hier.AllTypeKeys.union(self.gb_hier.SelfTypeKeys)
-        #TODO clean this up, why not IDparse for name?
-        if temp in types or '::' in temp :
-            tp = temp
-            bw = s.BracketParse()
-            name = s.IDParse()
-        else:
-            name = temp
+        name = s.IDParse()
         bwstr = self.Tuple2str(bw)
         bw = SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier.Params)
         dim = s.BracketParse()
@@ -346,9 +340,15 @@ class SVparse():
             s += self.Rdline(lines)
         _s = s.lsplit('}')
         _enum = SVstr(_s).ReplaceSplit(['{',','] )
-        for i,p in enumerate(_enum):
-            self.cur_hier.params[p]= i
-            self.cur_hier.paramsdetail[p] = ( p , () , '', 1 , i , '', '', '','enum literal')
+        ofs = 0
+        for e in _enum:
+            _s = SVstr(e)
+            name = _s.IDParse()
+            _num = _s.NumParse(self.cur_hier.Params) 
+            num = ofs if _num == '' else _num
+            ofs = ofs+1 if _num == '' else _num+1
+            self.cur_hier.params[name] = num
+            self.cur_hier.paramsdetail[name] = ( name , () , '', 1 , num , '', '', '','enum literal')
         name = s.IDParse()
         return ( name ,bw.Slice2num(self.cur_hier.Params),() , 'enum' , _enum  )
     def ImportParse(self, s , lines):
@@ -390,21 +390,34 @@ class SVparse():
                 _catch = self.keyword[_w](_s,lines)
                 attrlist.append(_catch)
                 continue
-            for t in self.cur_hier.Types:
-                if _w in t :
-                    _n = _s.IDParse()
-                    dim = _s.BracketParse()
-                    attrlist.append( ( _n , np.sum([x[1] for x in t[_w] ]) ,self.Tuple2num(dim) , _w) )
-                    break
+            types = self.cur_hier.AllTypeKeys
+            tp = SVstr(_w).TypeParse(types)
+            if not tp == '':
+                if '::' in tp:
+                    _pkg , _param = tp.split('::')
+                    self.cur_hier.types[tp] = SVparse.package[_pkg].types[_param]
+                    bw = np.sum([x[1] for x in SVparse.package[_pkg].types[_param] ] )
+                else:
+                    bw = np.sum([x[1] for x in self.cur_hier.AllType[tp] ]) 
+                _n = _s.IDParse()
+                dim = _s.BracketParse()
+                dimstr = self.Tuple2str(dim)
+                dim = self.Tuple2num(dim) 
+                attrlist.append( ( _n , bw, self.Tuple2num(dim) , tp) )
     def TypedefParse(self, s , lines):
         _w = s.lsplit()
+        types = self.cur_hier.AllTypeKeys
+        tp = SVstr(_w).TypeParse(types)
+        if not tp == '':
+            _pkg , _param = tp.split('::')
+            self.cur_hier.types[tp] = SVparse.package[_pkg].types[_param]
         _m = self.keyword.get(_w)
         _catch = () 
         if _m != None:
             _catch = _m(s , lines)
         else :
             _catch = self.ArrayParse(s,lines)
-            _catch = ( _catch[0],np.multiply.reduce(_catch[2])*self.cur_hier.types[_w][0][1]\
+            _catch = ( _catch[0], int(np.multiply.reduce(_catch[2])*self.cur_hier.types[_w][0][1]) \
                         ,_catch[2], _w)
         if _w == 'struct':
             self.cur_hier.types[_catch[0]] = _catch[1]
@@ -509,6 +522,7 @@ class SVstr():
         #return _idx
     def IDParse (self):
         # find one identifier at the start of the string
+        # TODO multiple ID ( often sperated by , ) 
         self.s = self.s.lstrip()
         _idx = self.FirstSPchar()
         if _idx != -1:
@@ -555,6 +569,15 @@ class SVstr():
         _s , self.s = self.split(')',maxsplit=1)
         args = SVstr(_s).ReplaceSplit(['(',','])
         return func,args
+    def NumParse(self,params):
+        # split the equal sign at the start of the string
+        # return left string as num, meaning that it converts
+        # the remain string no matter what ( determine if 
+        # a string is an equation is hard), leaving the object
+        # empty
+        num = self.lstrip('=').S2num(params)
+        self.s = ''
+        return num 
     def Arit2num(self, s):
         pass
     def S2num(self,params):
@@ -576,7 +599,8 @@ class SVstr():
         try:
             return eval(ps.expr(_s).compile('file.py'))
         except:
-            print("S2num failed, return original string")
+            if _s !='':
+                print(f"S2num failed, return original string: {_s}")
             return _s
     def Slice2num(self,params):
         if self.s == '':
