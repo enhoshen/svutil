@@ -340,17 +340,13 @@ class SVparse():
             s += self.Rdline(lines)
         _s = s.lsplit('}')
         _enum = SVstr(_s).ReplaceSplit(['{',','] )
-        ofs = 0
-        for e in _enum:
-            _s = SVstr(e)
-            name = _s.IDParse()
-            _num = _s.NumParse(self.cur_hier.Params) 
-            num = ofs if _num == '' else _num
-            ofs = ofs+1 if _num == '' else _num+1
-            self.cur_hier.params[name] = num
-            self.cur_hier.paramsdetail[name] = ( name , () , '', 1 , num , '', '', '','enum literal')
+        enum_name, enum_num = self.Enum2Num( _enum )
+        for _name, _num in zip( enum_name, enum_num):
+            self.cur_hier.params[_name] = _num
+            self.cur_hier.paramsdetail[_name] = ( _name , () , '', 1 , _num , '', '', '','enum literal')
         name = s.IDParse()
         return ( name ,bw.Slice2num(self.cur_hier.Params),() , 'enum' , _enum  )
+        
     def ImportParse(self, s , lines):
         s = s.split(';')[0]
         _pkg , _param = s.rstrip().split('::')
@@ -467,6 +463,27 @@ class SVparse():
         return reduce(lambda x,y : x+f'[{y}]' , t , '')
     def Bw2num(self, bw):
         return SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier.Params)
+    def Enum2Num(self, enum, params={}):
+        ofs =0
+        name = []
+        num = []
+        for e in enum:
+            _s = SVstr(e)
+            _name = _s.IDParse()
+            bw = _s.BracketParse()
+            bw = SVstr(bw[0]).Slice2TwoNum(params) if bw else SVstr('').Slice2TwoNum(params)
+            _num = _s.NumParse(params) 
+            if type(bw)==tuple:
+                bw = (0,bw[1]-1) if bw[0]=='' else bw
+                for i in range (bw[1]-bw[0]+1):
+                    name.append(_name+str(bw[0]+i))
+                    num.append( ofs+i if _num=='' else _num + i)
+                ofs = ofs + bw[1] - bw[0] + 1 if _num=='' else _num + bw[1] - bw[0] + 1
+            else:
+                name.append(_name) #TODO
+                num.append ( ofs if _num == '' else _num)
+                ofs = ofs+1 if _num == '' else _num+1
+        return name, num 
 class SVstr():
     sp_chars = ['=','{','}','[',']','::',';',',','(',')','#']
     op_chars = ['+','-','*','/','(',')']
@@ -610,6 +627,17 @@ class SVstr():
         _s,_e = self.s[0:_idx] , self.s[_idx+1:]
         try:
             return SVstr(_s).S2num(params)-SVstr(_e).S2num(params)+1
+        except(TypeError):
+            print('Slice2num fail, TypeError')
+            print (self.s)
+    def Slice2TwoNum(self,params):
+        if self.s == '':
+            return 1
+        _temp = self.s.replace('::','  ')
+        _idx = _temp.find(':')
+        _s,_e = self.s[0:_idx] , self.s[_idx+1:]
+        try:
+            return (SVstr(_s).S2num(params),SVstr(_e).S2num(params))
         except(TypeError):
             print('Slice2num fail, TypeError')
             print (self.s)
