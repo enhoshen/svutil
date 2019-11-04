@@ -6,7 +6,6 @@ from collections import namedtuple
 from collections import deque
 from subprocess import Popen, PIPE
 from functools import reduce
-from enum import Enum
 #Nico makefile specified
 TOPMODULE = os.environ.get('TOPMODULE','')
 TEST = os.environ.get('TEST','')
@@ -37,10 +36,13 @@ class EAdict():  #easy access
         return self.dic[n]
 class SVhier ():
     paramfield = EAdict([ 'name' , 'dim' , 'tp', 'bw' , 'num' , 'bwstr' , 'dimstr', 'numstr' , 'paramtype'] )
-    typefield  = EAdict([ 'name' , 'bw' , 'dim' , 'tp' , 'enumliteral' ] )
+    typefield  = EAdict([ 'name' , 'bw' , 'dim' , 'tp' , 'enumliteral', 'cmts' ] )
     portfield =  EAdict( [ 'direction' , 'name' , 'dim' , 'tp' , 'bw' , 'bwstr', 'dimstr' ] )
+    enumfield  = EAdict( [ 'name', 'bw', 'dim', 'tp', 'enumliterals', 'cmts' ] )
+    enumsfield = EAdict( [ 'names' , 'nums' , 'cmts' ] )
+    enumlfield = EAdict( [ 'name' , 'num' , 'cmt' ] )
     def __init__(self,name,scope):
-        self.hier= name # this is fucking ambiguous, but str method use it so it stays put
+        self.hier= name # this is fucking ambiguous, but str method use it so it remains 
         self.name = name
         self.params = {}
         self.paramsdetail = {}
@@ -49,8 +51,10 @@ class SVhier ():
         self.paramports = {} 
         self.ports = []
         self.protoPorts = []
+        self.enums = {}
         self.imported = {} 
         self._scope = scope
+        self.param_valuecb = int
         if scope != None:
             scope.child[name] = self
     @property
@@ -156,6 +160,7 @@ class SVhier ():
         s = s[:-1].replace(',',' ',1)
         ToClip(s)
         print(s)
+    
     def TypeStr(self,n,l,w=13):
         print(f'{self.hier+"."+n:-^{4*w}}' )
         for i in ['name','BW','dimension' , 'type']:
@@ -174,7 +179,7 @@ class SVhier ():
         print(f'\n{"":=<{2*w}}')
         #l = self.params
         for k,v in dic.items():
-            print (f'{k:^{w}}'f'{v.__repr__():^{w}}', end=' ')
+            print (f'{k:^{w}}'f'{self.param_valuecb(v).__repr__() if type(v)==int else v.__repr__():^{w}}', end=' ')
             print()
     def FieldStr(self,field,w=13):
         for i in field.dic:
@@ -214,14 +219,15 @@ class SVparse():
     flags = { 'pport': False , 'module' : False } #TODO
     def __getattr__(self , n ):
         return hiers[n]
-    def __init__(self,name,scope):
-        if scope != None: 
-            self.cur_hier = SVhier(name,scope) 
-            self.gb_hier.child[name] = self.cur_hier
-        else: 
-            SVhier(name,self.gb_hier) 
-            
-        SVparse.hiers[name]= self.cur_hier
+    def __init__(self,name=None,scope=None):
+        if name:
+            if scope != None: 
+                self.cur_hier = SVhier(name,scope) 
+                self.gb_hier.child[name] = self.cur_hier
+            else: 
+                SVhier(name,self.gb_hier) 
+            SVparse.hiers[name]= self.cur_hier
+
         self.cur_key = ''
         self.keyword = { 'logic':self.LogicParse , 'parameter':self.ParamParse, 'localparam':self.ParamParse,\
                         'typedef':self.TypedefParse , 'struct':self.StructParse  , 'package':self.HierParse , 'enum': self.EnumParse,\
@@ -260,13 +266,15 @@ class SVparse():
         self.f = open(path , 'r')
         self.cur_path = path
         self.lines = iter(self.f.readlines())
-        _s = self.Rdline(self.lines)
+        _s , self.cur_cmt = self.Rdline(self.lines)
         while(1):
             _w = ''
             if _s == None:
                 return
             if _s.End():
-                _s=self.Rdline(self.lines)
+                _cmt = self.cur_cmt
+                _s, self.cur_cmt=self.Rdline(self.lines)
+                self.cur_cmt = _cmt + self.cur_cmt if _s == '' else self.cur_cmt
                 continue 
             _w = _s.lsplit()
             _catch = None
@@ -336,16 +344,28 @@ class SVparse():
             s.lsplit()
         bw = s.BracketParse()
         bw = SVstr('' if bw==() else bw[0] )
+        cmt = self.cur_cmt
+        cmts = []
+        _s = SVstr(s.s).lsplit('}') if '}' in s else s.s
+        enums = SVstr(_s).ReplaceSplit(['{',','] )
+        cmts = [ '' for i in range(len(enums)-1) ] + [cmt]
         while '}' not in s:
-            s += self.Rdline(lines)
-        _s = s.lsplit('}')
-        _enum = SVstr(_s).ReplaceSplit(['{',','] )
-        enum_name, enum_num = self.Enum2Num( _enum )
+            _s, cmt = self.Rdline(lines)
+            s += _s
+            _s = _s.lsplit('}') if '}' in _s else _s.s
+            _enum = SVstr(_s).ReplaceSplit(['{',','] )
+            enums += _enum
+            cmts += [ '' for i in range(len(_enum)-1) ] + [cmt]
+        #_s = s.lsplit('}')
+        #enums = SVstr(_s).ReplaceSplit(['{',','] )
+        enum_name, enum_num = self.Enum2Num( enums, params=self.cur_hier.Params )
         for _name, _num in zip( enum_name, enum_num):
             self.cur_hier.params[_name] = _num
             self.cur_hier.paramsdetail[_name] = ( _name , () , '', 1 , _num , '', '', '','enum literal')
+        s.lsplit('}')
         name = s.IDParse()
-        return ( name ,bw.Slice2num(self.cur_hier.Params),() , 'enum' , _enum  )
+        self.cur_hier.enums[name] = ( enum_name, enum_num , cmts )
+        return ( name ,bw.Slice2num(self.cur_hier.Params),() , 'enum' , enums, cmts )
         
     def ImportParse(self, s , lines):
         s = s.split(';')[0]
@@ -376,7 +396,7 @@ class SVparse():
                 name = _s.IDParse()
                 return (name,attrlist)
             if _s.End():
-                _s=self.Rdline(lines)
+                _s, self.cur_cmt=self.Rdline(lines)
                 continue
             _w = _s.lsplit()
             if _w == rule[_step]:     
@@ -431,7 +451,7 @@ class SVparse():
         while(1):
             _w=''
             if s.End():
-                s = self.Rdline(lines)
+                s, self.cur_cmt = self.Rdline(lines)
                 continue
             _w = s.lsplit()
             self.PortFlag(_w)
@@ -456,7 +476,12 @@ class SVparse():
         s = next(lines,None) 
         # line number TODO
         #return SVstr(s.lstrip().split('//')[0].rstrip().strip(';')) if s != None else None
-        return SVstr(s.lstrip().split('//')[0].rstrip()) if s != None else None
+        #return SVstr(s.lstrip().split('//')[0].rstrip()) if s != None else None
+        if s == None:
+            return ( None, None)
+        _s = SVstr(s.lstrip())
+        cmt = _s.CommentParse()  
+        return ( _s.rstrip() , cmt ) 
     def Tuple2num(self, t ):
         return tuple(map(lambda x : SVstr(x).S2num(params=self.cur_hier.Params) ,t))
     def Tuple2str(self, t):
@@ -537,6 +562,13 @@ class SVstr():
         #_specC = [ x for x in (map(self.s.find,self.sp_chars)) if x > -1]
         #_idx = -1 if len(_specC) == 0 else min(_specC)
         #return _idx
+    def CommentParse(self):
+        _s = self.s.rstrip()
+        if '//' in _s:
+            self.s = _s.split('//')[0] 
+            return _s.split('//')[1:]
+        else:
+            return ''
     def IDParse (self):
         # find one identifier at the start of the string
         # TODO multiple ID ( often sperated by , ) 
