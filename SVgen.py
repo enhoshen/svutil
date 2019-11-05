@@ -35,6 +35,7 @@ class SVgen():
         self.dutname = TESTMODULE 
         self.dut = hiers.dic[self.dutname]
         self.dutfile = hiers.dic[self.dutname+'_sv']
+        self.hier = hiers.dic[HIER]
         self.genpath = './'
         self.endcycle = 10000
         self.cond = {} # syn 2ns test name etc.

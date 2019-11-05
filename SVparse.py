@@ -15,6 +15,7 @@ TESTMODULE = os.environ.get('TESTMODULE','')
 SV = os.environ.get('SV','')
 TOPSV = os.environ.get('TOPSV','')
 INC = os.environ.get('INC','')
+HIER= os.environ.get('HIER','')
 def ToClip(s):
     clip = os.environ.get('XCLIP')
     clip = 'xclip' if not clip else clip 
@@ -644,7 +645,7 @@ class SVstr():
                 if w in p:
                     _s = _s.replace( w , str(p[w]) )
                     break
-        _s = _s.replace('{','[').replace('}',']')
+        _s = _s.replace("\'{", ' [ ').replace('{',' [ ').replace('}',' ] ').replace(',',' , ')
         slist = _s.split()
         for i,v in enumerate(slist):
             if '\'b' in v:
@@ -657,7 +658,7 @@ class SVstr():
                 _n = v.split('\'o')[1]
                 slist[i] = f'int( "{_n}", 8)'
             if '\'d' in v:
-                _n = v.split('\'b')[1]
+                _n = v.split('\'d')[1]
                 slist[i] = f'int("{_n}")'
         _s = ' '.join(slist)
         #_s = _s.replace('\'','')
