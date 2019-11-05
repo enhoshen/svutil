@@ -71,10 +71,10 @@ class LatexGen(SVgen):
             s += f'{ind.b}\\signal{{ {name} }} {{{io}}} {{ \n'
             s += f'{ind[1]}\\signalDES{{ {desp} {ind[1]}}} {{ {width} }} {{ {active} }} {{ {clk} }} {{ No }} {{ {delay}\\%}}  }}\n'
         return s
-    def RegMemMapStr(self, reg): #reg is a SVEnuml object
+    def RegMemMapStr(self, reg, reg_bsize=4): #reg is a SVEnuml object
         ind = Ind(1)
         name = reg.name.replace('_','\_')
-        ofs  = reg.num
+        ofs  = reg.num*reg_bsize
         cmt = reg.cmt 
         width = ''
         rw = ''
@@ -82,7 +82,8 @@ class LatexGen(SVgen):
             width= cmt[0].lstrip().rstrip()
             rw = cmt[1].lstrip().rstrip()
         s = f'{ind.b}\\memmap{{{name}}}{{{hex(ofs).upper().replace("X","x")}}}{{{width}}}{{{rw}}}{{\n'
-        s += f'{ind[1]}\\memDES{{\n}}{{\n'
+        s += f'{ind[1]}\\memDES{{\n'
+        s += f'{ind[1]}}}{{\n'
         s += f'{ind[2]}\\TODO\n'
         s += f'{ind[1]}}}\n'
         s += f'{ind.b}}}\n'

@@ -154,7 +154,7 @@ class SVgen():
         s +='from itertools import repeat\n'
         s +='from nicotb.primitives import JoinableFork\n'
         s +='from SVparse import SVparse,EAdict\n'
-        s +='from NicoUtil import *\n'
+        s +='from sim.NicoUtil import *\n'
         s = s.replace('\n',f'\n{ind.b}') 
         yield s
     def PYbusinitGen(self,module):

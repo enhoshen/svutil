@@ -54,7 +54,7 @@ class SVhier ():
         self.enums = {}
         self.imported = {} 
         self._scope = scope
-        self.param_valuecb = int
+        self.valuecb = int
         if scope != None:
             scope.child[name] = self
     @property
@@ -179,7 +179,7 @@ class SVhier ():
         print(f'\n{"":=<{2*w}}')
         #l = self.params
         for k,v in dic.items():
-            print (f'{k:^{w}}'f'{self.param_valuecb(v).__repr__() if type(v)==int else v.__repr__():^{w}}', end=' ')
+            print (f'{k:^{w}}'f'{self.valuecb(v).__repr__() if type(v)==int else v.__repr__():^{w}}', end=' ')
             print()
     def FieldStr(self,field,w=13):
         for i in field.dic:
@@ -188,7 +188,7 @@ class SVhier ():
     def DictStr(self, dic, w=13):
         for t in dic.values():
             for v in t:
-                print (f'{v.__repr__():^{w}}', end=' ')
+                print (f'{self.valuecb(v).__repr__() if type(v)==int else v.__repr__():^{w}}', end=' ')
             print()
     def __repr__(self):
         sc = self._scope.hier if self._scope!=None else None
@@ -210,7 +210,7 @@ class SVparse():
     _top =  TOPMODULE
     top = _top if _top != None else ''
     base_path = os.environ.get("PWD").replace('/vcs','').replace('/verilator','').replace('/sim','')+'/'
-    print(base_path)
+    print("supposed base path of the project:", base_path)
     include_path = base_path + 'include/'
     sim_path = base_path+'sim/'
     src_path = base_path+'src/'
@@ -644,7 +644,23 @@ class SVstr():
                 if w in p:
                     _s = _s.replace( w , str(p[w]) )
                     break
-        _s = _s.replace('{','[').replace('}',']').replace('\'','')
+        _s = _s.replace('{','[').replace('}',']')
+        slist = _s.split()
+        for i,v in enumerate(slist):
+            if '\'b' in v:
+                _n = v.split('\'b')[1]
+                slist[i] = f'int( "{_n}", 2)'
+            if '\'h' in v:
+                _n = v.split('\'h')[1]
+                slist[i] = f'int( "{_n}", 16)'
+            if '\'o' in v:
+                _n = v.split('\'o')[1]
+                slist[i] = f'int( "{_n}", 8)'
+            if '\'d' in v:
+                _n = v.split('\'b')[1]
+                slist[i] = f'int("{_n}")'
+        _s = ' '.join(slist)
+        #_s = _s.replace('\'','')
         try:
             return eval(ps.expr(_s).compile('file.py'))
         except:
