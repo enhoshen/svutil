@@ -166,14 +166,14 @@ class LatexGen(SVgen):
             print(reg.name)
             reg_slices = regbk.regslices.get(reg.name)
             defaults = regbk.GetDefaultsStr(reg.name)
-            s += self.RegMemMapStr(reg, regbk.regbw, reg_slices, defaults ) 
+            s += self.RegMemMapStr(reg, regbk.regbsize, reg_slices, defaults ) 
         ToClip(s)
         return s
     def RegFieldDescription(self, pkg=None):
         s = ''
         regbk = SVRegbk(pkg)
         for reg in regbk.regfields:
-            ofs = regbk.addrsdict[reg].num*regbk.regbw
+            ofs = regbk.addrsdict[reg].num*regbk.regbsize
             ofs = hex(ofs).upper().replace('X', 'x')
             width, rw = regbk.GetAddrCmt(reg) 
             s += self.RegFieldSubSec( reg, ofs, width, rw) 

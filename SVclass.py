@@ -50,12 +50,14 @@ class SVRegbk():
     reserved_name = 'RESERVED'
     regaddr_name = 'regaddr'
     regbw_name = 'REG_BW'
+    regbsize_name = 'REG_BSIZE'
     def __init__(self, pkg):
         self.w = 20
         self.pkg = pkg
         self.addrs = SVEnums ( pkg.enums[self.regaddr_name] )
         self.addrsdict = { x.name: x for x in self.addrs.enumls }
         self.regbw = pkg.params[self.regbw_name]
+        self.regbsize = pkg.params[self.regbsize_name]
         self.regtypes = {}
         self.regmembtypes = {}
         self.regfields = {} 
