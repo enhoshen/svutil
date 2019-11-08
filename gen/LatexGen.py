@@ -71,22 +71,61 @@ class LatexGen(SVgen):
             s += f'{ind.b}\\signal{{ {name} }} {{{io}}} {{ \n'
             s += f'{ind[1]}\\signalDES{{ {desp} {ind[1]}}} {{ {width} }} {{ {active} }} {{ {clk} }} {{ No }} {{ {delay}\\%}}  }}\n'
         return s
-    def RegMemMapStr(self, reg, reg_bsize=4): #reg is a SVEnuml object
+    def RegMemMapStr(self, reg, reg_bsize=4, reg_slices=None, reg_defaults=None): #reg is a SVEnuml object
         ind = Ind(1)
         name = reg.name.replace('_','\_')
         ofs  = reg.num*reg_bsize
         cmt = reg.cmt 
         width = ''
         rw = ''
-        if len(cmt) == 2:
+        if len(cmt) >= 2:
             width= cmt[0].lstrip().rstrip()
             rw = cmt[1].lstrip().rstrip()
-        s = f'{ind.b}\\memmap{{{name}}}{{{hex(ofs).upper().replace("X","x")}}}{{{width}}}{{{rw}}}{{\n'
+        s = f'{ind.b}\\memmap{{\\hyperref[subsubsec:{reg.name.lower()}]{{{name}}}}}'
+        s += f'{{{hex(ofs).upper().replace("X","x")}}}{{{width}}}{{{rw}}}{{\n'
         s += f'{ind[1]}\\memDES{{\n'
         s += f'{ind[1]}}}{{\n'
-        s += f'{ind[2]}\\TODO\n'
+        reg_slices = self.RegSliceList(reg_slices) if reg_slices else None
+        if reg_slices and reg_slices[0][0] == SVRegbk.reserved_name:
+            reg_slices.pop(0)
+        if reg_slices and reg_defaults:
+            for _slice, _default in zip ( reg_slices, reg_defaults):
+                s += f'{ind[2]}{{[{_slice[1]}]}}: {_default}\\\\\n'
+            s = s[:-2]+'\n'
+        else:
+            reset = '\\TODO' if len(cmt) < 3 else cmt[2] 
+            reset = self.L_(self.Lbrac(reset))
+            s += f'{ind[2]}{reset}\n'
         s += f'{ind[1]}}}\n'
         s += f'{ind.b}}}\n'
+        return s
+    def RegFieldStr(self, reg_name, reg_slices, reg_types, reg_membtypes, reg_defaults, rw): # str, SVRegbk.regslices, SVRegbk.regtypes; align slices to types!
+        ind = Ind(0)
+        _name = reg_name.replace('_', '\_')
+        s = f'{ind.b}\\begin{{regfieldtable}}{{{reg_name.lower()}}}{{{_name} register field}}\n'
+        reg_slices = self.RegSliceList(reg_slices)
+        if reg_slices[0][0] == SVRegbk.reserved_name:
+            s += f'{ind[1]}\\regfield{{{reg_slices[0][1]}}}{{RESERVED}}{{N/A}}{{reserved}}\n'
+            reg_slices.pop(0)
+        for _slice, _type, _membtype, _default in zip(reg_slices, reg_types, reg_membtypes, reg_defaults):
+            _slice_name = _slice[0].replace('_', '\_')
+            s += f'{ind[1]}\\regfield{{{_slice[1]}}}{{{_slice_name}}}{{{rw}}}{{\n'
+            s += f'{ind[2]}\\regDES{{\\TODO\\\\\n'
+            if _membtype and _membtype[0].tp == 'enum':
+                s += f'{ind[3]}{self.DespStr(_membtype[0].enumliteral, ind[3])}'
+            s += f'{ind[3]}}}{{{_default}}}{{N/A}}\n'
+            s += f'{ind[2]}}}\n'
+        s += f'{ind.b}\\end{{regfieldtable}}\n'
+        return s
+    def RegFieldSubSec(self, reg, ofs, size, rw):
+        ind = Ind(0)
+        _name = self.L_(reg) 
+        s = f'{ind.b}\\subsubsection{{{_name}}} \\label{{subsubsec:{reg.lower()}}}\n'
+        s += f'{ind[1]}\\begin{{paragitemize}}\n'
+        s += f'{ind[2]}\\item \\textbf{{Address Offset:}} {ofs}\n'
+        s += f'{ind[2]}\\item \\textbf{{Size:}} {size}\n'
+        s += f'{ind[2]}\\item \\textbf{{Read/Write Access:}} {rw}\n'
+        s += f'{ind[1]}\\end{{paragitemize}}\n'
         return s
     def DespStr ( self, enuml, ind ):
         desp = f'{ind[2]}\\\\\n'
@@ -124,8 +163,40 @@ class LatexGen(SVgen):
         s = ''
         regbk = SVRegbk(pkg)
         for reg in regbk.addrs.enumls:
-            s += self.RegMemMapStr(reg) 
+            print(reg.name)
+            reg_slices = regbk.regslices.get(reg.name)
+            defaults = regbk.GetDefaultsStr(reg.name)
+            s += self.RegMemMapStr(reg, regbk.regbw, reg_slices, defaults ) 
         ToClip(s)
         return s
+    def RegFieldDescription(self, pkg=None):
+        s = ''
+        regbk = SVRegbk(pkg)
+        for reg in regbk.regfields:
+            ofs = regbk.addrsdict[reg].num*regbk.regbw
+            ofs = hex(ofs).upper().replace('X', 'x')
+            width, rw = regbk.GetAddrCmt(reg) 
+            s += self.RegFieldSubSec( reg, ofs, width, rw) 
+            s += self.RegFieldStr ( reg, regbk.regslices[reg], regbk.regtypes[reg], regbk.regmembtypes[reg], \
+                                    regbk.GetDefaultsStr(reg), rw)
+            s += '\n'
+        ToClip(s)
+        return s
+    def RegSliceStr(self, _slice):
+        _slice_str = ''
+        for _ss in _slice[1]:
+            if _ss[0] == _ss[1]:
+                _slice_str += f'{_ss[0]}, '
+            else:
+                _slice_str += f'{_ss[0]}:{_ss[1]}, ' 
+        _slice_str = _slice_str[:-2]
+        return _slice_str 
+    def RegSliceList(self, slices):
+        return [ (_slice[0], self.RegSliceStr(_slice)) for _slice in slices]
+    def Lbrac(self, s):
+        return s.replace('[','{[').replace(']', ']}')
+    def L_ (self, s):
+        return s.replace('_', '\_')
 if __name__ == '__main__':
     g = LatexGen()
+    pkg = SVRegbk(g.hier)

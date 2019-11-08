@@ -24,7 +24,7 @@ class SVgen():
         FileParse(paths)
         self.genlist = {}    
         self.hclkmacro = 'HCYCLE'
-        self.endcyclemacro = 'ENDCYCLE'
+        self.endcyclemacro = 'TIMEOUTCYCLE'
         self.clkstr = 'clk'
         self.rststr = 'rst'
         self.test = TEST
@@ -35,7 +35,7 @@ class SVgen():
         self.dutname = TESTMODULE 
         self.dut = hiers.dic[self.dutname]
         self.dutfile = hiers.dic[self.dutname+'_sv']
-        self.hier = hiers.dic[HIER]
+        self.hier = hiers.dic[HIER] if HIER != '' else None
         self.genpath = './'
         self.endcycle = 10000
         self.cond = {} # syn 2ns test name etc.
@@ -50,7 +50,8 @@ class SVgen():
         yield ''
         s = '\n'
         s += '`timescale 1ns/1ns\n'
-        s += '`include ' + f'"{self.incfile}.sv"\n' #TODO
+        s += '`include ' + f'"{self.incfile}.sv"\n' 
+        s += f'`define {self.endcyclemacro} 100\n'  
         s += 'module ' + TOPMODULE + ';\n'
         s = s.replace('\n',f'\n{ind.b}')
         yield s

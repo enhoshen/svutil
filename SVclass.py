@@ -23,6 +23,11 @@ class SVParam(SVclass):
     def __init__(self, param=None):
         self.w = 20
         self.data = param
+class SVType(SVclass):
+    field = SVhier.typefield
+    def __init__(self, tp = None):
+        self.w = 15
+        self.data = tp
 class SVPort(SVclass):
     field = SVhier.portfield
     def __init__(self, port=None):
@@ -40,14 +45,76 @@ class SVEnuml(SVclass):
         self.w = 20
         self.data = enuml
 class SVRegbk(): 
+    regfield_suf = '_regfield'
+    default_suf  = '_DEFAULT'
+    reserved_name = 'RESERVED'
+    regaddr_name = 'regaddr'
+    regbw_name = 'REG_BW'
     def __init__(self, pkg):
         self.w = 20
         self.pkg = pkg
-        self.addrs = SVEnums ( pkg.enums['regaddr'] )
+        self.addrs = SVEnums ( pkg.enums[self.regaddr_name] )
+        self.addrsdict = { x.name: x for x in self.addrs.enumls }
+        self.regbw = pkg.params[self.regbw_name]
+        self.regtypes = {}
+        self.regmembtypes = {}
+        self.regfields = {} 
+        self.regslices = {}
+        self.defaultstr = {} 
+        self.params = {} 
+        for i,v in pkg.paramsdetail.items():
+            _v = SVParam(v)
+            self.params[i]=(_v)
+            _s = i.split(self.default_suf)
+            if len(_s) == 2:
+                self.defaultstr[_s[0]] = _v.numstr
+        for i,v in pkg.enums.items():
+            _v = SVEnums(v)
+            _s = i.split(self.regfield_suf)
+            if len(_s) == 2:
+                self.regfields[_s[0]] = _v
+                pre_slice = 0
+                self.regslices[_s[0]] = []
+                _regslices =[ (name, [(start, end-1)] ) for name, start, end in zip(_v.names, _v.nums, _v.nums[1:]+[self.regbw])] 
+                reserved = []
+                for ii in _regslices:
+                    if self.reserved_name in ii[0]:
+                        reserved.append( ii[1][0] ) 
+                    else:
+                        self.regslices[_s[0]].append(ii)
+                if len(reserved)!=0:
+                    self.regslices[_s[0]].insert(0, (self.reserved_name , reserved))
+        for i,v in pkg.types.items():
+            _v = [ SVType(vv) for vv in v]
+            tt = [ self.GetType(vv.tp) for vv in _v ]
+            self.regtypes[i.upper()] = _v
+            self.regmembtypes[i.upper()] = tt
         #self.regfields = pkg. TODO reg fields, defaults etc...
+    def GetDefaultsStr(self, name):
+        _s = self.defaultstr.get(name)
+        if not _s:
+            return None
+        _s = _s.replace('_', '\_')
+        lst = SVstr(_s).ReplaceSplit([',','{','}'])
+        return lst
+    def GetType(self, tp):
+        tp = self.pkg.AllType.get(tp)
+        return [ SVType(t) for t in tp] if tp else None
+    def GetAddrCmt(self, reg):
+        cmt = self.addrsdict[reg].cmt 
+        width = ''
+        rw = ''
+        if len(cmt) == 2:
+            width= cmt[0].lstrip().rstrip()
+            rw = cmt[1].lstrip().rstrip()
+        return width, rw
+            
     def ShowAddr(self):
         print ( f'{self.pkg.name:-^{3*self.w}}') #TODO name banner width
         SVEnuml().ShowField
         SVEnuml().ShowLine
         for i in self.addrs.enumls:
             i.ShowData
+    def ShowRegfield(self, name):
+        pre_field = 0
+        reserve = []

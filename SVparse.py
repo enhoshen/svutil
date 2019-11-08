@@ -317,6 +317,10 @@ class SVparse():
         name = s.IDParse()
         dim = s.BracketParse()
         dimstr = self.Tuple2str(dim)
+        if '{' in s:
+            while '}' not in s:
+                _s, cmt = self.Rdline(lines)
+                s += _s
         numstr = s.rstrip().rstrip(';').rstrip(',').s.lstrip('=').lstrip()
         num =self.cur_hier.params[name]=s.lstrip('=').S2num(self.cur_hier.Params)
         self.cur_hier.paramsdetail[name] = ( name , self.Tuple2num(dim) , tp, bw , num , bwstr, dimstr, numstr ,self.cur_key )
@@ -635,7 +639,7 @@ class SVstr():
         if '$clog2' in _s:
             _temp = self.s.split('(')[1].split(')')[0] 
             _s = _s.replace( _s[_s.find('$'):_s.find(')')+1] , 'int(np.log2('+ _temp + '))')
-        _s_no_op = SVstr(_s).ReplaceSplit(self.op_chars)
+        _s_no_op = SVstr(_s).ReplaceSplit(self.op_chars+[','])
         #TODO package import :: symbol  , white spaces around '::' not handled
         for w in _s_no_op:
             if '::' in w:

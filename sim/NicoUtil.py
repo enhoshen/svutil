@@ -41,8 +41,8 @@ class StructBus:
     def SetTo(self,n):
         self.SetToN()
         [ x.SetTo(n) if isinstance(x,StructBus) else [s._value.fill(n) for s in x.signals] for x in self.buses ]
-    def Write(self):
-        [ x.Write() for x in self.buses ]
+    def Write(self, imm=False):
+        [ x.Write(imm) for x in self.buses ]
     def Read(self):
         [ x.Read() for x in self.buses ]
     #TODO *arg setter
@@ -152,8 +152,8 @@ class ProtoCreateBus ():
 class Busdict (EAdict):
     def Read(self):
         [ x.Read() for x in self.dic.values() ]
-    def Write(self):
-        [ x.Write() for x in self.dic.values() ]
+    def Write(self, imm=False):
+        [ x.Write(imm) for x in self.dic.values() ]
     def SetTo(self,n):
         [ x.SetToN() if isinstance(x,StructBus) else [s._x.fill(0) for s in x.signals]  for x in self.dic.values()]
         [ x.SetTo(n) if isinstance(x,StructBus) else [s._value.fill(n) for s in x.signals] for x in self.dic.values() ]
