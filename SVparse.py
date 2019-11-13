@@ -715,6 +715,11 @@ def ParseFirstArgument():
     SVparse.ParseFiles([(True,sys.argv[1])])
 def Reset():
     SVparse.parsed = False
+    package = {}
+    hiers = {}
+    paths = []
+    gb_hier = SVhier('files',None)
+    gb_hier.types =  {'integer':None,'int':None,'logic':None}
 def ShowFile(n,start=0,end=None):
     f=open(SVparse.paths[n],'r')
     l=f.readlines()
@@ -730,7 +735,8 @@ def FileParse( paths = [(True,INC)]):
     paths = [paths] if type(paths) == tuple else paths
     SVparse.ParseFiles( paths)
     SVparse.parsed = True
-
+def TopAllParamEAdict():
+    return EAdict(hiers.dic[TOPMODULE].AllParam)
 hiers = EAdict(SVparse.hiers)
 
 if __name__ == '__main__':

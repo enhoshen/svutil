@@ -86,8 +86,8 @@ class StructBusCreator():
             for k,v in T.items():
                 StructBusCreator(k,v)
     @classmethod
-    def Get(cls,i,name,hier=''):
-        return cls.structlist[i].CreateStructBus(name,hier)
+    def Get(cls,t,name,hier=''):
+        return cls.structlist[t].CreateStructBus(name,hier)
     def CreateStructBus (self, signalName , hier='',DIM=() ):
         #buses = {'logic' :  CreateBus( self.createTuple(signalName) )}
         buses = []
@@ -154,6 +154,8 @@ class Busdict (EAdict):
         [ x.Read() for x in self.dic.values() ]
     def Write(self, imm=False):
         [ x.Write(imm) for x in self.dic.values() ]
+    def SetToN(self):
+        [ x.SetToN() if isinstance(x,StructBus) else [s._x.fill(0) for s in x.signals]  for x in self.dic.values()]
     def SetTo(self,n):
         [ x.SetToN() if isinstance(x,StructBus) else [s._x.fill(0) for s in x.signals]  for x in self.dic.values()]
         [ x.SetTo(n) if isinstance(x,StructBus) else [s._value.fill(n) for s in x.signals] for x in self.dic.values() ]

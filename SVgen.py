@@ -65,7 +65,6 @@ class SVgen():
         _s +=  '#1 `NicotbInit\n' 
         _s +=  '#10 rst = 0;\n' +  '#10 rst = 1;\n'
         _s +=  f'#(2*`{self.hclkmacro+"*`"+self.endcyclemacro}) $display("timeout");\n'
-        _s +=  '`NicotbFinal\n' +  '$finish;'
         _s = _s.replace('\n',f'\n{ind[2]}')
         _s += f'\n{ind[1]}end\n\n'
         yield s+_s
@@ -185,6 +184,10 @@ class SVgen():
         s += f'{ind.b}def main():\n'
         s += f'{ind[1]}buses = BusInit()\n'
         s += f'{ind[1]}yield rst_out\n'
+        s += f'{ind[1]}#j = []\n' 
+        s += f'{ind[1]}#for jj in j:\n'
+        s += f'{ind[1]}#    yield from jj.Join()\n'
+        s += f'{ind[1]}#[jj.Destroy() for jj in j]\n'
         s += f'{ind[1]}FinishSim()\n' 
         yield s
         
@@ -256,6 +259,12 @@ class SVgen():
         conf['copy']=False
         self.SVWrite(self.ModuleTestSV(module,**conf))
         self.PYWrite(self.ModuleTestPY(module,**conf)) 
+    def ShowIns(self, module=None):
+        module = self.dut if not module else module
+        ins = self.InsGen(module)
+        s =  self.Genlist( [(ins,)]) 
+        ToClip(s)
+        print(s)
     def SVWrite(self , text ):
         p = self.TbWrite(text,'sv') 
         print ( "SV testbench written to " , p )
