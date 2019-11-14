@@ -18,6 +18,12 @@ class SVclass():
         for f in self.field.dic: 
             print(f'{f:<{self.w}}', end='')
         print() 
+    def ShowDataCb(self, cblst):
+        for f, cb in zip(self.field.dic, cblst):
+            s = cb(self.data[self.field.dic[f]]) if cb else self.data[self.field.dic[f]]
+            s = s.__repr__() if type(s) != str else s
+            print(f'{s:<{self.w}}', end='')
+        print()
 class SVParam(SVclass):
     field = SVhier.paramfield
     def __init__(self, param=None):
@@ -47,6 +53,7 @@ class SVEnuml(SVclass):
 class SVRegbk(): 
     regfield_suf = '_regfield'
     default_suf  = '_DEFAULT'
+    bw_suf  = '_BW'
     reserved_name = 'RESERVED'
     regaddr_name = 'regaddr'
     regbw_name = 'REG_BW'
@@ -63,6 +70,7 @@ class SVRegbk():
         self.regfields = {} 
         self.regslices = {}
         self.defaultstr = {} 
+        self.bwstr = {}
         self.params = {} 
         for i,v in pkg.paramsdetail.items():
             _v = SVParam(v)
@@ -70,6 +78,9 @@ class SVRegbk():
             _s = i.split(self.default_suf)
             if len(_s) == 2:
                 self.defaultstr[_s[0]] = _v.numstr
+            _s = i.split(self.bw_suf)
+            if len(_s) == 2:
+                self.bwstr[_s[0]] = _v.numstr
         for i,v in pkg.enums.items():
             _v = SVEnums(v)
             _s = i.split(self.regfield_suf)
@@ -111,12 +122,11 @@ class SVRegbk():
             rw = cmt[1].lstrip().rstrip()
         return width, rw
             
-    def ShowAddr(self):
+    def ShowAddr(self, valuecb=hex):
         print ( f'{self.pkg.name:-^{3*self.w}}') #TODO name banner width
         SVEnuml().ShowField
         SVEnuml().ShowLine
         for i in self.addrs.enumls:
-            i.ShowData
+            i.ShowDataCb([None, hex, None])
     def ShowRegfield(self, name):
-        pre_field = 0
-        reserve = []
+        pass

@@ -3,6 +3,7 @@ import sys
 sys.path.append(os.environ.get('SVutil'))
 from SVparse import *
 from SVgen import * 
+from SVclass import *
 import itertools
 import numpy as np
 class Shape():
@@ -24,6 +25,8 @@ class DrawioGen(SVgen):
     textstyle2 = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;"
     textstyle2left = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;"
     textstyle_rec1 = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=15"
+    textstyle_red = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#FF0505;" 
+    textstyle_redleft = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#FF0505;" 
     arrowstyle1 = "endArrow=block; endFill=1;fontSize=8;"
     arrowboldstyle1 = "endArrow=classic;shape=flexArrow;fillColor=#000000;endWidth=4.938516283050313;endSize=2.5476510067114093;width=1.2080536912751678;"
     def __init__(self, ind= Ind(0)):
@@ -127,7 +130,7 @@ class DrawioGen(SVgen):
         x = self.center_x if not flip else self.center_x-self.port_ofs/1.625
         shape = Shape( x , self.center_y, self.port_ofs/1.625, self.port_ofs)
         return self.RectangleStr( module.name, shape, parent, ind)
-    def PortArrowStr(self, module, port, parent, flip, ind):
+    def PortArrowStr(self, module, port, parent, reged , flip, ind):
         pfield = SVhier.portfield
         tpfield = SVhier.typefield
         s = ''
@@ -150,7 +153,7 @@ class DrawioGen(SVgen):
                 y_ofs = 0 
                 top_grp_x = self.center_x-2*self.text_width-self.curly_width-self.arr_text_dist-self.arrow_width
                 top_grp_y = self.port_ofs+self.center_y
-                curly_txt_style = self.textstyle2
+                curly_txt_style = self.textstyle_red if reged else self.textstyle2
             else:
                 curly_ofs  = self.text_width + self.arrow_width + self.arr_text_dist
                 curly_sh   = Shape(curly_ofs, 0, self.curly_width, curly_height) 
@@ -159,7 +162,7 @@ class DrawioGen(SVgen):
                 y_ofs = 0 
                 top_grp_x = self.center_x 
                 top_grp_y = self.port_ofs+self.center_y
-                curly_txt_style = self.textstyle2left
+                curly_txt_style = self.textstyle_redleft if reged else self.textstyle2left 
             top_grp_sh = Shape(top_grp_x, top_grp_y, total_w+self.text_width+self.curly_width, len(tp)*self.arrow_ofs)
             s += self.GroupStr( top_grp_sh, parent, ind)
             s += self.CurlyStr( curly_sh, portsparent, flip, ind+1) 
@@ -188,7 +191,10 @@ class DrawioGen(SVgen):
             grp_id = DrawioGen.unique_id
             s += self.GroupStr( grp_sh, portsparent, ind+1) 
             _p = f'SVgen-mxCell--{grp_id}'
-            txt_style = self.textstyle2 if not flip else self.textstyle2left
+            if reged:
+                txt_style = self.textstyle_red if not flip else self.textstyle_redleft
+            else:
+                txt_style = self.textstyle2 if not flip else self.textstyle2left
             s += self.TextStr(txt, txt_sh, txt_style, _p, ind+2)
             
             arrow_style = self.arrowboldstyle1 if boldarrow else self.arrowstyle1 
@@ -202,7 +208,8 @@ class DrawioGen(SVgen):
         self.port_ofs = 0
         s = ''
         for p in module.ports:
-            s += self.PortArrowStr(module, p, parent, flip, ind) 
+            reged = True if SVPort(p).name in module.regs else False
+            s += self.PortArrowStr(module, p, parent, reged, flip, ind) 
         return s
     def InterfaceDiagramGen (self, module, flip):
         indblk = self.IndBlk()

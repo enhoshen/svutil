@@ -10,6 +10,7 @@ class LatexGen(SVgen):
     def __init__(self):
         super().__init__()
         self.default_input_delay = 30
+        self.regbk= SVRegbk(self.regbkstr)
     def L_(self, s):
         return s.replace('_','\_')
     def ParameterStr(self , param):
@@ -161,9 +162,8 @@ class LatexGen(SVgen):
         return s
     def RegMemMapDescription(self, pkg=None):
         s = ''
-        regbk = SVRegbk(pkg)
+        regbk = SVRegbk(pkg) if pkg and type(pkg)==str else self.regbk
         for reg in regbk.addrs.enumls:
-            print(reg.name)
             reg_slices = regbk.regslices.get(reg.name)
             defaults = regbk.GetDefaultsStr(reg.name)
             s += self.RegMemMapStr(reg, regbk.regbsize, reg_slices, defaults ) 
@@ -171,7 +171,7 @@ class LatexGen(SVgen):
         return s
     def RegFieldDescription(self, pkg=None):
         s = ''
-        regbk = SVRegbk(pkg)
+        regbk = SVRegbk(pkg) if pkg and type(pkg)==str else self.regbk
         for reg in regbk.regfields:
             ofs = regbk.addrsdict[reg].num*regbk.regbsize
             ofs = hex(ofs).upper().replace('X', 'x')
@@ -199,4 +199,3 @@ class LatexGen(SVgen):
         return s.replace('_', '\_')
 if __name__ == '__main__':
     g = LatexGen()
-    pkg = SVRegbk(g.hier)

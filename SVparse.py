@@ -16,6 +16,7 @@ SV = os.environ.get('SV','')
 TOPSV = os.environ.get('TOPSV','')
 INC = os.environ.get('INC','')
 HIER= os.environ.get('HIER','')
+REGBK= os.environ.get('REGBK','')
 def ToClip(s):
     clip = os.environ.get('XCLIP')
     clip = 'xclip' if not clip else clip 
@@ -54,6 +55,7 @@ class SVhier ():
         self.protoPorts = []
         self.enums = {}
         self.imported = {} 
+        self.regs = {}
         self._scope = scope
         self.valuecb = int
         if scope != None:
@@ -220,7 +222,8 @@ class SVparse():
     flags = { 'pport': False , 'module' : False } #TODO
     def __getattr__(self , n ):
         return hiers[n]
-    def __init__(self,name=None,scope=None):
+    def __init__(self,name=None,scope=None,parse=None):
+        self.parse = parse
         if name:
             if scope != None: 
                 self.cur_hier = SVhier(name,scope) 
@@ -233,7 +236,8 @@ class SVparse():
         self.keyword = { 'logic':self.LogicParse , 'parameter':self.ParamParse, 'localparam':self.ParamParse,\
                         'typedef':self.TypedefParse , 'struct':self.StructParse  , 'package':self.HierParse , 'enum': self.EnumParse,\
                         'module':self.HierParse , 'import':self.ImportParse, 'input':self.PortParse , 'output':self.PortParse,\
-                        '`include':self.IncludeRead ,'`rdyack_input':self.RdyackParse, '`rdyack_output':self.RdyackParse}
+                        '`include':self.IncludeRead ,'`rdyack_input':self.RdyackParse, '`rdyack_output':self.RdyackParse,\
+                        'always_ff@': self.RegisterParse}
     @classmethod
     def ParseFiles(cls , paths=[(True,INC)] ):
         for p in paths:
@@ -328,11 +332,16 @@ class SVparse():
             self.cur_hier.paramports[name] = num 
         return name , num
     def PortParse(self, s , lines):
+        cmt = self.cur_cmt
         #bw = s.BracketParse()
         tp = s.TypeParse(self.cur_hier.AllTypeKeys.union(self.gb_hier.SelfTypeKeys) ) 
         tp = 'logic' if tp == '' else tp
         bw = s.BracketParse()
         name = s.IDParse()
+        if cmt != '':
+            for i in cmt:
+                if 'reged' in i:
+                    self.cur_hier.regs[name] = 'N/A'
         bwstr = self.Tuple2str(bw)
         bw = SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier.Params)
         dim = s.BracketParse()
@@ -444,6 +453,26 @@ class SVparse():
             self.cur_hier.types[_catch[0]] = _catch[1]
         else :
             self.cur_hier.types[_catch[0]] = [_catch] 
+    def RegisterParse(self, s, lines):
+        endflag = 0 
+        _w = ''
+        while True:
+            if endflag==0 and s.End():
+                break
+            if s.End():
+                s, self.cur_cmt = self.Rdline(lines)
+                continue
+            pre_w = _w
+            _w = s.lsplit()
+            if 'begin' in _w:
+                endflag += 1
+            if 'end' in _w:
+                endflag -= 1
+            if s.s[0:2] == '<=':
+                pre_w = _w
+                _w = s.lsplit('<=')
+                _w = s.lsplit()
+                self.cur_hier.regs[pre_w] = _w
     def HierParse(self,  s , lines):
         name = s.IDParse()
         new_hier = SVhier(name, self.cur_hier)
@@ -497,12 +526,15 @@ class SVparse():
         ofs =0
         name = []
         num = []
+        import copy
+        _params = copy.deepcopy(params)
+        _params.appendleft({})
         for e in enum:
             _s = SVstr(e)
             _name = _s.IDParse()
             bw = _s.BracketParse()
-            bw = SVstr(bw[0]).Slice2TwoNum(params) if bw else SVstr('').Slice2TwoNum(params)
-            _num = _s.NumParse(params) 
+            bw = SVstr(bw[0]).Slice2TwoNum(_params) if bw else SVstr('').Slice2TwoNum(_params)
+            _num = _s.NumParse(_params) 
             if type(bw)==tuple:
                 bw = (0,bw[1]-1) if bw[0]=='' else bw
                 for i in range (bw[1]-bw[0]+1):
@@ -513,6 +545,7 @@ class SVparse():
                 name.append(_name) #TODO
                 num.append ( ofs if _num == '' else _num)
                 ofs = ofs+1 if _num == '' else _num+1
+            _params[0][name[-1]] = num[-1]
         return name, num 
 class SVstr():
     sp_chars = ['=','{','}','[',']','::',';',',','(',')','#']
@@ -647,7 +680,8 @@ class SVstr():
                 _s = _s.replace(_pkg+'::'+_param,str(SVparse.package[_pkg].params[_param]) )
             for p in params:    
                 if w in p:
-                    _s = _s.replace( w , str(p[w]) )
+                    _s = re.sub(rf'\b{w}\b', str(p[w]), _s)
+                    #_s = _s.replace( w , str(p[w]) )
                     break
         _s = _s.replace("\'{", ' [ ').replace('{',' [ ').replace('}',' ] ').replace(',',' , ')
         slist = _s.split()
@@ -738,6 +772,85 @@ def FileParse( paths = [(True,INC)]):
 def TopAllParamEAdict():
     return EAdict(hiers.dic[TOPMODULE].AllParam)
 hiers = EAdict(SVparse.hiers)
+class SVparseTemp():
+    def __getattr__(self , n ):
+        return self.hiers[n]
+    def __init__(self,name=None,scope=None):
+        self.parsed = False
+        self.package = {}
+        self.hiers = {}
+        self.paths = []
+        self.gb_hier = SVhier('files',None)
+        self.gb_hier.types =  {'integer':None,'int':None,'logic':None}
+        self._top =  TOPMODULE
+        self.top = _top if _top != None else ''
+        self.base_path = os.environ.get("PWD").replace('/vcs','').replace('/verilator','').replace('/sim','')+'/'
+        print("supposed base path of the project:", base_path)
+        self.include_path = base_path + 'include/'
+        self.sim_path = base_path+'sim/'
+        self.src_path = base_path+'src/'
+        self.cur_scope = '' 
+        self.cur_path= ''
+        self.flags = { 'pport': False , 'module' : False } #TODO
+        if name:
+            if scope != None: 
+                self.cur_hier = SVhier(name,scope) 
+                self.gb_hier.child[name] = self.cur_hier
+            else: 
+                SVhier(name,self.gb_hier) 
+            self.hiers[name]= self.cur_hier
+    def ParseFiles(self , paths=[(True,INC)] ):
+        for p in paths:
+            self.paths.append(f'{cls.include_path}{p[1]}.sv' if p[0] else p[1] )
+        print(self.paths)
+        for p in cls.paths:
+            n = (p.rsplit('/',maxsplit=1)[1] if '/' in p else p ).replace('.','_')
+            cur_parse = SVparseFile( n , self.gb_hier)
+            cur_parse.Readfile(p if '/' in p else f'./{p}')
+        self.parsed = True
+    def IncludeFileParse(self, path):
+        f = open(self.include_path+path ,'r')
+        paths = []
+        '''
+        while 1:
+            line = f.readline()
+            if '`else' in line:
+                break
+            #TODO this part is very unpolished
+        '''
+        for line in f.readlines():
+            line = line.split('//')[0]
+            if '`include' in line:
+                line = line.split('`include')[1].split()[0].replace('"','')
+                paths.append( self.include_path+line)
+        return paths
+        def ParseFirstArgument(self):
+            import sys
+            self.ParseFiles([(True,sys.argv[1])])
+        def Reset(self):
+            self.parsed = False
+            self.package = {}
+            self.hiers = {}
+            self.paths = []
+            self.gb_hier = SVhier('files',None)
+            self.gb_hier.types =  {'integer':None,'int':None,'logic':None}
+        def ShowFile(n,start=0,end=None):
+            f=open(self.paths[n],'r')
+            l=f.readlines()
+            end = start+40 if end==None else end
+            for i,v in enumerate([ x+start for x in range(end-start)]):
+                print(f'{i+start:<4}|',l[v],end='')
+        def ShowPaths(self):
+            for i,v in enumerate(self.paths):
+                print (i ,':  ',v)
+        def FileParse(self, paths = [(True,INC)]):
+            if self.parsed == True:
+                return
+            paths = [paths] if type(paths) == tuple else paths
+            self.ParseFiles( paths)
+            self.parsed = True
+        def TopAllParamEAdict():
+            return EAdict(self.gb_hier[TOPMODULE].AllParam)
 
 if __name__ == '__main__':
 
