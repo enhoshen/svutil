@@ -237,7 +237,7 @@ class SVparse():
                         'typedef':self.TypedefParse , 'struct':self.StructParse  , 'package':self.HierParse , 'enum': self.EnumParse,\
                         'module':self.HierParse , 'import':self.ImportParse, 'input':self.PortParse , 'output':self.PortParse,\
                         '`include':self.IncludeRead ,'`rdyack_input':self.RdyackParse, '`rdyack_output':self.RdyackParse,\
-                        'always_ff@': self.RegisterParse}
+                        'always_ff@': self.RegisterParse, 'always_ff': self.RegisterParse}
     @classmethod
     def ParseFiles(cls , paths=[(True,INC)] ):
         for p in paths:
