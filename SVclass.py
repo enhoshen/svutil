@@ -8,7 +8,10 @@ class SVclass():
     @property
     def ShowData(self):
         for f in self.field.dic:
-            print(f'{self.data[self.field.dic[f]].__repr__():<{self.w}}', end='')
+            try:
+                print(f'{self.data[self.field.dic[f]].__repr__():<{self.w}}', end='')
+            except:
+                print(f'{"":<{self.w}}', end='')
         print()
     @property
     def ShowLine(self, char='='):
@@ -60,6 +63,7 @@ class SVRegbk():
     regaddrbw_name = 'REG_ADDR_BW'
     regbsize_name = 'REG_BSIZE'
     regbsizebw_name = 'REG_BSIZE_BW'
+    regintr_name = 'raw_intr_stat'
     def __init__(self, pkg):
         self.w = 20
         self.pkg = pkg
@@ -76,6 +80,7 @@ class SVRegbk():
         self.defaultstr = {} 
         self.bwstr = {}
         self.params = {} 
+        self.raw_intr_stat = self.GetType('raw_intr_stat')
         for i,v in pkg.paramsdetail.items():
             _v = SVParam(v)
             self.params[i]=(_v)

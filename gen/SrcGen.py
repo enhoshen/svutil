@@ -7,6 +7,17 @@ from SVclass import *
 import itertools
 import numpy as np
 class SrcGen(SVgen):
+    r"""
+    This class saves you effort on reptitive but non-trivial part of your source system verilog code,
+    like register bank related logics.
+    Common function arguments:
+        pkg: the name of the register bank package used to create a SVRegbk object from
+            corresponding SVhier object. Default: self.regbk
+        ind: the base indentation using Ind(n) object. Default: self.cur_ind
+    Function naming suffix conventions:
+        Str(self, *arg, ind): return a str of a code block. ind is the text base indentation of type Ind.
+        ToClip(self, *arg, ind): try copying text result to xclip and return the text as string.
+    """
     def __init__(self, ind=Ind(0)):
         super().__init__()
         self.regbk= SVRegbk(self.regbkstr)
@@ -16,6 +27,7 @@ class SrcGen(SVgen):
         self.regbk_wdata_name = 'i_wdata'
         self.regbk_addr_slice = f'[{self.regbk.regaddrbw_name}:{(self.regbk.regbsizebw_name)}]'
         self.regbk_write_cond = 'write_valid'
+        self.regbk_read_cond = 'read_valid'
         self.regbk_cg_cond = 'regbk_cg'
         self.regbk_ro_cg_cond = 'regbk_ro_cg'
     def RegbkRdataStr(self, reg, _slice, w, ind):
@@ -53,7 +65,20 @@ class SrcGen(SVgen):
             s += f'{ind[2]}//TODO\n'
             s += f'{ind[1]}end\n{ind.b}end\n'
         return s
+    def RegbkIntrCombStr(self, intr_logic, intr_field, ind=None):
+        ind = self.cur_ind.Copy() if not ind else ind
+        s = f'{ind.b}if ({self.regbk_read_cond} && {self.regbk_addr_name}{self.regbk_addr_slice} == CLR_{intr_field}) '
+        s += f'{SVRegbk.regintr_name}_w.{intr_logic} = \'0;\n'
+        s += f'{ind.b}else begin\n'
+        s += f'{ind[1]}{SVRegbk.regintr_name}_w.{intr_logic} = {SVRegbk.regintr_name}_r.{intr_logic};//TODO\n'
+        s += f'{ind.b}end\n'
+        return s
     def RegbkRdataToClip(self, pkg=None, ind=None):
+        r"""
+        Help building register bank read data part of combinational logics.
+        Follow specific coding style in your register bank description package, the function generate
+        logics based on the regaddr enum list.
+        """
         regbk = SVRegbk(pkg) if pkg and type(pkg)==str else self.regbk
         ind = self.cur_ind.Copy() if not ind else ind
         s = ''
@@ -66,6 +91,11 @@ class SrcGen(SVgen):
         ToClip(s)
         return s
     def RegbkWdataToClip(self, pkg=None, ind=None):
+        r"""
+        Help building register bank write data part of both combinational and sequential part logics.
+        Follow specific coding style in your register bank description package, the function generate
+        logics based on the regaddr enum list.
+        """
         regbk = SVRegbk(pkg) if pkg and type(pkg)==str else self.regbk
         ind = self.cur_ind.Copy() if not ind else ind
         s = ''
@@ -82,5 +112,17 @@ class SrcGen(SVgen):
             s += self.RegbkWdataSeqStr( reg.name, _slice, rw, ind) + '\n'
         ToClip(s)
         return s
+    def RegbkIntrCombToClip(self, pkg=None, ind=None):
+        r"""
+        Help build clear register read part of interrupts combinational logics.
+        """
+        regbk = SVRegbk(pkg) if pkg and type(pkg)==str else self.regbk
+        ind = self.cur_ind.Copy() if not ind else ind
+        s = ''
+        w = 30
+        for intr, field in zip ( regbk.raw_intr_stat, regbk.regfields['RAW_INTR_STAT'].enumls):
+            s += self.RegbkIntrCombStr( intr.name, field.name, ind) + '\n'
+        ToClip(s)
+        return s 
 if __name__ == '__main__':
     g = SrcGen()
