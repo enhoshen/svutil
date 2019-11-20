@@ -16,6 +16,7 @@ class TestGen(SVgen):
         s += '`timescale 1ns/1ns\n'
         s += '`include ' + f'"{self.incfile}.sv"\n' 
         s += f'`define {self.endcyclemacro} 100\n'  
+        s += f'`define {self.hclkmacro} 5\n'  
         s += 'module ' + TOPMODULE + ';\n'
         s = s.replace('\n',f'\n{ind.b}')
         yield s
@@ -29,6 +30,7 @@ class TestGen(SVgen):
         _s +=  '#1 `NicotbInit\n' 
         _s +=  '#10 rst = 0;\n' +  '#10 rst = 1;\n'
         _s +=  f'#(2*`{self.hclkmacro+"*`"+self.endcyclemacro}) $display("timeout");\n'
+        _s +=  '`NicotbFinal\n' +  '$finish;'
         _s = _s.replace('\n',f'\n{ind[2]}')
         _s += f'\n{ind[1]}end\n\n'
         yield s+_s
