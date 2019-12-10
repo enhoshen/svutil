@@ -17,6 +17,7 @@ TOPSV = os.environ.get('TOPSV','')
 INC = os.environ.get('INC','')
 HIER= os.environ.get('HIER','')
 REGBK= os.environ.get('REGBK','')
+PROJECT_PATH = os.environ.get('PROJECT_PATH','')
 def ToClip(s):
     clip = os.environ.get('XCLIP')
     clip = 'xclip' if not clip else clip 
@@ -128,17 +129,20 @@ class SVhier ():
         w= 30
         print(f'{self.hier+" Parameters":-^{2*w}}' )
         self.ParamStr(self.params, w)
+        return
     @property
     def ShowAllParams(self):
         w =30 
         print(f'{self.hier+" All Parameters":-^{2*w}}')
         self.ParamStr(self.AllParam, w)
+        return None
     @property
     def ShowAllParamsDetail(self):
         w = 20 
         print(f'{self.hier+" All Parameters detail":-^{2*w}}')
         self.FieldStr(self.paramfield,w)
         self.DictStr(self.AllParamsDetail,w)
+        return None
     ##########################
     @property
     def ShowPorts(self):
@@ -150,6 +154,7 @@ class SVhier ():
             print(f'{io:<{w}}'f'{n:<{w}}'f'{"()":<{w}}')
         for io , n ,dim,tp , *_ in self.ports:
             print(f'{io:<{w}}'f'{n:<{w}}'f'{dim.__repr__():<{w}}'f'{tp:<{w}}')
+        return
     @property
     def ShowConnect(self,**conf):
         s = '.*\n' if conf.get('explicit')==True else ''
@@ -163,6 +168,7 @@ class SVhier ():
         s = s[:-1].replace(',',' ',1)
         ToClip(s)
         print(s)
+        return
     
     def TypeStr(self,n,l,w=13):
         print(f'{self.hier+"."+n:-^{4*w}}' )
@@ -212,7 +218,11 @@ class SVparse():
     gb_hier.types =  {'integer':None,'int':None,'logic':None}
     _top =  TOPMODULE
     top = _top if _top != None else ''
-    base_path = os.environ.get("PWD").replace('/vcs','').replace('/verilator','').replace('/sim','')+'/'
+    if PROJECT_PATH:
+        base_path = os.environ.get("PWD")+'/'+PROJECT_PATH
+    elif re.search( r'/sim\b', os.environ.get("PWD")):
+        base_path = os.environ.get("PWD").replace('/vcs','').replace('/verilator','').replace('/sim','')+'/'
+    print ( PROJECT_PATH, INC)
     print("supposed base path of the project:", base_path)
     include_path = base_path + 'include/'
     sim_path = base_path+'sim/'
@@ -484,6 +494,8 @@ class SVparse():
         self.flag_port = ''
         while(1):
             _w=''
+            if s == None:
+                break        
             if s.End():
                 s, self.cur_cmt = self.Rdline(lines)
                 continue
@@ -672,7 +684,7 @@ class SVstr():
         if '$clog2' in _s:
             _temp = self.s.split('(')[1].split(')')[0] 
             _s = _s.replace( _s[_s.find('$'):_s.find(')')+1] , 'int(np.log2('+ _temp + '))')
-        _s_no_op = SVstr(_s).ReplaceSplit(self.op_chars+[','])
+        _s_no_op = SVstr(_s).ReplaceSplit(self.op_chars+[',', "'", '{', '}'])
         #TODO package import :: symbol  , white spaces around '::' not handled
         for w in _s_no_op:
             if '::' in w:

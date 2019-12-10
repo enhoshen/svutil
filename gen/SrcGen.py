@@ -25,11 +25,12 @@ class SrcGen(SVgen):
         self.rst_name = 'i_rst_n'
         self.regbk_addr_name = 'i_addr'
         self.regbk_wdata_name = 'i_wdata'
-        self.regbk_addr_slice = f'[{self.regbk.regaddrbw_name}:{(self.regbk.regbsizebw_name)}]'
+        self.regbk_addr_slice = f'[{self.regbk.regaddrbw_name}-1:{(self.regbk.regbsizebw_name)}]'
         self.regbk_write_cond = 'write_valid'
         self.regbk_read_cond = 'read_valid'
         self.regbk_cg_cond = 'regbk_cg'
         self.regbk_ro_cg_cond = 'regbk_ro_cg'
+        self.regbk_clr_affix = 'clr_'
     def RegbkRdataStr(self, reg, _slice, w, ind):
         #TODO slice dependent, now it only pad the MSB and it's usually the case
         pad = f'{SVRegbk.regbw_name}-{reg}{SVRegbk.bw_suf}'
@@ -54,8 +55,13 @@ class SrcGen(SVgen):
         #TODO slice dependent, now it only pad the MSB and it's usually the case
         ind = self.cur_ind.Copy() if not ind else ind
         s = f'{ind.b}always_comb begin\n'
-        s += f'{ind[1]}{reg.lower()}_w = {reg.lower()}_r;\n'
         if rw and rw == 'RO':
+            if self.regbk_clr_affix.upper() in reg:
+                s += f'{ind[1]}if ({self.regbk_read_cond} && {self.regbk_addr_name}{self.regbk_addr_slice} == {reg}) '
+                s += f'{reg.lower()}_w = \'1;\n'
+                s += f'{ind[1]}else {reg.lower()}_w = \'0;\n'
+            else:
+                s += f'{ind[1]}{reg.lower()}_w = {reg.lower()}_r;\n'
             s += f'{ind[1]}//TODO\n{ind.b}end\n'
         else:
             s += f'{ind[1]}if ({self.regbk_write_cond} && {self.regbk_addr_name}{self.regbk_addr_slice} == {reg}) begin\n'
@@ -67,8 +73,7 @@ class SrcGen(SVgen):
         return s
     def RegbkIntrCombStr(self, intr_logic, intr_field, ind=None):
         ind = self.cur_ind.Copy() if not ind else ind
-        s = f'{ind.b}if ({self.regbk_read_cond} && {self.regbk_addr_name}{self.regbk_addr_slice} == CLR_{intr_field}) '
-        s += f'{SVRegbk.regintr_name}_w.{intr_logic} = \'0;\n'
+        s = f'{ind.b}if ({self.regbk_clr_affix}{intr_logic}_r) {SVRegbk.regintr_name}_w.{intr_logic} = \'0;\n'
         s += f'{ind.b}else begin\n'
         s += f'{ind[1]}{SVRegbk.regintr_name}_w.{intr_logic} = {SVRegbk.regintr_name}_r.{intr_logic};//TODO\n'
         s += f'{ind.b}end\n'

@@ -1,11 +1,13 @@
 from nicotb import *
 from SVparse import *
+from SVclass import *
 import os
 import itertools
 import numpy as np
 from nicotb.protocol import TwoWire
 from nicotb.protocol import OneWire 
 from nicotb.utils import RandProb
+ 
 class StructBus:
     "name , bw , dim , type , enum literals"
     def __init__ (self, structName,signalName,attrs, buses):
@@ -111,15 +113,19 @@ class StructBusCreator():
         return StructBus(self.structName,signalName,attrs,buses)
 global ck_ev
 class ProtoCreateBus ():
-    # this class member functions help createbuses, if you've already connected buses, 
-    # ArgParse is not needed
+    '''
+        this class member functions help createbuses, if you've already connected buses, 
+        ArgParse is not needed
+    '''
     def __init__(self):
         pass
     def ArgParse(self, protoCallback, portCallback,*args , clk  , **kwargs):
-        # args[0] is the data bus, it could be a list, ex: [hrdata,hwdata] in AHB
-        # portCallback should return list of buses for protocl buses
-        # protoCallback should create the protocal object, ex: TwoWire.Master
-        # see NicoProtocol inherited protobus classes
+        '''
+            args[0] is the data bus, it could be a list, ex: [hrdata,hwdata] in AHB
+            portCallback should return list of buses for protocl buses
+            protoCallback should create the protocal object, ex: TwoWire.Master
+            see NicoProtocol inherited protobus classes
+        '''
         kw = dict(kwargs)
         if len(args) == 0:
             self.data = kw['data'] 
@@ -173,6 +179,22 @@ class Busdict (EAdict):
     def SetTo(self,n):
         self.SetToN()
         [ x.SetTo(n) if isinstance(x,StructBus) else [s._value.fill(n) for s in x.signals] for x in self.dic.values() ]
+class NicoUtil():
+    def __init__(self):
+        FileParse( (False,TOPSV) )
+        self.test = TEST
+        self.testname = TEST.rsplit('_tb')[0]
+        self.fsdbname = self.testname + '_tb' #TODO
+        self.topfile  = SV.rstrip('.sv')
+        self.incfile  = INC
+        self.dutname = TESTMODULE 
+        self.dut = hiers.dic[self.dutname] if self.dutname else None
+        self.dutfile = hiers.dic[self.dutname+'_sv'] if self.dutname else None
+        self.hier = hiers.dic[HIER] if HIER != '' else None
+        self.regbkstr= hiers.dic[REGBK] if REGBK != '' else None
+        self.regbk= SVRegbk(self.regbkstr) if self.regbkstr else None
+        self.endcycle = 10000
+        self.SBC = StructBusCreator
 def clk_cnt():
 
     global n_clk

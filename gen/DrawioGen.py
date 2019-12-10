@@ -27,8 +27,8 @@ class DrawioGen(SVgen):
     textstyle_rec1 = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=15"
     textstyle_red = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#FF0505;" 
     textstyle_redleft = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#FF0505;" 
-    arrowstyle1 = "endArrow=block; endFill=1;fontSize=8;"
-    arrowboldstyle1 = "endArrow=classic;shape=flexArrow;fillColor=#000000;endWidth=4.938516283050313;endSize=2.5476510067114093;width=1.2080536912751678;"
+    arrowstyle1 = "endArrow=block; endFill=1;fontSize=8; html=1;"
+    arrowboldstyle1 = "endArrow=classic;shape=flexArrow;fillColor=#000000;endWidth=4.938516283050313;endSize=2.5476510067114093;width=1.2080536912751678; html=1;"
     def __init__(self, ind= Ind(0)):
         super().__init__()
         self.arrow_width = 50 
@@ -218,16 +218,18 @@ class DrawioGen(SVgen):
         port = self.Str2Blk ( self.ModulePortArrowStr, module, '1', flip)
         modblk = self.Str2Blk( self.ModuleBlockStr , module, '1', flip)
         return self.Genlist( [ (mxg,rt) , [indblk,port] , [indblk,modblk], rt, mxg] )
-    def DutPortToClip ( self, flip=False):
-        ToClip(self.InterfaceDiagramGen(g.dut,flip))
-    def DutPortToClipTwoSide ( self ):
+    def DutPortToClip ( self, module=None, flip=False):
+        m = self.dut if not module else module
+        ToClip(self.InterfaceDiagramGen(m,flip))
+    def DutPortToClipTwoSide ( self, module =None ):
+        m = self.dut if not module else module
         indblk = self.IndBlk()
         mxg = self.mxPageBlk()
         rt  = self.RootBlk()
-        port = self.Str2Blk ( self.ModulePortArrowStr, self.dut, '1', False)
-        modblk = self.Str2Blk( self.ModuleBlockStr , self.dut, '1', False)
-        portflip = self.Str2Blk ( self.ModulePortArrowStr, self.dut, '1', True)
-        modblkflip = self.Str2Blk( self.ModuleBlockStr , self.dut, '1', True)
+        port = self.Str2Blk ( self.ModulePortArrowStr, m, '1', False)
+        modblk = self.Str2Blk( self.ModuleBlockStr , m, '1', False)
+        portflip = self.Str2Blk ( self.ModulePortArrowStr, m, '1', True)
+        modblkflip = self.Str2Blk( self.ModuleBlockStr , m, '1', True)
         s = self.Genlist( [ (mxg,rt) , [indblk,port] , [indblk,modblk] ])
         self.center_y = self.prev_y_ofs + 10 
         s += self.Genlist( [  [indblk,portflip], [indblk,modblkflip], rt, mxg] )

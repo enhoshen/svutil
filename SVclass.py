@@ -54,6 +54,10 @@ class SVEnuml(SVclass):
         self.w = 20
         self.data = enuml
 class SVRegbk(): 
+    '''
+    Register bank information parsed from a *Regbk package
+        regfields: SVEnums
+    '''
     regfield_suf = '_regfield'
     default_suf  = '_DEFAULT'
     bw_suf  = '_BW'
@@ -69,6 +73,8 @@ class SVRegbk():
         self.pkg = pkg
         self.addrs = SVEnums ( pkg.enums[self.regaddr_name] )
         self.addrsdict = { x.name: x for x in self.addrs.enumls }
+        self.regaddrs = self.addrs
+        self.regaddrsdict = self.addrsdict
         self.regbw = pkg.params[self.regbw_name]
         self.regaddrbw = pkg.params[self.regaddrbw_name]
         self.regbsize = pkg.params[self.regbsize_name]
@@ -131,6 +137,32 @@ class SVRegbk():
             rw = cmt[1].lstrip().rstrip()
         return width, rw
             
+    def GetAddrNField(self, reg):
+        '''
+            Return the address and regfield given the register name
+            the address is multiplied by regaddrbw
+        '''
+        addr = self.regaddrsdict[reg].num * self.regbsize
+        regfield = self.regfields.get(reg)
+        nums = regfield.nums if regfield else [0]
+        names = regfield.names if regfield else None
+        return addr, nums, names 
+    def RegWrite(self, reg, datalst):
+        '''
+            Return the address ,packed data and register fields names given register name
+            and list of data of each register fields.
+        '''
+        addr, regnums, regnames = self.GetAddrNField(reg)
+        data = self.RegfieldPack(regnums, datalst)
+        return addr, data, regnames
+    def RegRead(self, reg, data):
+        '''
+            Return the address ,extracted data fields and register fields names given register name
+            and read data.
+        '''
+        addr, regnums, regnames = self.GetAddrNField(reg)
+        datalst = self.RegfieldPack(regnums, data)
+        return datalst, regnames 
     def ShowAddr(self, valuecb=hex):
         print ( f'{self.pkg.name:-^{3*self.w}}') #TODO name banner width
         SVEnuml().ShowField
@@ -139,3 +171,39 @@ class SVRegbk():
             i.ShowDataCb([None, hex, None])
     def ShowRegfield(self, name):
         pass
+    def RegfieldPack (self, regfieldlst, datalst):
+        '''
+            The function packs the provided data list
+            based on each fields to a data of bandwidth self.regbw.
+            regfieldlst consists of a list
+            Ex: [0,6,31]; the first data will be packed to data[5:0], then data[30:6] and data[31]
+            this list corresponds to self.regfield['reg name'].nums
+        '''
+        print(regfieldlst)
+        data = 0
+        try:
+            iterator = iter(datalst)
+        except TypeError:
+            datalst = [datalst]
+        else:
+            pass
+        for f, d in zip( regfieldlst, datalst):
+            msk = (1 << f) -1
+            data = (data & msk) + (d << f )
+        msk = ( 1 << self.regbw) -1 
+        data = data & msk
+        return data
+    def RegfieldExtract(self, regfieldlst, data):
+        '''
+            Given the regfield list and a data, extract each fields' bit slice
+            Co-test with RegfieldPack by:
+                datalst == g.regbk.RegfieldExtract( regfieldlst, g.regbk.RegfieldPack( regfieldlst, datalst))
+                Ex:g.regbk.RegfieldExtract( [0,5,17,30,31], g.regbk.RegfieldPack( [0, 5, 17, 30, 31], [31, 1033, 2033, 0, 1]))
+        '''
+        datalst = []
+        for s, e in zip(regfieldlst, regfieldlst[1:]+[self.regbw]):
+            print( s, e, e-s)
+            msk = ((1 << s) -1) ^ ((1 << e) -1) if s!=e else (1 << s)
+            print ( bin(msk))
+            datalst.append((data & msk) >> s)
+        return datalst[0] if len(datalst)==1 else datalst

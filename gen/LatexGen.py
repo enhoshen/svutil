@@ -7,6 +7,7 @@ from SVclass import *
 import itertools
 import numpy as np
 class LatexGen(SVgen):
+    # TODO $clog2 in latex
     def __init__(self):
         super().__init__()
         self.default_input_delay = 30
