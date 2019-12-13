@@ -58,10 +58,12 @@ class SVgen():
                 for v in strt:
                     o += self.Nextblk(v)
                     self.cur_ind-=1
-            elif  type(strt) == tuple:
+            elif type(strt) == tuple:
                 for i in strt:
                     next(i)
                     o += self.Nextblk(i)
+            elif type(strt) == str:
+                o += strt
             else :
                 o += self.Nextblk(strt)
         return o

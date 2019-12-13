@@ -11,7 +11,7 @@ class LatexGen(SVgen):
     def __init__(self):
         super().__init__()
         self.default_input_delay = 30
-        self.regbk= SVRegbk(self.regbkstr)
+        self.regbk= SVRegbk(self.regbkstr) if self.regbkstr else None
     def L_(self, s):
         return s.replace('_','\_')
     def ParameterStr(self , param):

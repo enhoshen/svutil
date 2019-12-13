@@ -118,10 +118,12 @@ class TestGen(SVgen):
         s +='import sys\n'
         s +='import os\n'
         s +='sys.path.append(os.environ.get(\'SVutil\'))\n'
+        s +='sys.path.append(os.environ.get(\'PROJECT_PATH\')+\'/sim\')\n'
         s +='from itertools import repeat\n'
         s +='from nicotb.primitives import JoinableFork\n'
         s +='from SVparse import SVparse,EAdict\n'
-        s +='from sim.NicoUtil import *\n'
+        s +='from sim.NicoUtil import *\n\n'
+        s +='TEST_CFG= os.environ.get(\'TEST_CFG\','')\n'
         s = s.replace('\n',f'\n{ind.b}') 
         yield s
     def PYbusinitGen(self,module):
