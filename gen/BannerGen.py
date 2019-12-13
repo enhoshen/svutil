@@ -45,17 +45,18 @@ class GanzinBanner(BannerGen):
         if suf == 'sv':
             s =  f'{ind.b}' + self.svcopyrightstr 
             s += f'{ind.b}' + self.svstatementstr
-        elif suf == 'py':
+        elif suf == 'py' or suf == 'Makefile':
             s =  f'{ind.b}' + self.pycopyrightstr 
             s += f'{ind.b}' + self.pystatementstr
+            
         s.replace ('\n', f'{ind.b}')
         s += f'{ind.b}{"//" if suf == "sv" else "#"} '
-        s += f' {self.name} {self.email}, {self.yyyy}\n'
+        s += f' {self.name} {self.email}, {self.yyyy}\n\n'
         yield s
     def IncGuardBlk(self):
         ind = self.cur_ind.Copy()
         yield ''
-        s  = f'\n{ind.b}`ifndef {self.IncGuardStr()}\n'
+        s  = f'{ind.b}`ifndef {self.IncGuardStr()}\n'
         s += f'{ind.b}`define {self.IncGuardStr()}\n\n'
         yield s 
         yield f'\n{ind.b}`endif // {self.IncGuardStr()}'
@@ -74,10 +75,12 @@ class GanzinBanner(BannerGen):
         return s
     def BanWrite(self, fr=None, overwrite=False):
         fpath = self.Write(self.BannerStr, fr, overwrite)
-        print ( "Banner attached to ", fpath)
+        if (os.path.isfile(fpath)):
+            print ( "Banner attached to ", fpath)
     def BanIncWrite(self, fr=None, overwrite=False):
         fpath = self.Write(self.BannerIncguardStr, fr, overwrite)
-        print ( "Banner, include guard attached to ", fpath)
+        if (os.path.isfile(fpath)):
+            print ( "Banner, include guard attached to ", fpath)
     def Write(self, strcallback=None, fr=None, overwrite=False):
         if not strcallback:
             strcallback = self.BannerStr
@@ -87,12 +90,16 @@ class GanzinBanner(BannerGen):
             self.FileReg(fr)
         if not overwrite and os.path.isfile(self.filepath):
             print( "file exists, make a copy, rename the file right away")
-            fpath = self.genpath + self.filename +'_'+ time.strftime('%m%d%H') + '.' + self.filesuf
+            fpath = self.genpath + self.filename +'_'+ time.strftime('%m%d%H')
+            if self.filesuf:
+                fpath += '.' + self.filesuf
         else:
             fpath = self.filepath
-        s = strcallback(fr, self.filesuf)
-        f = open( fpath, 'w')
-        f.write(s)
+        _suf = 'Makefile' if self.filename == 'Makefile' else self.filesuf
+        if (os.path.isfile(fpath)):
+            s = strcallback(fr, _suf)
+            f = open( fpath, 'w')
+            f.write(s)
         return fpath
     def FolderBanWrite(self, _dir='.', overwrite=False):
         for f in os.listdir(_dir):

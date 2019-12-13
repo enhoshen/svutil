@@ -6,9 +6,12 @@ from SVgen import *
 from SVclass import *
 import itertools
 import numpy as np
+from functools import reduce
 class TestGen(SVgen):
     def __init__(self, ind=Ind(0)):
         super().__init__()
+        self.intrev = ( 'intr_ev', 'intr_any')
+        self.eventlst = [self.intrev]
     def TbSVGen(self): 
         ind = self.cur_ind.Copy() 
         yield ''
@@ -20,7 +23,14 @@ class TestGen(SVgen):
         s += 'module ' + TOPMODULE + ';\n'
         s = s.replace('\n',f'\n{ind.b}')
         yield s
-        s = f'\nlogic {self.clkstr}, {self.rststr};\n`Pos(rst_out, {self.rststr})\n' +f'`PosIf(ck_ev , {self.clkstr}, {self.rststr})\n' + '`WithFinish\n\n' 
+        s = f'\nlogic {self.clkstr}, {self.rststr};\n'
+        s += f'`Pos(rst_out, {self.rststr})\n' 
+        s += f'`PosIf(ck_ev , {self.clkstr}, {self.rststr})\n' 
+        ev_lst = reduce( (lambda x,y: str(x[1])+', '+str(y[1])), self.eventlst + [("","")])[0:-2]
+        s += f'logic {ev_lst};\n'
+        for ev in self.eventlst:
+            s += f'`PosIf({ev[0]}, {ev[1]}, {self.rststr})\n' 
+        s += f'`WithFinish\n\n' 
         s += f'always #`{self.hclkmacro} {self.clkstr}= ~{self.clkstr};\n\n'
         s += f'initial begin'
         s = s.replace('\n',f'\n{ind[1]}')
@@ -106,7 +116,13 @@ class TestGen(SVgen):
         s += f'{ind.b}from nicotb import *\n'
         s += f'{ind.b}import numpy as np \n'
         yield s
-        s =  f'{ind.b}rst_out, ck_ev = CreateEvents(["rst_out" , "ck_ev"])\n\n'
+        s =  f'{ind.b}rst_out, ck_ev, intr_ev = CreateEvents(["rst_out", "ck_ev", "intr_ev"])\n'
+        print(self.eventlst)
+        ev_lst = reduce( lambda x,y: str(x[0])+', '+str(y[0]), self.eventlst + [("","")])[0:-2]
+        print(ev_lst)
+        ev_lst_str = reduce( (lambda x,y: f'"{str(x[0])}", '+f'"{str(y[0])}"'), self.eventlst +[("","")])[0:-4]
+        print(ev_lst_str)
+        s += f'{ind.b}{ev_lst} = CreateEvents([{ev_lst_str}])\n\n'
         s += f'{ind.b}RegisterCoroutines([\n'
         s += f'{ind[1]}main()\n'
         s += f'{ind.b}])'
