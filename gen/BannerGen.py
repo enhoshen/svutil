@@ -42,16 +42,19 @@ class GanzinBanner(BannerGen):
     def BannerBlk(self, suf='sv'):
         ind = self.cur_ind.Copy()
         yield ''
+        s =''
         if suf == 'sv':
             s =  f'{ind.b}' + self.svcopyrightstr 
             s += f'{ind.b}' + self.svstatementstr
+            s.replace ('\n', f'{ind.b}')
+            s += f'{ind.b}//'
+            s += f' {self.name} {self.email}, {self.yyyy}\n\n'
         elif suf == 'py' or suf == 'Makefile':
             s =  f'{ind.b}' + self.pycopyrightstr 
             s += f'{ind.b}' + self.pystatementstr
-            
-        s.replace ('\n', f'{ind.b}')
-        s += f'{ind.b}{"//" if suf == "sv" else "#"} '
-        s += f' {self.name} {self.email}, {self.yyyy}\n\n'
+            s.replace ('\n', f'{ind.b}')
+            s += f'{ind.b}#'
+            s += f' {self.name} {self.email}, {self.yyyy}\n\n'
         yield s
     def IncGuardBlk(self):
         ind = self.cur_ind.Copy()
@@ -63,17 +66,31 @@ class GanzinBanner(BannerGen):
     def BannerStr(self, fr, suf='sv'):
         fr = open(fr, 'r')
         ban = self.BannerBlk(suf)
-        fstr = fr.read()
+        try:
+            fstr = fr.read()
+        except:
+            print('file read not supported')
+            return None
         s = self.Genlist( [(ban,), fstr] )
         return s
     def BannerIncguardStr(self, fr, suf='sv'):
         fr = open(fr, 'r')
         ban = self.BannerBlk(suf)
         incg = self.IncGuardBlk()
-        fstr = fr.read()
+        try:
+            fstr = fr.read()
+        except:
+            print('file read not supported')
+            return None
         s = self.Genlist( [(ban,), (incg,), fstr, incg] )
         return s
     def BanWrite(self, fr=None, overwrite=False):
+        '''
+            Write Banner at the start of the file
+            Arguments:
+                fr = file name
+                overwrite = True to write to the file, False to generate a new one
+        '''
         fpath = self.Write(self.BannerStr, fr, overwrite)
         if (os.path.isfile(fpath)):
             print ( "Banner attached to ", fpath)
@@ -82,10 +99,14 @@ class GanzinBanner(BannerGen):
         if (os.path.isfile(fpath)):
             print ( "Banner, include guard attached to ", fpath)
     def Write(self, strcallback=None, fr=None, overwrite=False):
+        '''
+            Utility to write strings to files
+        '''
         if not strcallback:
             strcallback = self.BannerStr
         if not fr:
             print('specify a file')
+            return
         else:
             self.FileReg(fr)
         if not overwrite and os.path.isfile(self.filepath):
@@ -98,13 +119,29 @@ class GanzinBanner(BannerGen):
         _suf = 'Makefile' if self.filename == 'Makefile' else self.filesuf
         if (os.path.isfile(fpath)):
             s = strcallback(fr, _suf)
+            if not s:
+                print('un-supported files or something went wrong')
+                return ''
             f = open( fpath, 'w')
             f.write(s)
         return fpath
     def FolderBanWrite(self, _dir='.', overwrite=False):
+        '''
+            Write Banner to every files of provided folder _dir
+                Arguments:
+                    _dir = folder path
+                    overwrite = True to write to the file, False to generate a new one
+        '''
         for f in os.listdir(_dir):
             self.BanWrite(_dir+'/'+f, overwrite)
     def FolderBanIncWrite(self, _dir='.', overwrite=False):
+        '''
+            Write Banner and include guard to every files of the provided folder _dir
+            This is meant for .sv files.
+                Arguments:
+                    _dir = folder path
+                    overwrite = True to write to the file, False to generate a new one
+        '''
         for f in os.listdir(_dir):
             self.BanIncWrite(_dir+'/'+f, overwrite)
 if __name__ == '__main__':

@@ -24,6 +24,7 @@ class TestGen(SVgen):
         s = s.replace('\n',f'\n{ind.b}')
         yield s
         s = f'\nlogic {self.clkstr}, {self.rststr};\n'
+        s += f'int clk_cnt;\n'
         s += f'`Pos(rst_out, {self.rststr})\n' 
         s += f'`PosIf(ck_ev , {self.clkstr}, {self.rststr})\n' 
         ev_lst = reduce( (lambda x,y: str(x[1])+', '+str(y[1])), self.eventlst + [("","")])[0:-2]
@@ -32,13 +33,14 @@ class TestGen(SVgen):
             s += f'`PosIf({ev[0]}, {ev[1]}, {self.rststr})\n' 
         s += f'`WithFinish\n\n' 
         s += f'always #`{self.hclkmacro} {self.clkstr}= ~{self.clkstr};\n\n'
+        s += f'always #(2*`{self.hclkmacro}) clk_cnt = clk_cnt+1;\n\n'
         s += f'initial begin'
         s = s.replace('\n',f'\n{ind[1]}')
         _s =  f'\n$fsdbDumpfile("{self.fsdbname}.fsdb");\n' 
         _s +=  f'$fsdbDumpvars(0,{TEST},"+all");\n'
         _s +=  f'{self.clkstr} = 0;\n' + f'{self.rststr} = 1;\n'
         _s +=  '#1 `NicotbInit\n' 
-        _s +=  '#10 rst = 0;\n' +  '#10 rst = 1;\n'
+        _s +=  '#10 rst = 0;\n' +  '#10 rst = 1;\n' + 'clk_cnt = 0;\n'
         _s +=  f'#(2*`{self.hclkmacro+"*`"+self.endcyclemacro}) $display("timeout");\n'
         _s +=  '`NicotbFinal\n' +  '$finish;'
         _s = _s.replace('\n',f'\n{ind[2]}')
@@ -139,7 +141,7 @@ class TestGen(SVgen):
         s +='from nicotb.primitives import JoinableFork\n'
         s +='from SVparse import SVparse,EAdict\n'
         s +='from sim.NicoUtil import *\n\n'
-        s +='TEST_CFG= os.environ.get(\'TEST_CFG\','')\n'
+        s +='TEST_CFG= os.environ.get(\'TEST_CFG\',None)\n'
         s = s.replace('\n',f'\n{ind.b}') 
         yield s
     def PYbusinitGen(self,module):
@@ -168,7 +170,7 @@ class TestGen(SVgen):
         s += f'{ind.b}def main():\n'
         s += f'{ind[1]}buses = BusInit()\n'
         s += f'{ind[1]}buses.SetToN()\n'
-        s += f'{ind[1]}buses.Write() #don\' use this afterward if you\'re not sure what you\'re doing\n'
+        s += f'{ind[1]}buses.Write() #don\'t use this afterward if you\'re not sure what you\'re doing\n'
         s += f'{ind[1]}yield rst_out\n'
         s += f'{ind[1]}#j = []\n' 
         s += f'{ind[1]}#for jj in j:\n'

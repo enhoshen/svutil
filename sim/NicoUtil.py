@@ -78,13 +78,13 @@ class StructBusCreator():
     structlist = {'logic':[],'enum':[]}
     def __init__ ( self, structName , attrs):
         for memb in attrs:
-            assert self.structlist.get(memb[3] ) != None , "change the declaration order"
+            assert self.structlist.get(memb[3] ) != None , f"can't find type {memb[3]}; probably use StructBusCreator.AllTypes()?"
         if self.structlist.get(structName) == None:
             self.structlist[structName] = self
         self.structName = structName
         self.attrs = attrs
     @classmethod
-    def Alltypes(cls):
+    def AllTypes(cls):
         FileParse()
         for h in SVparse.hiers.values():
             for k,v in h.types.items():
