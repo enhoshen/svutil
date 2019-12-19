@@ -63,9 +63,14 @@ class TestGen(SVgen):
         pfield = SVhier.portfield 
         for p in module.ports:
             if p[pfield.tp] == 'logic' or p[pfield.tp] == 'signed logic':
-                s += f'{ind.b}{p[pfield.tp]} {p[pfield.bwstr]} {p[pfield.name]} {p[pfield.dimstr]};\n'
+                s += f'{ind.b}{p[pfield.tp]} {p[pfield.bwstr]} {p[pfield.name]}'
             else:
-                s += f'{ind.b}{p[pfield.tp]} {p[pfield.name]} {p[pfield.dimstr]};\n' 
+                s += f'{ind.b}{p[pfield.tp]} {p[pfield.name]}'
+            if  not p[pfield.dimstr] == '':
+                s += f' {p[pfield.dimstr]};\n'
+            else:
+                s += ';\n'
+            
         yield s
     def ParamGen(self , module , **conf):
         ind = self.cur_ind.Copy()
