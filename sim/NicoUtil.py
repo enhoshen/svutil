@@ -8,7 +8,7 @@ from nicotb.protocol import TwoWire
 from nicotb.protocol import OneWire 
 from nicotb.utils import RandProb
  
-class StructBus:
+class StructBus():
     "name , bw , dim , type , enum literals"
     def __init__ (self, structName,signalName,attrs, buses):
         self.structName= structName
@@ -78,7 +78,9 @@ class StructBusCreator():
     structlist = {'logic':[],'enum':[]}
     def __init__ ( self, structName , attrs):
         for memb in attrs:
-            assert self.structlist.get(memb[3] ) != None , f"can't find type {memb[3]}; probably use StructBusCreator.AllTypes()?"
+            assert self.structlist.get(memb[3] ) != None , f"can't find type {memb[3]}; \
+                                                            \n  (1)change the declartion of the type/import\
+                                                            \n  (2)probably use StructBusCreator.AllTypes()?"
         if self.structlist.get(structName) == None:
             self.structlist[structName] = self
         self.structName = structName
@@ -94,23 +96,36 @@ class StructBusCreator():
         FileParse( (False,TOPSV) )
         for T in SVparse.hiers[TOPMODULE].Types: # TOPMODULE defined in SVparse
             for k,v in T.items():
+                print(k,v)
                 StructBusCreator(k,v)
     @classmethod
-    def Get(cls,t,name,hier=''):
-        return cls.structlist[t].CreateStructBus(name,hier)
+    def Get(cls,t,name,hier='',dim=()):
+        if dim == ():
+            return cls.structlist[t].CreateStructBus(name,hier,dim)
+        else:
+            return cls.structlist[t].MDACreateStructBus(name,hier,dim)
     def CreateStructBus (self, signalName , hier='',DIM=() ):
         #buses = {'logic' :  CreateBus( self.createTuple(signalName) )}
         buses = []
         attrs = self.structlist[self.structName].attrs
         for  n , bw, dim ,t ,*_ in attrs :
-            
             if t=='logic':
+                print(hier)
                 buses.append ( CreateBus( ((hier, signalName+'.'+n ,DIM+dim),) ) )
             elif t == 'enum':
                 buses.append ( CreateBus( ((hier, signalName , DIM+dim ),) ) )
             else:
                 buses.append ( self.structlist[t].CreateStructBus( signalName+'.'+n , hier, DIM+dim ) )
         return StructBus(self.structName,signalName,attrs,buses)
+    def MDACreateStructBus ( self, signalName, hier='', DIM=()):
+        buses = []
+        if DIM == ():
+            buses.append (self.CreateStructBus(signalName,hier,DIM))
+        else:
+            for d in range(DIM[0]):
+                print ( signalName)
+                buses.append( self.MDACreateStructBus(signalName+f'[{d}]', hier, DIM[1:])  )
+        return buses
 global ck_ev
 class ProtoCreateBus ():
     '''
@@ -164,21 +179,29 @@ class ProtoCreateBus ():
     def values(self):
         return [ x.values for x in self.data]
 class Busdict (EAdict):
+    def Flatten(self, lst):
+        return self.Flatten(lst[0]) + (self.Flatten(lst[1:]) if len(lst) > 1 else []) if type(lst) == list else [lst]
     def Read(self):
-        [ x.Read() for x in self.dic.values() ]
+        [ [i.Read() for i in self.Flatten(x)] if type(x) == list\
+         else x.Read() for x in self.dic.values() ]
     def Write(self, *lst, imm=False, ):
         if not lst:
-            [ x.Write(imm=imm) for x in self.dic.values() ]
+            [ [i.Write(imm=imm) for i in self.Flatten(x)] if type(x) == list\
+                else x.Write(imm=imm) for x in self.dic.values() ]
         else:
             if len(lst)==1 and type(lst[0])==list:
-                [ self.dic[x].Write(imm=imm) for x in lst[0] ]
+                [ [i.Write(imm=imm) for i in self.Flatten(self.dic[x])] if type(self.dic[x]) == list\
+                    else  self.dic[x].Write(imm=imm) for x in lst[0] ]
             else:
-                [ self.dic[x].Write(imm=imm) for x in lst ]
+                [ [i.Write(imm=imm) for i in self.Flatten(self.dic[x])] if type(self.dic[x]) == list\
+                    else  self.dic[x].Write(imm=imm) for x in lst ]
     def SetToN(self):
-        [ x.SetToN() if isinstance(x,StructBus) else [s._x.fill(0) for s in x.signals]  for x in self.dic.values()]
+        [ [i.SetToN() for i in self.Flatten(x)] if type(x) == list\
+            else  x.SetToN() if isinstance(x,StructBus) else [s._x.fill(0) for s in x.signals]  for x in self.dic.values()]
     def SetTo(self,n):
         self.SetToN()
-        [ x.SetTo(n) if isinstance(x,StructBus) else [s._value.fill(n) for s in x.signals] for x in self.dic.values() ]
+        [ [i.SetTo(n) for i in self.Flatten(x)] if type(x) == list\
+            else  x.SetTo(n) if isinstance(x,StructBus) else [s._value.fill(n) for s in x.signals] for x in self.dic.values() ]
 class NicoUtil():
     def __init__(self):
         FileParse( (False,TOPSV) )

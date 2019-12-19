@@ -50,6 +50,8 @@ class SVhier ():
         self.params = {}
         self.paramsdetail = {}
         self.types = {}
+        self.macros = {}
+
         self.child = {}
         self.paramports = {} 
         self.ports = []
@@ -91,6 +93,15 @@ class SVhier ():
         else:
             _l = self._scope.Types
             _l.appendleft(self.types)
+            return _l
+    @property
+    def Macros(self):
+        if self._scope == None:
+            _l = deque([h.macros for _ , h in self.child.items()] )
+            return _l 
+        else:
+            _l = self._scope.Types
+            _l.appendleft(self.macros)
             return _l
     ########################
     # types
@@ -135,6 +146,13 @@ class SVhier ():
         w =30 
         print(f'{self.hier+" All Parameters":-^{2*w}}')
         self.ParamStr(self.AllParam, w)
+        return None
+    @property
+    def ShowParamsDetail(self):
+        w = 20 
+        print(f'{self.hier+" All Parameters detail":-^{2*w}}')
+        self.FieldStr(self.paramfield,w)
+        self.DictStr(self.paramsdetail,w)
         return None
     @property
     def ShowAllParamsDetail(self):
@@ -210,6 +228,7 @@ class SVhier ():
         
 class SVparse():
     # One SVparse object one file, and it's also SVhier
+    verbose = 0
     parsed = False
     package = {}
     hiers = {}
@@ -251,7 +270,7 @@ class SVparse():
                         'typedef':self.TypedefParse , 'struct':self.StructParse  , 'package':self.HierParse , 'enum': self.EnumParse,\
                         'module':self.HierParse , 'import':self.ImportParse, 'input':self.PortParse , 'output':self.PortParse,\
                         '`include':self.IncludeRead ,'`rdyack_input':self.RdyackParse, '`rdyack_output':self.RdyackParse,\
-                        'always_ff@': self.RegisterParse, 'always_ff': self.RegisterParse}
+                        'always_ff@': self.RegisterParse, 'always_ff': self.RegisterParse, '`define':self.DefineParse}
     @classmethod
     def ParseFiles(cls , paths=[(True,INC)] ):
         for p in paths:
@@ -297,7 +316,7 @@ class SVparse():
                 continue 
             _w = _s.lsplit()
             _catch = None
-            if _w in {'typedef','package','import','module','`include'}:
+            if _w in {'typedef','package','import','module','`include', '`define'}:
                 self.cur_key = _w
                 _catch = self.keyword[_w](_s,self.lines) 
     def IncludeRead( self, s , lines):
@@ -513,6 +532,25 @@ class SVparse():
                 _catch = self.keyword[_w](s,lines)
                 self.cur_key = _k
         self.cur_hier = self.cur_hier.scope   
+    def DefineParse ( self, s, lines):
+        func, args = s.FunctionParse() 
+        _s = s.s
+        while True:
+            if s == None or s.End():
+                break        
+            else:
+                if s.s[-1] == '\\':
+                    s, self.cur_cmt = self.Rdline(lines)
+                    _s += s.s
+                    continue
+                else:
+                    break
+        if self.verbose:
+            print(_s)
+        _s = _s.replace('\\','')
+        self.cur_hier.macros [func] = (args, _s)
+        print( func, args, _s)
+        pass
     def PortFlag(self , w ):
         if ';' in w and self.flag_port =='':
             self.flag_port = 'end' 
@@ -566,6 +604,7 @@ class SVparse():
 class SVstr():
     sp_chars = ['=','{','}','[',']','::',';',',','(',')','#']
     op_chars = ['+','-','*','/','(',')']
+    verbose = 0
     def __init__(self,s):
         self.s = s
     def __repr__(self):
@@ -668,10 +707,17 @@ class SVstr():
         if _step == len(rules) :
             return
     def FunctionParse(self):
+        if self.verbose:
+            print(self.End())
         func = self.lsplit()
-        _s , self.s = self.split(')',maxsplit=1)
-        args = SVstr(_s).ReplaceSplit(['(',','])
-        return func,args
+        if self.End():
+            return func , []
+        if self.s[0] == '(':
+            _s , self.s = self.split(')',maxsplit=1)
+            args = SVstr(_s).ReplaceSplit(['(',','])
+            return func,args
+        else:
+            return func, []
     def NumParse(self,params):
         # split the equal sign at the start of the string
         # return left string as num, meaning that it converts
@@ -744,6 +790,8 @@ class SVstr():
         except(TypeError):
             print('Slice2num fail, TypeError')
             print (self.s)
+    def MacroExpand(self, macros):
+        pass
     def DeleteList(self,clist):
         _s = self.s
         for c in clist:
@@ -760,6 +808,7 @@ class SVstr():
         return st in self.s
     def End(self):
         return self.s==''
+    
 def ParseFirstArgument():
     import sys
     SVparse.ParseFiles([(True,sys.argv[1])])
@@ -891,4 +940,6 @@ if __name__ == '__main__':
     #for i in SVparse.hiers.keys():
     #    print (i)
     #print(SVparse.hiers['PECtlCfg'])
+    SVstr.verbose = 1
+    SVparse.verbose = 1
     ParseFirstArgument()

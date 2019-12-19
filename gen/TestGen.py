@@ -156,15 +156,18 @@ class TestGen(SVgen):
         s += f'{ind.b}def BusInit():\n'
         s += f'{ind[1]}SBC = StructBusCreator\n'
         s += f'{ind[1]}SBC.TopTypes()\n'
+        s += f'{ind[1]}#SBC.AllTypes()\n'
         s += f'{ind[1]}dic = {{}}\n'
         for p in module.ports:
-            pfield = SVhier.portfield
-            tp = p[pfield.tp]
+            #portfield =  EAdict( [ 'direction' , 'name' , 'dim' , 'tp' , 'bw' , 'bwstr', 'dimstr' ] )
+            p = SVPort(p)
+            tp = p.tp
             if tp == 'logic' or tp == 'signed logic':
-                s += f'{ind[1]}dic[\'{p[pfield.name]}\'] = '
-                s += f'CreateBus(( (\'\', \'{p[pfield.name]}\', {p[pfield.dim]},),  ))\n'
+                s += f'{ind[1]}dic[\'{p.name}\'] = '
+                s += f'CreateBus(( (\'\', \'{p.name}\', {p.dim},),  ))\n'
             else:
-                s += f'{ind[1]}dic[\'{p[1]}\'] = SBC.Get(\'{p[3]}\' , \'{p[1]}\')\n'     
+                s += f'{ind[1]}dic[\'{p.name}\'] = SBC.Get(\'{p.tp}\' , \'{p.name}\', dim={p.dim})\n'     
+                #TODO macro....
         s += f'{ind[1]}return Busdict(dic) # access by name without quotes\n'
         yield s
             
