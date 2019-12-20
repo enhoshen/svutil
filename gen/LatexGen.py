@@ -73,27 +73,29 @@ class LatexGen(SVgen):
             s += f'{ind.b}\\signal{{ {name} }} {{{io}}} {{ \n'
             s += f'{ind[1]}\\signalDES{{ {desp} {ind[1]}}} {{ {width} }} {{ {active} }} {{ {clk} }} {{ No }} {{ {delay}\\%}}  }}\n'
         return s
-    def RegMemMapStr(self, reg, reg_bsize=4, reg_slices=None, reg_defaults=None): #reg is a SVEnuml object
+    def RegMemMapStr(self, reg, reg_bsize=4, reg_slices=None, reg_defaults=None, reg_bw=None, reg_bw_str=None, rw=None): #reg is a SVEnuml object
         ind = Ind(1)
         name = reg.name.replace('_','\_')
         ofs  = reg.num*reg_bsize
-        cmt = reg.cmt 
-        width = ''
-        rw = ''
-        if len(cmt) >= 2:
-            width= cmt[0].lstrip().rstrip()
-            rw = cmt[1].lstrip().rstrip()
         s = f'{ind.b}\\memmap{{\\hyperref[subsubsec:{reg.name.lower()}]{{{name}}}}}'
-        s += f'{{{hex(ofs).upper().replace("X","x")}}}{{{width}}}{{{rw}}}{{\n'
+        s += f'{{{hex(ofs).upper().replace("X","x")}}}{{{reg_bw}}}{{{rw}}}{{\n'
         s += f'{ind[1]}\\memDES{{\n'
         s += f'{ind[1]}}}{{\n'
         reg_slices = self.RegSliceList(reg_slices) if reg_slices else None
         if reg_slices and reg_slices[0][0] == SVRegbk.reserved_name:
             reg_slices.pop(0)
-        if reg_slices and reg_defaults:
-            for _slice, _default in zip ( reg_slices, reg_defaults):
-                s += f'{ind[2]}{{[{_slice[1]}]}}: {_default}\\\\\n'
-            s = s[:-2]+'\n'
+        if reg_defaults:
+            if reg_slices :
+                for _slice, _default in zip ( reg_slices, reg_defaults):
+                    s += f'{ind[2]}{{[{_slice[1]}]}}: {_default}\\\\\n'
+                s = s[:-2]+'\n'
+            else:
+                try:
+                    reg_bw_str = int(reg_bw_str)-1
+                    reg_bw_str = '0' if reg_bw_str == 0 else f'{reg_bw_str}:0' 
+                except: 
+                    reg_bw_str = f'{reg_bw_str}-1:0'
+                s += f'{ind[2]}{{[{reg_bw_str}]}}: {reg_defaults[0]}\\\\\n'
         else:
             reset = '\\TODO' if len(cmt) < 3 else cmt[2] 
             reset = self.L_(self.Lbrac(reset))
@@ -166,8 +168,14 @@ class LatexGen(SVgen):
         regbk = SVRegbk(pkg) if pkg and type(pkg)==str else self.regbk
         for reg in regbk.addrs.enumls:
             reg_slices = regbk.regslices.get(reg.name)
-            defaults = regbk.GetDefaultsStr(reg.name)
-            s += self.RegMemMapStr(reg, regbk.regbsize, reg_slices, defaults ) 
+            defaults = self.Str2Lst(regbk.GetDefaultsStr(reg.name))
+            reg_bw = regbk.params.get(f'{reg.name}_BW')
+            reg_bw = reg_bw.num if reg_bw else None
+            reg_bw_str = self.L_(regbk.GetBWStr(reg.name))
+            width, rw = regbk.GetAddrCmt(reg.name) 
+            reg_bw = width if not reg_bw else reg_bw
+            reg_bw_str = width if not reg_bw_str else reg_bw_str
+            s += self.RegMemMapStr(reg, regbk.regbsize, reg_slices, defaults, reg_bw, reg_bw_str, rw ) 
         ToClip(s)
         return s
     def RegFieldDescription(self, pkg=None):
@@ -176,10 +184,12 @@ class LatexGen(SVgen):
         for reg in regbk.regfields:
             ofs = regbk.addrsdict[reg].num*regbk.regbsize
             ofs = hex(ofs).upper().replace('X', 'x')
+            reg_bw = self.L_(regbk.GetBWStr(reg))
             width, rw = regbk.GetAddrCmt(reg) 
-            s += self.RegFieldSubSec( reg, ofs, width, rw) 
+            reg_bw = width if not reg_bw else reg_bw
+            s += self.RegFieldSubSec( reg, ofs, reg_bw+'b', rw) 
             s += self.RegFieldStr ( reg, regbk.regslices[reg], regbk.regtypes[reg], regbk.regmembtypes[reg], \
-                                    regbk.GetDefaultsStr(reg), rw)
+                                    self.Str2Lst(regbk.GetDefaultsStr(reg)), rw)
             s += '\n'
         ToClip(s)
         return s
@@ -198,5 +208,9 @@ class LatexGen(SVgen):
         return s.replace('[','{[').replace(']', ']}')
     def L_ (self, s):
         return s.replace('_', '\_')
+    def Str2Lst(self,s):
+        s = self.L_(s)
+        s = SVstr(s).ReplaceSplit([',','{','}'])
+        return s
 if __name__ == '__main__':
     g = LatexGen()

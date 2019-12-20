@@ -123,7 +123,7 @@ class TestGen(SVgen):
         s += f'{ind.b}from nicotb import *\n'
         s += f'{ind.b}import numpy as np \n'
         yield s
-        s =  f'{ind.b}rst_out, ck_ev, intr_ev = CreateEvents(["rst_out", "ck_ev", "intr_ev"])\n'
+        s =  f'{ind.b}rst_out, ck_ev = CreateEvents(["rst_out", "ck_ev"])\n'
         print(self.eventlst)
         ev_lst = reduce( lambda x,y: str(x[0])+', '+str(y[0]), self.eventlst + [("","")])[0:-2]
         print(ev_lst)

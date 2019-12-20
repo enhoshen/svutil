@@ -33,10 +33,10 @@ class SVgen():
         self.topfile  = SV.rstrip('.sv')
         self.incfile  = INC
         self.dutname = TESTMODULE 
-        self.dut = hiers.dic[self.dutname]
-        self.dutfile = hiers.dic[self.dutname+'_sv']
-        self.hier = hiers.dic[HIER] if HIER != '' else None
-        self.regbkstr= hiers.dic[REGBK] if REGBK != '' else None
+        self.dut = hiers.dic.get(self.dutname)
+        self.dutfile = hiers.dic.get(self.dutname+'_sv')
+        self.hier = hiers.dic.get(HIER) 
+        self.regbkstr= hiers.dic.get(REGBK)
         self.genpath = './'
         self.endcycle = 10000
         self.cond = {} # syn 2ns test name etc.

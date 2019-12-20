@@ -96,7 +96,6 @@ class StructBusCreator():
         FileParse( (False,TOPSV) )
         for T in SVparse.hiers[TOPMODULE].Types: # TOPMODULE defined in SVparse
             for k,v in T.items():
-                print(k,v)
                 StructBusCreator(k,v)
     @classmethod
     def Get(cls,t,name,hier='',dim=()):
@@ -110,7 +109,6 @@ class StructBusCreator():
         attrs = self.structlist[self.structName].attrs
         for  n , bw, dim ,t ,*_ in attrs :
             if t=='logic':
-                print(hier)
                 buses.append ( CreateBus( ((hier, signalName+'.'+n ,DIM+dim),) ) )
             elif t == 'enum':
                 buses.append ( CreateBus( ((hier, signalName , DIM+dim ),) ) )
@@ -120,12 +118,11 @@ class StructBusCreator():
     def MDACreateStructBus ( self, signalName, hier='', DIM=()):
         buses = []
         if DIM == ():
-            buses.append (self.CreateStructBus(signalName,hier,DIM))
+            return self.CreateStructBus(signalName,hier,DIM)
         else:
             for d in range(DIM[0]):
-                print ( signalName)
                 buses.append( self.MDACreateStructBus(signalName+f'[{d}]', hier, DIM[1:])  )
-        return buses
+            return buses
 global ck_ev
 class ProtoCreateBus ():
     '''

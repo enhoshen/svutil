@@ -550,7 +550,6 @@ class SVparse():
         _s = _s.replace('\\','')
         self.cur_hier.macros [func] = (args, _s)
         print( func, args, _s)
-        pass
     def PortFlag(self , w ):
         if ';' in w and self.flag_port =='':
             self.flag_port = 'end' 
@@ -791,7 +790,18 @@ class SVstr():
             print('Slice2num fail, TypeError')
             print (self.s)
     def MacroExpand(self, macros):
-        pass
+        _s = self.s
+        exp = _s
+        reobj = re.search( r'`\w+\b', _s )
+        if reobj:
+            span = reobj.span()
+            m = _s[span[0]+1:span[1]]
+            m = self.macros[m] 
+            for a in m[0]:
+                arg = SVstr().MacroExpand(macros) 
+                #TODO pass the entire argument string ex: test( a+b  ,c) pass ' a+b  ' to MacroExpand
+                re.sub(rf'(\b|(``)){a}(\b(``)|\b)', arg , exp)
+        return exp 
     def DeleteList(self,clist):
         _s = self.s
         for c in clist:
