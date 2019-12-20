@@ -533,7 +533,7 @@ class SVparse():
                 self.cur_key = _k
         self.cur_hier = self.cur_hier.scope   
     def DefineParse ( self, s, lines):
-        func, args = s.FunctionParse() 
+        name, args = s.FunctionParse() 
         _s = s.s
         while True:
             if s == None or s.End():
@@ -548,8 +548,11 @@ class SVparse():
         if self.verbose:
             print(_s)
         _s = _s.replace('\\','')
-        self.cur_hier.macros [func] = (args, _s)
-        print( func, args, _s)
+        func = lambda *_args: reduce( lambda x,y: \
+                                re.sub( rf'(\b|(``)){y[1]}(\b(``)|\b)', str(y[0]),x )\
+                                , [i for i in zip(_args,args)], _s )
+        self.cur_hier.macros[name] = (args, _s, func)
+        print (re.sub( rf'(\b|(``))b(\b(``)|\b)','2',re.sub(rf'(\b|(``))a(\b(``)|\b)', '1', _s) ))
     def PortFlag(self , w ):
         if ';' in w and self.flag_port =='':
             self.flag_port = 'end' 
@@ -792,16 +795,22 @@ class SVstr():
     def MacroExpand(self, macros):
         _s = self.s
         exp = _s
-        reobj = re.search( r'`\w+\b', _s )
-        if reobj:
-            span = reobj.span()
-            m = _s[span[0]+1:span[1]]
-            m = self.macros[m] 
-            for a in m[0]:
-                arg = SVstr().MacroExpand(macros) 
-                #TODO pass the entire argument string ex: test( a+b  ,c) pass ' a+b  ' to MacroExpand
-                re.sub(rf'(\b|(``)){a}(\b(``)|\b)', arg , exp)
-        return exp 
+        reobj = True
+        while reobj:
+            print(exp)
+            reobj = re.search( r'`(\w+)\b', exp )
+            if reobj:
+                m0 = reobj.group(0)
+                m = reobj.group(1)
+                if macros[m][0] == []:
+                    exp = re.sub(rf'{m0}\b', f'macros[\'{m}\'][2]()', exp) 
+                else:
+                    exp = re.sub(rf'{m0}\b', f'macros[\'{m}\'][2]', exp) 
+        print(exp)
+        #try:
+        return eval(ps.expr(exp).compile('file.py'))
+        #except:
+        #    print('macro expansion error')
     def DeleteList(self,clist):
         _s = self.s
         for c in clist:
