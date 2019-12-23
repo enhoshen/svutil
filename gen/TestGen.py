@@ -147,6 +147,7 @@ class TestGen(SVgen):
         s +='from SVparse import SVparse,EAdict\n'
         s +='from sim.NicoUtil import *\n\n'
         s +='TEST_CFG= os.environ.get(\'TEST_CFG\',None)\n'
+        s +='Nico = NicoUtil() \n'
         s = s.replace('\n',f'\n{ind.b}') 
         yield s
     def PYbusinitGen(self,module):
@@ -162,11 +163,12 @@ class TestGen(SVgen):
             #portfield =  EAdict( [ 'direction' , 'name' , 'dim' , 'tp' , 'bw' , 'bwstr', 'dimstr' ] )
             p = SVPort(p)
             tp = p.tp
+            dim = f'Nico.DutPortDim(\'{p.name}\')'
             if tp == 'logic' or tp == 'signed logic':
                 s += f'{ind[1]}dic[\'{p.name}\'] = '
-                s += f'CreateBus(( (\'\', \'{p.name}\', {p.dim},),  ))\n'
+                s += f'CreateBus(( (\'\', \'{p.name}\', {dim},),  ))\n'
             else:
-                s += f'{ind[1]}dic[\'{p.name}\'] = SBC.Get(\'{p.tp}\' , \'{p.name}\', dim={p.dim})\n'     
+                s += f'{ind[1]}dic[\'{p.name}\'] = SBC.Get(\'{p.tp}\' , \'{p.name}\', dim={dim})\n'     
                 #TODO macro....
         s += f'{ind[1]}return Busdict(dic) # access by name without quotes\n'
         yield s

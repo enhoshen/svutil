@@ -1,6 +1,7 @@
 from nicotb import *
 from SVparse import *
 from SVclass import *
+from SimUtil import *
 import os
 import itertools
 import numpy as np
@@ -199,22 +200,42 @@ class Busdict (EAdict):
         self.SetToN()
         [ [i.SetTo(n) for i in self.Flatten(x)] if type(x) == list\
             else  x.SetTo(n) if isinstance(x,StructBus) else [s._value.fill(n) for s in x.signals] for x in self.dic.values() ]
-class NicoUtil():
+class NicoUtil(PYUtil):
     def __init__(self):
         FileParse( (False,TOPSV) )
+        super().__init__()
         self.test = TEST
         self.testname = TEST.rsplit('_tb')[0]
         self.fsdbname = self.testname + '_tb' #TODO
         self.topfile  = SV.rstrip('.sv')
         self.incfile  = INC
         self.dutname = TESTMODULE 
-        self.dut = hiers.dic[self.dutname] if self.dutname else None
-        self.dutfile = hiers.dic[self.dutname+'_sv'] if self.dutname else None
-        self.hier = hiers.dic[HIER] if HIER != '' else None
-        self.regbkstr= hiers.dic[REGBK] if REGBK != '' else None
-        self.regbk= SVRegbk(self.regbkstr) if self.regbkstr else None
-        self.endcycle = 10000
+        self.dut = hiers.dic.get(self.dutname)
+        self.top = hiers.dic.get(TOPMODULE)
+        self.dutfile = hiers.dic.get(self.dutname+'_sv')
         self.SBC = StructBusCreator
+        self.SBC.TopTypes()
+    def Macro2num (self, s):
+        _s = s 
+        _s = SVstr(_s).MultiMacroExpand(self.top.AllMacro)
+        _s = SVstr(_s).S2num(self.top.Params) 
+        reobj = True
+        while reobj:
+            if type(_s) == int:
+                break
+            reobj = re.search(r'`(\w+)\b', _s)
+            if reobj:    
+                _s = SVstr(_s).MultiMacroExpand(self.top.AllMacro)
+                _s = SVstr(_s).S2num(self.top.Params) 
+        return _s 
+    @property
+    def DutPorts(self):
+        return {  i:SVPort(v)for i,v in self.dut.Portsdic.items()}
+    def DutPortDim(self, p):
+        d = self.DutPorts[p].dimstrtuple
+        return self.Tuple2num(d)
+    def Tuple2num(self, t):
+        return tuple(map(lambda x : self.Macro2num(x),t))
 def clk_cnt():
 
     global n_clk

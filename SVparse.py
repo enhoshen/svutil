@@ -40,10 +40,11 @@ class EAdict():  #easy access
 class SVhier ():
     paramfield = EAdict([ 'name' , 'dim' , 'tp', 'bw' , 'num' , 'bwstr' , 'dimstr', 'numstr' , 'paramtype'] )
     typefield  = EAdict([ 'name' , 'bw' , 'dim' , 'tp' , 'enumliteral', 'cmts' ] )
-    portfield =  EAdict( [ 'direction' , 'name' , 'dim' , 'tp' , 'bw' , 'bwstr', 'dimstr' ] )
+    portfield =  EAdict( [ 'direction' , 'name' , 'dim' , 'tp' , 'bw' , 'bwstr', 'dimstr', 'dimstrtuple' ] )
     enumfield  = EAdict( [ 'name', 'bw', 'dim', 'tp', 'enumliterals', 'cmts' ] )
     enumsfield = EAdict( [ 'names' , 'nums' , 'cmts' ] )
     enumlfield = EAdict( [ 'name' , 'num' , 'cmt' ] )
+    macrofield = EAdict( [ 'args', 'macrostr', 'lambda'] )
     def __init__(self,name,scope):
         self.hier= name # this is fucking ambiguous, but str method use it so it remains 
         self.name = name
@@ -51,7 +52,6 @@ class SVhier ():
         self.paramsdetail = {}
         self.types = {}
         self.macros = {}
-
         self.child = {}
         self.paramports = {} 
         self.ports = []
@@ -100,9 +100,13 @@ class SVhier ():
             _l = deque([h.macros for _ , h in self.child.items()] )
             return _l 
         else:
-            _l = self._scope.Types
+            _l = self._scope.Macros
             _l.appendleft(self.macros)
             return _l
+    @property
+    def Portsdic(self):
+        idx = self.portfield.name
+        return { x[idx]:x for x in self.ports }
     ########################
     # types
     ########################
@@ -161,6 +165,12 @@ class SVhier ():
         self.FieldStr(self.paramfield,w)
         self.DictStr(self.AllParamsDetail,w)
         return None
+    #########################
+    # macros 
+    #########################
+    @property
+    def AllMacro(self):
+        return { k:v for i in self.Macros for k,v in i.items() }
     ##########################
     @property
     def ShowPorts(self):
@@ -378,10 +388,11 @@ class SVparse():
         bwstr = self.Tuple2str(bw)
         bw = SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier.Params)
         dim = s.BracketParse()
+        dimstrtuple = dim
         dimstr = self.Tuple2str(dim)
         #dim = self.Tuple2num(s.BracketParse())
         dim = self.Tuple2num(dim)
-        self.cur_hier.ports.append( (self.cur_key,name,dim,tp,bw,bwstr,dimstr) )
+        self.cur_hier.ports.append( (self.cur_key,name,dim,tp,bw,bwstr,dimstr, dimstrtuple) )
     def RdyackParse(self, s , lines):
         _ , args = s.FunctionParse()
         self.cur_hier.protoPorts.append(('rdyack',args[0]))
@@ -552,7 +563,8 @@ class SVparse():
                                 re.sub( rf'(\b|(``)){y[1]}(\b(``)|\b)', str(y[0]),x )\
                                 , [i for i in zip(_args,args)], _s )
         self.cur_hier.macros[name] = (args, _s, func)
-        print (re.sub( rf'(\b|(``))b(\b(``)|\b)','2',re.sub(rf'(\b|(``))a(\b(``)|\b)', '1', _s) ))
+        if self.verbose:
+            print (re.sub( rf'(\b|(``))b(\b(``)|\b)','2',re.sub(rf'(\b|(``))a(\b(``)|\b)', '1', _s) ))
     def PortFlag(self , w ):
         if ';' in w and self.flag_port =='':
             self.flag_port = 'end' 
@@ -792,25 +804,85 @@ class SVstr():
         except(TypeError):
             print('Slice2num fail, TypeError')
             print (self.s)
-    def MacroExpand(self, macros):
-        _s = self.s
+    def SimpleMacroExpand(self, macros):
+        '''
+            Expand a simple substituion macro
+            the string must start with ` and end with a word character
+        '''
+        _s = self.s.rstrip().lstrip()
         exp = _s
         reobj = True
         while reobj:
-            print(exp)
+            reobj = re.search(r'`(\w+)\b', exp)
+            if reobj:
+                m0 = reobj.group(0)
+                m = reobj.group(1)
+                exp = re.sub(rf'{m0}\b', f'macros[\'{m}\'][2]()', exp)
+        try:
+            return eval(ps.expr(exp).compile('file.py'))
+        except:
+            print('macro expansion error')
+    def MacroFuncExpand(self, macros):
+        '''
+            Expand a potentially nested macro to a string.
+            Limitation: the string start with ` and end with )
+            Arguments:
+                macros: the dictionary to find required macro definitions
+        '''
+        _s = self.s.rstrip().lstrip()
+        exp = _s
+        reobj = True
+        exp = re.sub(rf'[\']', '\\\'', exp)
+        exp = re.sub(rf'["]', '\\\"', exp)
+        exp = re.sub(rf'[(]', '("', exp)
+        exp = re.sub(rf'[,]', '","' , exp)  
+        exp = re.sub(rf'(?!^[`])[`]', '"+`', exp)      
+        exp = re.sub(rf'(?![)]$)[)]',  '")+"', exp)
+        exp = re.sub(rf'[)]$', '")', exp) 
+        while reobj:
+            if self.verbose:
+                print(exp)
             reobj = re.search( r'`(\w+)\b', exp )
             if reobj:
                 m0 = reobj.group(0)
                 m = reobj.group(1)
                 if macros[m][0] == []:
-                    exp = re.sub(rf'{m0}\b', f'macros[\'{m}\'][2]()', exp) 
+                    exp = re.sub(rf'{m0}\b', f'macros[\'{m}\'][2]()+"', exp) 
                 else:
                     exp = re.sub(rf'{m0}\b', f'macros[\'{m}\'][2]', exp) 
-        print(exp)
-        #try:
-        return eval(ps.expr(exp).compile('file.py'))
-        #except:
-        #    print('macro expansion error')
+        if self.verbose:
+            print(exp)
+        try:
+            return eval(ps.expr(exp).compile('file.py'))
+        except:
+            print('macro expansion error')
+    def MultiMacroExpand(self, macros):
+        _s = self.s
+        nested = -1 
+        rbkt= 0
+        exp = _s
+        reobj = True
+        while reobj:
+            reobj = re.search ( r'`(\w+)\b', exp)
+            if reobj:
+                span = reobj.span()
+                for i,c in enumerate(exp[span[0]:]):
+                    if c == '(':
+                        nested += 1
+                    if c == ')':
+                        nested -= 1
+                        if nested == -1:
+                            rbkt = i
+                if rbkt == 0:
+                    rbkt = span[1]
+                    exp = exp[0:span[0]] + SVstr(exp[span[0]:rbkt]).SimpleMacroExpand(macros) + exp[rbkt:]
+                else:
+                    exp = exp[0:span[0]] + SVstr(exp[span[0]:rbkt+1]).MacroFuncExpand(macros) + exp[rbkt+1:]
+                nested = -1 
+                rbkt = 0
+        return exp
+            
+                
     def DeleteList(self,clist):
         _s = self.s
         for c in clist:
@@ -860,6 +932,7 @@ class SVparseTemp():
     def __getattr__(self , n ):
         return self.hiers[n]
     def __init__(self,name=None,scope=None):
+        self.verbose = 0
         self.parsed = False
         self.package = {}
         self.hiers = {}
@@ -876,13 +949,21 @@ class SVparseTemp():
         self.cur_scope = '' 
         self.cur_path= ''
         self.flags = { 'pport': False , 'module' : False } #TODO
-        if name:
-            if scope != None: 
-                self.cur_hier = SVhier(name,scope) 
-                self.gb_hier.child[name] = self.cur_hier
-            else: 
-                SVhier(name,self.gb_hier) 
-            self.hiers[name]= self.cur_hier
+    def Swap (self):
+        SVparse.verbose =self.verbose
+        SVparse.parsed =self.parsed
+        SVparse.package =self.package
+        SVparse.hiers =self.hiers
+        SVparse.paths =self.paths
+        SVparse.gb_hier =self.gb_hier
+        SVparse.top =self.top
+        SVparse.base_path =self.base_path
+        SVparse.include_path =self.include_path
+        SVparse.sim_path =self.sim_path
+        SVparse.src_path =self.src_path
+        SVparse.cur_scope =self.cur_scope
+        SVparse.cur_path =self.cur_path
+        SVparse.flags =self.flags
     def ParseFiles(self , paths=[(True,INC)] ):
         for p in paths:
             self.paths.append(f'{cls.include_path}{p[1]}.sv' if p[0] else p[1] )
@@ -908,33 +989,33 @@ class SVparseTemp():
                 line = line.split('`include')[1].split()[0].replace('"','')
                 paths.append( self.include_path+line)
         return paths
-        def ParseFirstArgument(self):
-            import sys
-            self.ParseFiles([(True,sys.argv[1])])
-        def Reset(self):
-            self.parsed = False
-            self.package = {}
-            self.hiers = {}
-            self.paths = []
-            self.gb_hier = SVhier('files',None)
-            self.gb_hier.types =  {'integer':None,'int':None,'logic':None}
-        def ShowFile(n,start=0,end=None):
-            f=open(self.paths[n],'r')
-            l=f.readlines()
-            end = start+40 if end==None else end
-            for i,v in enumerate([ x+start for x in range(end-start)]):
-                print(f'{i+start:<4}|',l[v],end='')
-        def ShowPaths(self):
-            for i,v in enumerate(self.paths):
-                print (i ,':  ',v)
-        def FileParse(self, paths = [(True,INC)]):
-            if self.parsed == True:
-                return
-            paths = [paths] if type(paths) == tuple else paths
-            self.ParseFiles( paths)
-            self.parsed = True
-        def TopAllParamEAdict():
-            return EAdict(self.gb_hier[TOPMODULE].AllParam)
+    def ParseFirstArgument(self):
+        import sys
+        self.ParseFiles([(True,sys.argv[1])])
+    def Reset(self):
+        self.parsed = False
+        self.package = {}
+        self.hiers = {}
+        self.paths = []
+        self.gb_hier = SVhier('files',None)
+        self.gb_hier.types =  {'integer':None,'int':None,'logic':None}
+    def ShowFile(n,start=0,end=None):
+        f=open(self.paths[n],'r')
+        l=f.readlines()
+        end = start+40 if end==None else end
+        for i,v in enumerate([ x+start for x in range(end-start)]):
+            print(f'{i+start:<4}|',l[v],end='')
+    def ShowPaths(self):
+        for i,v in enumerate(self.paths):
+            print (i ,':  ',v)
+    def FileParse(self, paths = [(True,INC)]):
+        if self.parsed == True:
+            return
+        paths = [paths] if type(paths) == tuple else paths
+        self.ParseFiles( paths)
+        self.parsed = True
+    def TopAllParamEAdict():
+        return EAdict(self.gb_hier[TOPMODULE].AllParam)
 
 if __name__ == '__main__':
 
