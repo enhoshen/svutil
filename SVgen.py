@@ -36,7 +36,8 @@ class SVgen():
         self.dut = hiers.dic.get(self.dutname)
         self.dutfile = hiers.dic.get(self.dutname+'_sv')
         self.hier = hiers.dic.get(HIER) 
-        self.regbkstr= hiers.dic.get(REGBK)
+        self.regbkstr= REGBK 
+        self.regbk = hiers.dic.get(REGBK)
         self.genpath = './'
         self.endcycle = 10000
         self.cond = {} # syn 2ns test name etc.
@@ -87,6 +88,27 @@ class SVgen():
     def Nextblk(self, blk):
         s = next(blk,None)
         return s if s != None else ''
+    def FileWrite(self , fpath, text, suf): 
+        if os.path.isfile(self.genpath+fpath):
+            print( "file exists, make a copy, rename the file right away")
+            import time
+            fpath = self.genpath + fpath +'_'+ time.strftime('%m%d%H') +'.'+ suf 
+        else:
+            pass
+        f = open( fpath,'w')
+        f.write(text)
+        return fpath
+    def Line3BannerBlk(self, w, cmtc, text):
+        '''
+            w: banner width; cmtc: language specified comment character
+            text: banner text
+        '''
+        ind = self.cur_ind.Copy()
+        yield ''
+        s =f'{ind.b}{cmtc}{"":=^{w}}\n'
+        s += f'{ind.b}{cmtc}{text:^{w}}\n'
+        s += f'{ind.b}{cmtc}{"":=^{w}}\n'
+        yield s
 if __name__ == "__main__":
     g = SVgen()
     pass

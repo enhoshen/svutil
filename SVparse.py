@@ -614,7 +614,8 @@ class SVparse():
             s.s = SVstr(k).MacroFuncExpand(self.cur_hier.AllMacro) + s.s[span[1]:]
         else:
             s.s = SVstr(k).SimpleMacroExpand(self.cur_hier.AllMacro) + s.s
-        print(k)
+        if self.verbose == 3:
+            print(k)
     def IfDefParse( self, s, lines):
         self.cnt_ifdef += 1 
         self.cur_macrodef = 'ifdef'
@@ -634,7 +635,6 @@ class SVparse():
             self.flag_parse = False 
         pass
     def ElsifParse( self, s, lines):
-        print('in')
         self.cur_macrodef = 'elsif'
         n = s.IDParse()
         if self.flag_elsif_parsed:
@@ -916,7 +916,6 @@ class SVstr():
                 m0 = reobj.group(0)
                 m = reobj.group(1)
                 exp = re.sub(rf'{m0}\b', f'macros[\'{m}\'][2]()', exp)
-        print(exp)
         try:
             return eval(ps.expr(exp).compile('file.py'))
         except:

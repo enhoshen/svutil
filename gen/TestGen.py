@@ -229,16 +229,8 @@ class TestGen(SVgen):
         p = self.TbWrite(text,'py')
         print ( "PY testbench written to " , p )
     def TbWrite(self , text , suf): 
-        fpath = self.genpath + self.test + '.' + suf
-        if os.path.isfile(fpath):
-            print( "file exists, make a copy, rename the file right away")
-            import time
-            fpath = self.genpath + self.test +'_'+ time.strftime('%m%d%H') +'.'+ suf 
-        else:
-            pass
-        f = open( fpath,'w')
-        f.write(text)
-        return fpath
+        fpath = self.genpath + self.test
+        return self.FileWrite(fpath,text,suf)
 if __name__ == '__main__':
     g = TestGen()
 
