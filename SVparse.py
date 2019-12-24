@@ -658,7 +658,7 @@ class SVparse():
             self.cnt_ifndef -= 1
         self.cur_macrodef = None 
         self.flag_parse = True
-        pass
+        self.flag_elsif_parsed = False
     def PortFlag(self , w ):
         if ';' in w and self.flag_port =='':
             self.flag_port = 'end' 
