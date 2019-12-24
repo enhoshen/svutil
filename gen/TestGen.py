@@ -155,9 +155,9 @@ class TestGen(SVgen):
         yield ''
         s = '\n'
         s += f'{ind.b}def BusInit():\n'
-        s += f'{ind[1]}SBC = StructBusCreator\n'
-        s += f'{ind[1]}SBC.TopTypes()\n'
-        s += f'{ind[1]}#SBC.AllTypes()\n'
+        #s += f'{ind[1]}SBC = StructBusCreator\n'
+        s += f'{ind[1]}#Nico.SBC.TopTypes()\n'
+        s += f'{ind[1]}#Nico.SBC.AllTypes()\n'
         s += f'{ind[1]}dic = {{}}\n'
         for p in module.ports:
             #portfield =  EAdict( [ 'direction' , 'name' , 'dim' , 'tp' , 'bw' , 'bwstr', 'dimstr' ] )
@@ -168,7 +168,7 @@ class TestGen(SVgen):
                 s += f'{ind[1]}dic[\'{p.name}\'] = '
                 s += f'CreateBus(( (\'\', \'{p.name}\', {dim},),  ))\n'
             else:
-                s += f'{ind[1]}dic[\'{p.name}\'] = SBC.Get(\'{p.tp}\' , \'{p.name}\', dim={dim})\n'     
+                s += f'{ind[1]}dic[\'{p.name}\'] = Nico.SBC.Get(\'{p.tp}\' , \'{p.name}\', dim={dim})\n'     
                 #TODO macro....
         s += f'{ind[1]}return Busdict(dic) # access by name without quotes\n'
         yield s
