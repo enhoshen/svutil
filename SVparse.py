@@ -280,14 +280,17 @@ class SVparse():
                         'module':self.HierParse , 'import':self.ImportParse, 'input':self.PortParse , 'output':self.PortParse,\
                         '`include':self.IncludeRead ,'`rdyack_input':self.RdyackParse, '`rdyack_output':self.RdyackParse,\
                         'always_ff@': self.RegisterParse, 'always_ff': self.RegisterParse, '`define':self.DefineParse,\
-                        '`ifndef':self.IfNDefParse, '`ifdef':self.IfDefParse, '`endif':self.EndifParse}
+                        '`ifndef':self.IfNDefParse, '`ifdef':self.IfDefParse, '`endif':self.EndifParse,\
+                        '`elsif':self.ElsifParse, '`else':self.ElseParse}
         self.parselist = {'typedef','package','import','module','`include', '`define',\
-                        '`ifdef', '`ifndef', '`endif'}
+                        '`ifdef', '`ifndef', '`endif', '`elsif', '`else'}
+        self.alwaysparselist = {'`endif', '`elsif', '`else'}
         for k in self.cur_hier.AllMacro.keys():
             self.keyword['`'+k] = self.MacroParse
         self.cnt_ifdef = -1
         self.cnt_ifndef = -1
         self.cur_macrodef = None
+        self.flag_elsif_parsed = False
         self.flag_parse = True
     @classmethod
     def ARGSParse(cls):
@@ -340,7 +343,7 @@ class SVparse():
             _catch = None
             if _w in self.parselist:
                 self.cur_key = _w
-                if self.flag_parse or _w == '`endif':
+                if self.flag_parse or _w in self.alwaysparselist:
                     _catch = self.keyword[_w](self.cur_s,self.lines) 
     def IncludeRead( self, s , lines):
         parent_path = self.cur_path
@@ -630,6 +633,25 @@ class SVparse():
         else:
             self.flag_parse = False 
         pass
+    def ElsifParse( self, s, lines):
+        print('in')
+        self.cur_macrodef = 'elsif'
+        n = s.IDParse()
+        if self.flag_elsif_parsed:
+            self.flag_parse = False
+        else:
+            if self.cur_hier.AllMacro.get(n):
+                self.flag_parse = True
+                self.flag_elsif_parsed = True
+            else:
+                self.flag_parse = False
+    def ElseParse( self, s, lines):
+        self.cur_macrodef = 'else'
+        n = s.IDParse()
+        if self.flag_elsif_parsed:
+            self.flag_parse = False
+        else:
+            self.flag_parse = True
     def EndifParse( self, s, lines):
         if self.cur_macrodef == 'ifdef':
             self.cnt_ifdef -= 1
@@ -893,6 +915,7 @@ class SVstr():
                 m0 = reobj.group(0)
                 m = reobj.group(1)
                 exp = re.sub(rf'{m0}\b', f'macros[\'{m}\'][2]()', exp)
+        print(exp)
         try:
             return eval(ps.expr(exp).compile('file.py'))
         except:
