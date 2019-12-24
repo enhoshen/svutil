@@ -188,6 +188,9 @@ class SrcGen(SVgen):
         ind = self.cur_ind.Copy() if not ind else ind
         s = ''
         w = 30
+        if not self.regbk.raw_intr_stat:
+            print("interrupt struct not specified")
+            return ""
         for intr, field in zip ( self.regbk.raw_intr_stat, self.regbk.regfields[self.regbk.regintr_name.upper()].enumls):
             s += self.RegbkIntrCombStr( intr.name, field.name, ind) + '\n'
         if toclip:
