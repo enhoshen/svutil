@@ -36,7 +36,7 @@ class SrcGen(SVgen):
         ind = self.cur_ind.Copy() 
         yield ''
         s = '\n'
-        s += f'{ind.b}`include ' + f'"{self.incfile}.sv"\n\n' 
+        s += f'{ind.b}`include ' + f'"{self.regbkstr}.sv" // Please manually modify the path\n\n' 
         s += f'{ind.b}import {self.regbkstr}::*;\n'
         s += f'{ind.b}module ' + self.regbkstr+ ' (\n'
         s += f'{ind[1]} input {self.clk_name}\n'
@@ -93,7 +93,7 @@ class SrcGen(SVgen):
                 s += self.RegbkIntrCombToClip(self.regbk, toclip=False, ind=ind+2)
             else:
                 s += f'{ind[2]}//TODO\n'
-                s += f'{ind[1]}end\n{ind.b}end\n'
+            s += f'{ind[1]}end\n{ind.b}end\n'
         return s
     def RegbkIntrCombStr(self, intr_logic, intr_field, ind=None):
         ind = self.cur_ind.Copy() if not ind else ind
@@ -107,11 +107,7 @@ class SrcGen(SVgen):
         ind = self.cur_ind.Copy() if not ind else ind
         w = [0,0] 
         s = ''
-        for reg in self.regbk.addrs.enumls:
-            bw = self.regbk.GetBWStr(reg.name)
-            w[0] = max(w[0], len(reg.name+self.regbk.bw_suf)+6)
-            w[1] = max(w[1], len(reg.name)+3)
-        for reg in self.regbk.addrs.enumls:
+        def gettpbw(reg):
             tp = self.regbk.GetType(reg.name.lower())
             bw = self.regbk.GetBWStr(reg.name)
             try:
@@ -121,6 +117,14 @@ class SrcGen(SVgen):
             bw = reg.name + self.regbk.bw_suf if not bw == 1 else 1
             bw = 1 if tp else bw
             tp = reg.name.lower() if tp else 'logic'
+            return bw,tp 
+        for reg in self.regbk.addrs.enumls:
+            bw,tp = gettpbw(reg)
+            bwstr = '' if bw ==1 else f'[{bw}-1:0]' 
+            w[0] = max(w[0], len(f'{tp+" "+bwstr}'))
+            w[1] = max(w[1], len(reg.name)+3)
+        for reg in self.regbk.addrs.enumls:
+            bw,tp = gettpbw(reg)
             s += self.RegbkLogicStr( w, reg.name.lower(), bw, tp, ind)
         if toclip:
             ToClip(s)

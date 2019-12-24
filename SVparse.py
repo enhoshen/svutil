@@ -519,9 +519,13 @@ class SVparse():
         _w = s.lsplit()
         types = self.cur_hier.AllTypeKeys
         tp = SVstr(_w).TypeParse(types)
+        print(tp)
         if not tp == '':
-            _pkg , _param = tp.split('::')
-            self.cur_hier.types[tp] = SVparse.package[_pkg].types[_param]
+            try:
+                _pkg , _param = tp.split('::')
+                self.cur_hier.types[tp] = SVparse.package[_pkg].types[_param]
+            except:
+                pass
         _m = self.keyword.get(_w)
         _catch = () 
         if _m != None:

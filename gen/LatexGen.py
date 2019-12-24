@@ -11,7 +11,7 @@ class LatexGen(SVgen):
     def __init__(self):
         super().__init__()
         self.default_input_delay = 30
-        self.regbk= SVRegbk(self.regbkstr) if self.regbkstr else None
+        self.regbk= SVRegbk(self.regbk) if self.regbk else None
     def L_(self, s):
         return s.replace('_','\_')
     def ParameterStr(self , param):
@@ -207,7 +207,7 @@ class LatexGen(SVgen):
     def Lbrac(self, s):
         return s.replace('[','{[').replace(']', ']}')
     def L_ (self, s):
-        return s.replace('_', '\_')
+        return s.replace('_', '\_') if s else None
     def Str2Lst(self,s):
         if not s:
             return s
