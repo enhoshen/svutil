@@ -274,7 +274,6 @@ class SVparse():
             else: 
                 SVhier(name,self.gb_hier) 
             SVparse.hiers[name]= self.cur_hier
-
         self.cur_key = ''
         self.keyword = { 'logic':self.LogicParse , 'parameter':self.ParamParse, 'localparam':self.ParamParse,\
                         'typedef':self.TypedefParse , 'struct':self.StructParse  , 'package':self.HierParse , 'enum': self.EnumParse,\
@@ -282,6 +281,10 @@ class SVparse():
                         '`include':self.IncludeRead ,'`rdyack_input':self.RdyackParse, '`rdyack_output':self.RdyackParse,\
                         'always_ff@': self.RegisterParse, 'always_ff': self.RegisterParse, '`define':self.DefineParse,\
                         '`ifndef':self.IfNDefParse, '`ifdef':self.IfDefParse, '`endif':self.EndifParse}
+        self.parselist = {'typedef','package','import','module','`include', '`define',\
+                        '`ifdef', '`ifndef', '`endif'}
+        for k in self.cur_hier.AllMacro.keys():
+            self.keyword['`'+k] = self.MacroParse
         self.cnt_ifdef = -1
         self.cnt_ifndef = -1
         self.cur_macrodef = None
@@ -335,8 +338,7 @@ class SVparse():
                 continue 
             _w = self.cur_s.lsplit()
             _catch = None
-            if _w in {'typedef','package','import','module','`include', '`define',\
-                        '`ifdef', '`ifndef', '`endif'}:
+            if _w in self.parselist:
                 self.cur_key = _w
                 if self.flag_parse or _w == '`endif':
                     _catch = self.keyword[_w](self.cur_s,self.lines) 
@@ -595,8 +597,21 @@ class SVparse():
                                 re.sub( rf'(\b|(``)){y[1]}(\b(``)|\b)', str(y[0]),x )\
                                 , [i for i in zip(_args,args)], _s )
         self.cur_hier.macros[name] = (args, _s, func)
+        self.keyword['`'+name] = self.MacroParse
+        self.parselist.add('`'+name)
         if self.verbose:
             print (re.sub( rf'(\b|(``))b(\b(``)|\b)','2',re.sub(rf'(\b|(``))a(\b(``)|\b)', '1', _s) ))
+    def MacroParse(self, s, lines):
+        k = self.cur_key
+        s.lstrip() 
+        _s = s.s
+        reobj = re.search( r'`^[(]', _s)
+        if reobj:
+            span = SVstr(_s).FirstBracketSpan()
+            s.s = SVstr(k).MacroFuncExpand(self.cur_hier.AllMacro) + s.s[span[1]:]
+        else:
+            s.s = SVstr(k).SimpleMacroExpand(self.cur_hier.AllMacro) + s.s
+        print(k)
     def IfDefParse( self, s, lines):
         self.cnt_ifdef += 1 
         self.cur_macrodef = 'ifdef'
@@ -839,7 +854,7 @@ class SVstr():
         try:
             return eval(ps.expr(_s).compile('file.py'))
         except:
-            if _s !='':
+            if _s !='' and self.verbose:
                 print(f"S2num failed, return original string: {_s}")
             return _s
     def Slice2num(self,params):
@@ -941,8 +956,24 @@ class SVstr():
                 nested = -1 
                 rbkt = 0
         return exp
-            
-                
+    def FirstBracketSpan(self):
+        '''
+            Find the first enclosed round bracket span if the 
+            string start with (
+        '''
+        if self.s[0] != '(':
+            return (0,0)
+        rbkt = 0
+        nested = 0 
+        reobj = re.search ( r'`(\w+)\b', exp)
+        for i,c in enumerate():
+            if c == '(':
+                nested += 1
+            if c == ')':
+                nested -= 1
+                if nested == -1:
+                    rbkt = i
+        return (0,rbkt)
     def DeleteList(self,clist):
         _s = self.s
         for c in clist:
