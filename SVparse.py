@@ -647,7 +647,6 @@ class SVparse():
                 self.flag_parse = False
     def ElseParse( self, s, lines):
         self.cur_macrodef = 'else'
-        n = s.IDParse()
         if self.flag_elsif_parsed:
             self.flag_parse = False
         else:
@@ -776,6 +775,8 @@ class SVstr():
             find one identifier at the start of the string
             TODO multiple ID ( often sperated by , ) 
         '''
+        if self.End():
+            return ''
         self.s = self.s.lstrip()
         _idx = self.FirstSPchar()
         if _idx != -1:
