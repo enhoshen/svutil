@@ -35,8 +35,8 @@ class SrcGen(SVgen):
     def RegbkModBlk(self): 
         ind = self.cur_ind.Copy() 
         yield ''
-        s  = f'{ind.b}`timescale 1ns/1ns\n'
-        s += f'{ind.b}`include ' + f'"{self.incfile}.sv"\n' 
+        s = '\n'
+        s += f'{ind.b}`include ' + f'"{self.incfile}.sv"\n\n' 
         s += f'{ind.b}import {self.regbkstr}::*;\n'
         s += f'{ind.b}module ' + self.regbkstr+ ' (\n'
         s += f'{ind[1]} input {self.clk_name}\n'
@@ -51,7 +51,10 @@ class SrcGen(SVgen):
     def RegbkRdataStr(self, reg, _slice, w, ind):
         #TODO slice dependent, now it only pad the MSB and it's usually the case
         pad = f'{SVRegbk.regbw_name}-{reg}{SVRegbk.bw_suf}'
-        return f'{ind.b}{reg:<{w}}: rdata_w = {{{{({pad}){{1\'b0}}}}, {reg.lower()}_r}};\n'
+        s =f'{ind.b}{reg:<{w[0]}}: rdata_w = '
+        pad = '{{'+f'{pad}'+'{1\'b0}},'
+        s += f'{pad:<{w[1]}} {reg.lower()}_r}};\n'
+        return s 
     def RegbkWdataSeqStr(self, reg, _slice, rw=None, ind=None):
         #TODO slice dependent, now it only pad the MSB and it's usually the case
         ind = self.cur_ind.Copy() if not ind else ind
@@ -131,7 +134,7 @@ class SrcGen(SVgen):
         """
         regbktemp = self.RegbkSwap(pkg)
         ind = self.cur_ind.Copy() if not ind else ind
-        w = 0
+        w = [0,0]
         print ( f'read condition: {self.regbk_read_cond}')
         s = f'{ind.b}always_comb begin\n'
         s += f'{ind[1]}if (state_main_r == DISABLED) begin //Disabled default read value\n'
@@ -140,7 +143,8 @@ class SrcGen(SVgen):
         s += f'{ind[1]}else if ({self.regbk_read_cond}) begin\n'
         s += f'{ind[2]}case ({self.regbk_addr_name}{self.regbk_addr_slice})\n'
         for i in self.regbk.addrs.enumls:
-            w = max(w, len(i.name))
+            w[0] = max(w[0], len(i.name))
+            w[1] = max(w[1], len(self.regbk.regbw_name+i.name+self.regbk.bw_suf)+12)
         for reg in self.regbk.addrs.enumls:
             _slice = self.regbk.regslices.get(reg.name)
             s += self.RegbkRdataStr( reg.name, _slice, w, ind+3)
