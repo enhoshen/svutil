@@ -280,7 +280,15 @@ class SVparse():
                         'typedef':self.TypedefParse , 'struct':self.StructParse  , 'package':self.HierParse , 'enum': self.EnumParse,\
                         'module':self.HierParse , 'import':self.ImportParse, 'input':self.PortParse , 'output':self.PortParse,\
                         '`include':self.IncludeRead ,'`rdyack_input':self.RdyackParse, '`rdyack_output':self.RdyackParse,\
-                        'always_ff@': self.RegisterParse, 'always_ff': self.RegisterParse, '`define':self.DefineParse}
+                        'always_ff@': self.RegisterParse, 'always_ff': self.RegisterParse, '`define':self.DefineParse,\
+                        '`ifndef':self.IfNDefParse, '`ifdef':self.IfDefParse, '`endif':self.EndifParse}
+        self.cnt_ifdef = -1
+        self.cnt_ifndef = -1
+        self.cur_macrodef = None
+        self.flag_parse = True
+    @classmethod
+    def ARGSParse(cls):
+        pass
     @classmethod
     def ParseFiles(cls , paths=[(True,INC)] ):
         for p in paths:
@@ -314,21 +322,24 @@ class SVparse():
         self.f = open(path , 'r')
         self.cur_path = path
         self.lines = iter(self.f.readlines())
-        _s , self.cur_cmt = self.Rdline(self.lines)
+        self.cur_s , self.cur_cmt = self.Rdline(self.lines)
         while(1):
+            #print(self.cur_s)
             _w = ''
-            if _s == None:
+            if self.cur_s == None:
                 return
-            if _s.End():
+            if self.cur_s.End():
                 _cmt = self.cur_cmt
-                _s, self.cur_cmt=self.Rdline(self.lines)
-                self.cur_cmt = _cmt + self.cur_cmt if _s == '' else self.cur_cmt
+                self.cur_s, self.cur_cmt=self.Rdline(self.lines)
+                self.cur_cmt = _cmt + self.cur_cmt if self.cur_s == '' else self.cur_cmt
                 continue 
-            _w = _s.lsplit()
+            _w = self.cur_s.lsplit()
             _catch = None
-            if _w in {'typedef','package','import','module','`include', '`define'}:
+            if _w in {'typedef','package','import','module','`include', '`define',\
+                        '`ifdef', '`ifndef', '`endif'}:
                 self.cur_key = _w
-                _catch = self.keyword[_w](_s,self.lines) 
+                if self.flag_parse or _w == '`endif':
+                    _catch = self.keyword[_w](self.cur_s,self.lines) 
     def IncludeRead( self, s , lines):
         parent_path = self.cur_path
         _s = s.s.replace('"','')
@@ -342,15 +353,33 @@ class SVparse():
                 cur_parse.Readfile(path)
         return
     def LogicParse(self, s ,lines):
+        '''
+            When the keyword logic is encountered:
+            return information of the following identifier
+            commas (multiple identifiers) is not supported...
+        '''
         #TODO signed keyword
+        if self.verbose == 3:
+            print(s)
         s.lstrip()
         sign = s.SignParse() 
         bw = s.BracketParse()
         bw = SVstr(''if bw == () else bw[0])
+        n = []
         name = s.IDParse()
+        n.append(name)
+        while s.s[0] == ',': 
+            s.s = s.s[1:]
+            name = s.IDParse()
+            n.append(name)
+            if self.verbose == 3:
+                print(s)
         dim = s.BracketParse()  
         tp = ('signed ' if sign==True else '') + 'logic'
-        return (name,bw.Slice2num(self.cur_hier.Params),self.Tuple2num(dim),tp)
+        lst = [(_n,bw.Slice2num(self.cur_hier.Params),self.Tuple2num(dim),tp) for _n in n]
+        if self.verbose == 3: 
+            print(lst)
+        return lst 
     def ArrayParse(self, s , lines):
         dim = s.BracketParse()
         name = s.IDParse()
@@ -462,7 +491,10 @@ class SVparse():
                 continue
             if _w in self.keyword:
                 _catch = self.keyword[_w](_s,lines)
-                attrlist.append(_catch)
+                if type(_catch) == list:
+                    attrlist += _catch
+                else:
+                    attrlist.append(_catch)
                 continue
             types = self.cur_hier.AllTypeKeys
             tp = SVstr(_w).TypeParse(types)
@@ -565,6 +597,32 @@ class SVparse():
         self.cur_hier.macros[name] = (args, _s, func)
         if self.verbose:
             print (re.sub( rf'(\b|(``))b(\b(``)|\b)','2',re.sub(rf'(\b|(``))a(\b(``)|\b)', '1', _s) ))
+    def IfDefParse( self, s, lines):
+        self.cnt_ifdef += 1 
+        self.cur_macrodef = 'ifdef'
+        n = s.IDParse()
+        if self.cur_hier.AllMacro.get(n):
+            self.flag_parse = True
+        else:
+            self.flag_parse = False
+        pass
+    def IfNDefParse( self, s, lines):
+        self.cnt_ifndef += 1
+        self.cur_macrodef = 'ifndef'
+        n = s.IDParse()
+        if not self.cur_hier.AllMacro.get(n):
+            self.flag_parse = True
+        else:
+            self.flag_parse = False 
+        pass
+    def EndifParse( self, s, lines):
+        if self.cur_macrodef == 'ifdef':
+            self.cnt_ifdef -= 1
+        elif self.cur_macrodef == 'ifndef':
+            self.cnt_ifndef -= 1
+        self.cur_macrodef = None 
+        self.flag_parse = True
+        pass
     def PortFlag(self , w ):
         if ';' in w and self.flag_port =='':
             self.flag_port = 'end' 
@@ -677,8 +735,10 @@ class SVstr():
         else:
             return ''
     def IDParse (self):
-        # find one identifier at the start of the string
-        # TODO multiple ID ( often sperated by , ) 
+        '''
+            find one identifier at the start of the string
+            TODO multiple ID ( often sperated by , ) 
+        '''
         self.s = self.s.lstrip()
         _idx = self.FirstSPchar()
         if _idx != -1:
