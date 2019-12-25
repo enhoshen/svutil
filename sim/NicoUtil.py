@@ -76,10 +76,11 @@ class StructBus():
                 s+=f'{"":<{indent-13}}'f'{a[0]:<{w}}'f'{list(v) if len(a)!=5 else [a[4][i] for i in v] !r:<{w}}\n'
         return s 
 class StructBusCreator():
-    structlist = {'logic':[],'enum':[]}
+    structlist = {}
     def __init__ ( self, structName , attrs):
-        for memb in attrs:
-            assert self.structlist.get(memb[3] ) != None , f"can't find type {memb[3]}; \
+        if attrs:
+            for memb in attrs:
+                assert self.structlist.get(memb[3] ) != None , f"can't find type {memb[3]}; \
                                                             \n  (1)change the declartion of the type/import\
                                                             \n  (2)probably use StructBusCreator.AllTypes()?"
         if self.structlist.get(structName) == None:
@@ -87,13 +88,19 @@ class StructBusCreator():
         self.structName = structName
         self.attrs = attrs
     @classmethod
+    def BasicTypes(cls):
+        StructBusCreator('logic',None)
+        StructBusCreator('enum',None)
+    @classmethod
     def AllTypes(cls):
+        cls.BasicTypes()
         FileParse()
         for h in SVparse.hiers.values():
             for k,v in h.types.items():
                 StructBusCreator(k,v)
     @classmethod
     def TopTypes(cls):
+        cls.BasicTypes()
         FileParse( (False,TOPSV) )
         for T in SVparse.hiers[TOPMODULE].Types: # TOPMODULE defined in SVparse
             for k,v in T.items():
@@ -108,13 +115,16 @@ class StructBusCreator():
         #buses = {'logic' :  CreateBus( self.createTuple(signalName) )}
         buses = []
         attrs = self.structlist[self.structName].attrs
-        for  n , bw, dim ,t ,*_ in attrs :
-            if t=='logic':
-                buses.append ( CreateBus( ((hier, signalName+'.'+n ,DIM+dim),) ) )
-            elif t == 'enum':
-                buses.append ( CreateBus( ((hier, signalName , DIM+dim ),) ) )
-            else:
-                buses.append ( self.structlist[t].CreateStructBus( signalName+'.'+n , hier, DIM+dim ) )
+        if not attrs:
+            return buses.append ( CreateBus( ((hier, signalName, DIM),) ) )
+        else:
+            for  n , bw, dim ,t ,*_ in attrs :
+                if t=='logic':
+                    buses.append ( CreateBus( ((hier, signalName+'.'+n ,DIM+dim),) ) )
+                elif t == 'enum':
+                    buses.append ( CreateBus( ((hier, signalName , DIM+dim ),) ) )
+                else:
+                    buses.append ( self.structlist[t].CreateStructBus( signalName+'.'+n , hier, DIM+dim ) )
         return StructBus(self.structName,signalName,attrs,buses)
     def MDACreateStructBus ( self, signalName, hier='', DIM=()):
         buses = []

@@ -207,7 +207,7 @@ class LatexGen(SVgen):
     def Lbrac(self, s):
         return s.replace('[','{[').replace(']', ']}')
     def L_ (self, s):
-        return s.replace('_', '\_')
+        return s.replace('_', '\_') if s else None
     def Str2Lst(self,s):
         if not s:
             return s
