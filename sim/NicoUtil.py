@@ -193,13 +193,17 @@ class Busdict (EAdict):
             else:
                 [ [i.Write(imm=imm) for i in self.Flatten(self.dic[x])] if type(self.dic[x]) == list\
                     else  self.dic[x].Write(imm=imm) for x in lst ]
+    def IsSB(self,x):
+        return isinstance(x,StructBus)
     def SetToN(self):
-        [ [i.SetToN() for i in self.Flatten(x)] if type(x) == list\
-            else  x.SetToN() if isinstance(x,StructBus) else [s._x.fill(0) for s in x.signals]  for x in self.dic.values()]
+        bussettoN = lambda x: [s._x.fill(0) for s in x.signals]
+        [ [i.SetToN() if self.IsSB(i) else bussettoN(i) for i in self.Flatten(x)] if type(x) == list\
+            else  x.SetToN() if self.IsSB(x) else bussettoN(x)  for x in self.dic.values()]
     def SetTo(self,n):
+        busfill = lambda x: [s._value.fill(n) for s in x.signals]
         self.SetToN()
-        [ [i.SetTo(n) for i in self.Flatten(x)] if type(x) == list\
-            else  x.SetTo(n) if isinstance(x,StructBus) else [s._value.fill(n) for s in x.signals] for x in self.dic.values() ]
+        [ [i.SetTo(n) if self.IsSB(i) else busfill(i) for i in self.Flatten(x)] if type(x) == list\
+            else  x.SetTo(n) if self.IsSB(x) else busfill(x) for x in self.dic.values() ]
 class NicoUtil(PYUtil):
     def __init__(self):
         FileParse( (False,TOPSV) )

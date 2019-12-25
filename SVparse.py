@@ -370,18 +370,9 @@ class SVparse():
         sign = s.SignParse() 
         bw = s.BracketParse()
         bw = SVstr(''if bw == () else bw[0])
-        n = []
-        name = s.IDParse()
-        n.append(name)
-        while s.s[0] == ',': 
-            s.s = s.s[1:]
-            name = s.IDParse()
-            n.append(name)
-            if self.verbose == 3:
-                print(s)
-        dim = s.BracketParse()  
+        n, d = s.IDDIMarrParse()
         tp = ('signed ' if sign==True else '') + 'logic'
-        lst = [(_n,bw.Slice2num(self.cur_hier.Params),self.Tuple2num(dim),tp) for _n in n]
+        lst = [(_n,bw.Slice2num(self.cur_hier.Params),self.Tuple2num(_d),tp) for _n,_d in zip(n,d)]
         if self.verbose == 3: 
             print(lst)
         return lst 
@@ -455,9 +446,10 @@ class SVparse():
             self.cur_hier.params[_name] = _num
             self.cur_hier.paramsdetail[_name] = ( _name , () , '', 1 , _num , '', '', '','enum literal')
         s.lsplit('}')
-        name = s.IDParse()
-        self.cur_hier.enums[name] = ( enum_name, enum_num , cmts )
-        return ( name ,bw.Slice2num(self.cur_hier.Params),() , 'enum' , enums, cmts )
+        n = s.IDarrParse()
+        for _n in n:
+            self.cur_hier.enums[_n] = ( enum_name, enum_num , cmts )
+        return [( _n,bw.Slice2num(self.cur_hier.Params),() , 'enum' , enums, cmts ) for _n in n]
         
     def ImportParse(self, s , lines):
         s = s.split(';')[0]
@@ -485,7 +477,7 @@ class SVparse():
         while(1):
             _w = ''
             if _step == 2:
-                name = _s.IDParse()
+                name = _s.IDarrParse()
                 return (name,attrlist)
             if _s.End():
                 _s, self.cur_cmt=self.Rdline(lines)
@@ -510,11 +502,12 @@ class SVparse():
                     bw = np.sum([x[1] for x in SVparse.package[_pkg].types[_param] ] )
                 else:
                     bw = np.sum([x[1] for x in self.cur_hier.AllType[tp] ]) 
-                _n = _s.IDParse()
-                dim = _s.BracketParse()
-                dimstr = self.Tuple2str(dim)
-                dim = self.Tuple2num(dim) 
-                attrlist.append( ( _n , bw, self.Tuple2num(dim) , tp) )
+                n, d = _s.IDDIMarrParse()
+                #_n = _s.IDParse()
+                #dim = _s.BracketParse()
+                #dimstr = self.Tuple2str(dim)
+                #dim = self.Tuple2num(dim) 
+                attrlist += [( _n , bw, self.Tuple2num(_d) , tp) for _n, _d in zip(n, d)]
     def TypedefParse(self, s , lines):
         _w = s.lsplit()
         types = self.cur_hier.AllTypeKeys
@@ -531,12 +524,18 @@ class SVparse():
             _catch = _m(s , lines)
         else :
             _catch = self.ArrayParse(s,lines)
+            print(_catch)
             _catch = ( _catch[0], int(np.multiply.reduce(_catch[2])*self.cur_hier.types[_w][0][1]) \
                         ,_catch[2], _w)
         if _w == 'struct':
-            self.cur_hier.types[_catch[0]] = _catch[1]
+            for n in _catch[0]:
+                self.cur_hier.types[n] = _catch[1]
         else :
-            self.cur_hier.types[_catch[0]] = [_catch] 
+            if type(_catch)==list:
+                for n in _catch:
+                    self.cur_hier.types[n[0]] = [n] 
+            else:
+                self.cur_hier.types[_catch[0]] = [_catch] 
     def RegisterParse(self, s, lines):
         endflag = 0 
         _w = ''
@@ -789,6 +788,29 @@ class SVstr():
         _s = self.s.rstrip('\n').rstrip().split(maxsplit=1)
         self.s =  _s[1] if len(_s)>1 else ''
         return _s[0].rstrip(';')
+    def IDarrParse(self):
+        n= []
+        name = self.IDParse()
+        n.append(name)
+        while self.s[0] == ',': 
+            self.s = self.s[1:]
+            name = self.IDParse()
+            n.append(name)
+        return n
+    def IDDIMarrParse(self):
+        n = []
+        d = []
+        name = self.IDParse()
+        n.append(name)
+        dim = self.BracketParse()  
+        d.append(dim) 
+        while self.s[0] == ',': 
+            self.s = self.s[1:]
+            name = self.IDParse()
+            n.append(name)
+            dim = self.BracketParse()  
+            d.append(dim) 
+        return n, d
     def SignParse (self):
         self.lstrip()
         if 'signed' in self.s:
