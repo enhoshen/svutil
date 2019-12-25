@@ -25,6 +25,7 @@ class DrawioGen(SVgen):
     textstyle2 = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;"
     textstyle2left = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;"
     textstyle_rec1 = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=15"
+    textstyle_rec1left = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=15"
     textstyle_red = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#FF0505;" 
     textstyle_redleft = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#FF0505;" 
     arrowstyle1 = "endArrow=block; endFill=1;fontSize=8; html=1;"
@@ -114,12 +115,13 @@ class DrawioGen(SVgen):
     def CurlyStr(self, shape, parent, flip, ind):
         flipstr= "flipH=0" if not flip else "flipH=1"
         return  self.CellGeoStr( "", shape, f"shape=curlyBracket;whiteSpace=wrap;html=1;rounded=1;{flipstr};", parent, ind)
-    def RectangleStr(self, value, shape, parent, ind):
+    def RectangleStr(self, value, shape, parent, flip, ind):
         _p = f'SVgen-mxCell--{DrawioGen.unique_id}'
         s = self.GroupStr(shape, parent, ind)
         txt_sh = self.rec_txt_ofs.Copy() 
         txt_sh.x = (shape.w-self.rec_txt_width)/2 
-        s += self.TextStr( value, txt_sh, self.textstyle_rec1, _p, ind+1) 
+        textstyle = self.textstyle_rec1left if not flip else self.textstyle_rec1
+        s += self.TextStr( value, txt_sh, textstyle, _p, ind+1) 
         _d = DrawioGen(ind+1)
         mcblk = _d.mxCellBlk( "", "rounded=0;", _p)
         mxGeo = _d.Str2Blk( _d.mxGeometry, Shape( 0, 0, shape.w, shape.h) )
@@ -129,7 +131,7 @@ class DrawioGen(SVgen):
         # use after port arrow making use of self.port_ofs
         x = self.center_x if not flip else self.center_x-self.port_ofs/1.625
         shape = Shape( x , self.center_y, self.port_ofs/1.625, self.port_ofs)
-        return self.RectangleStr( module.name, shape, parent, ind)
+        return self.RectangleStr( module.name, shape, parent, flip, ind)
     def PortArrowStr(self, module, port, parent, reged , flip, ind):
         pfield = SVhier.portfield
         tpfield = SVhier.typefield
