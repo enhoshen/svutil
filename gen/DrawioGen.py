@@ -177,6 +177,7 @@ class DrawioGen(SVgen):
                 y_ofs = self.port_ofs+self.center_y
             boldarrow = port[pfield.dim] != () or port[pfield.bw] != 1
             memlist = [ (port[pfield.name]+port[pfield.dimstr], boldarrow) ] 
+            top_grp_y = 0
             #memlist = [ port[pfield.name]+port[pfield.bwstr]+port[pfield.dimstr] ]
         for txt,boldarrow in memlist:
             grp_sh = Shape(x_ofs , y_ofs, total_w, total_h)
@@ -200,8 +201,8 @@ class DrawioGen(SVgen):
             arrow_style = self.arrowboldstyle1 if boldarrow else self.arrowstyle1 
             s += self.ClassicArrowStr( "", arrow_style, arr_sh, face , _p, ind+3) 
             self.port_ofs += self.arrow_ofs
-            y_ofs += self.arrow_ofs
-        self.prev_y_ofs = y_ofs
+            y_ofs += self.arrow_ofs 
+        self.prev_y_ofs = y_ofs + top_grp_y
         return s
     
     def ModulePortArrowStr ( self, module, parent, flip, ind):
@@ -228,10 +229,10 @@ class DrawioGen(SVgen):
         rt  = self.RootBlk()
         port = self.Str2Blk ( self.ModulePortArrowStr, m, '1', False)
         modblk = self.Str2Blk( self.ModuleBlockStr , m, '1', False)
-        portflip = self.Str2Blk ( self.ModulePortArrowStr, m, '1', True)
-        modblkflip = self.Str2Blk( self.ModuleBlockStr , m, '1', True)
         s = self.Genlist( [ (mxg,rt) , [indblk,port] , [indblk,modblk] ])
         self.center_y = self.prev_y_ofs + 10 
+        portflip = self.Str2Blk ( self.ModulePortArrowStr, m, '1', True)
+        modblkflip = self.Str2Blk( self.ModuleBlockStr , m, '1', True)
         s += self.Genlist( [  [indblk,portflip], [indblk,modblkflip], rt, mxg] )
         ToClip(s)
         return s

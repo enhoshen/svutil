@@ -10,5 +10,3 @@ class PYUtil():
         self.regbkstr= hiers.dic.get(REGBK)
         self.regbk= SVRegbk(self.regbkstr) if self.regbkstr else None
         self.endcycle = 10000
-    def StrMacroExpand (self, s):
-        return SVstr( S2num(SVstr(s)).S2num(self.top.AllParam) ).MultiMacroExpand(self.top.AllMacro)
