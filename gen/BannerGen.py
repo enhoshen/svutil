@@ -92,11 +92,11 @@ class GanzinBanner(BannerGen):
                 overwrite = True to write to the file, False to generate a new one
         '''
         fpath = self.Write(self.BannerStr, fr, overwrite)
-        if (os.path.isfile(fpath)):
+        if os.path.isfile(fpath) or not os.path.exists(fpath):
             print ( "Banner attached to ", fpath)
     def BanIncWrite(self, fr=None, overwrite=False):
         fpath = self.Write(self.BannerIncguardStr, fr, overwrite)
-        if (os.path.isfile(fpath)):
+        if os.path.isfile(fpath) or not os.path.exists(fpath):
             print ( "Banner, include guard attached to ", fpath)
     def Write(self, strcallback=None, fr=None, overwrite=False):
         '''
@@ -117,7 +117,7 @@ class GanzinBanner(BannerGen):
         else:
             fpath = self.filepath
         _suf = 'Makefile' if self.filename == 'Makefile' else self.filesuf
-        if (os.path.isfile(fpath)):
+        if os.path.isfile(fpath) or not os.path.exists(fpath):
             s = strcallback(fr, _suf)
             if not s:
                 print('un-supported files or something went wrong')

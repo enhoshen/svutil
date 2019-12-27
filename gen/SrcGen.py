@@ -20,17 +20,20 @@ class SrcGen(SVgen):
     """
     def __init__(self, ind=Ind(0)):
         super().__init__()
-        self.regbk= SVRegbk(self.regbk)
+        self.regbk= SVRegbk(self.regbk) if self.regbk else None
         self.clk_name = 'i_clk'
         self.rst_name = 'i_rst_n'
         self.regbk_addr_name = 'i_addr'
+        self.regbk_write_name = 'i_write'
         self.regbk_wdata_name = 'i_wdata'
-        self.regbk_rdata_name = 'o_rdata'
+        self.regbk_rdata_name = 'rdata'
+        self.regbk_ointr_name = 'o_intr'
         self.regbk_addr_slice = f'[{self.regbk.regaddrbw_name}-1:{(self.regbk.regbsizebw_name)}]'
         self.regbk_write_cond = 'write_valid'
         self.regbk_read_cond = 'read_valid'
         self.regbk_cg_cond = 'regbk_cg'
         self.regbk_ro_cg_cond = 'regbk_ro_cg'
+        self.regbk_flag_logic_lst = [ self.regbk_write_cond, self.regbk_read_cond, self.regbk_cg_cond, self.regbk_ro_cg_cond ]
         self.regbk_clr_affix = 'clr_'
     def RegbkModBlk(self): 
         ind = self.cur_ind.Copy() 
@@ -38,16 +41,24 @@ class SrcGen(SVgen):
         s = '\n'
         s += f'{ind.b}`include ' + f'"{self.regbkstr}.sv" // Please manually modify the path\n\n' 
         s += f'{ind.b}import {self.regbkstr}::*;\n'
-        s += f'{ind.b}module ' + self.regbkstr+ ' (\n'
+        s += f'{ind.b}module ' + self.regbkstr+ ' #(\n'
+        s += f'{ind.b})(\n'
         s += f'{ind[1]} input {self.clk_name}\n'
         s += f'{ind[1]},input {self.rst_name}\n'
+        s += f'{ind[1]}//TODO protocol\n'
+        w = len(self.regbk.regbw_name)+5+7+8
+        s += f'{ind[1]}{",input":<{w}} {self.regbk_write_name}\n'
+        s += f'{ind[1]}{",input ["+self.regbk.regaddrbw_name+"-1:0]":<{w}} {self.regbk_addr_name}\n'
+        s += f'{ind[1]}{",input ["+self.regbk.regbw_name+"-1:0]":<{w}} {self.regbk_wdata_name}\n'
+        s += f'{ind[1]}{",output logic ["+self.regbk.regbw_name+"-1:0]":<{w}} o_{self.regbk_rdata_name}\n'
+        s += f'{ind[1]}{",output "+self.regbk.regintr_name:<{w}} {self.regbk_ointr_name}\n'
         s += f'{ind.b});\n'
         yield s
         s = '\n' + ind.b +'endmodule'
         yield s
     def RegbkLogicStr(self, w, reg, bw, tp, ind):
-        bwstr = '' if bw ==1 else f'[{bw}-1:0]' 
-        return  f'{ind.b}{tp+" "+bwstr:<{w[0]}} {reg+"_r,":<{w[1]}} {reg}_w;\n'
+        bwstr = '' if bw ==1 else f'[{bw}-1:0] ' 
+        return  f'{ind.b}{tp+" "+bwstr:<{w[0]}}{reg+"_r,":<{w[1]}} {reg}_w;\n'
     def RegbkRdataStr(self, reg, _slice, w, ind):
         #TODO slice dependent, now it only pad the MSB and it's usually the case
         pad = f'{SVRegbk.regbw_name}-{reg}{SVRegbk.bw_suf}'
@@ -118,14 +129,34 @@ class SrcGen(SVgen):
             bw = 1 if tp else bw
             tp = reg.name.lower() if tp else 'logic'
             return bw,tp 
+        s += f'{ind.b}// control register\n'
         for reg in self.regbk.addrs.enumls:
             bw,tp = gettpbw(reg)
-            bwstr = '' if bw ==1 else f'[{bw}-1:0]' 
+            bwstr = '' if bw ==1 else f'[{bw}-1:0] ' 
             w[0] = max(w[0], len(f'{tp+" "+bwstr}'))
             w[1] = max(w[1], len(reg.name)+3)
         for reg in self.regbk.addrs.enumls:
             bw,tp = gettpbw(reg)
             s += self.RegbkLogicStr( w, reg.name.lower(), bw, tp, ind)
+        s += f'{ind.b}logic [{self.regbk.regbw_name}-1:0] {self.regbk_rdata_name}_w;\n'
+        s += '\n'
+
+        s += f'{ind.b}// interrupt clear\n'
+        intr = self.regbk.raw_intr_stat
+        if not self.regbk.raw_intr_stat:
+            print("interrupt struct not specified")
+            return ""
+        w[0] = 0
+        for intr in self.regbk.raw_intr_stat:
+            w[1] = max(w[1], len(self.regbk_clr_affix+intr.name)+3)
+        for intr in self.regbk.raw_intr_stat:
+            s += self.RegbkLogicStr( w, self.regbk_clr_affix+intr.name.lower(), 1, 'logic', ind)
+        s += '\n'
+
+        s += f'{ind.b}// flags\n'
+        for l in self.regbk_flag_logic_lst:
+            s += f'{ind.b}logic {l};\n' 
+        
         if toclip:
             ToClip(s)
         self.regbk = regbktemp
@@ -154,7 +185,7 @@ class SrcGen(SVgen):
             s += self.RegbkRdataStr( reg.name, _slice, w, ind+3)
         s += f'{ind[3]}default: rdata_w = \'0;\n'
         s += f'{ind[2]}endcase\n'
-        s += f'{ind[1]}else rdata_w = {self.regbk_rdata_name};\n'
+        s += f'{ind[1]}else {self.regbk_rdata_name}_w = o_{self.regbk_rdata_name};\n'
         s += f'{ind.b}end\n'
         if toclip:
             ToClip(s)
@@ -175,9 +206,7 @@ class SrcGen(SVgen):
         for reg in self.regbk.addrs.enumls:
             _slice = self.regbk.regslices.get(reg.name)
             s += f'{ind.b}//{"reg "+reg.name:=^{w}}\n'
-            rw = None
-            if len(reg.cmt) >= 2 and 'RO' in reg.cmt[1] :
-                rw = 'RO'
+            width, rw = self.regbk.GetAddrCmt(reg.name)
             s += self.RegbkWdataCombStr( reg.name, _slice, rw, ind)
             s += self.RegbkWdataSeqStr( reg.name, _slice, rw, ind) + '\n'
         if toclip:
@@ -201,6 +230,38 @@ class SrcGen(SVgen):
             ToClip(s)
         self.regbk = regbktemp
         return s 
+    def SeqStr(self, s1, s2, ind=None):
+        ff_str = f'always_ff @(posedge {self.clk_name} or negedge {self.rst_name})begin' 
+        s = f'{ind.b}{ff_str}\n'
+        s += s1
+        s += f'{ind.b}end\n'
+        s += f'{ind.b}else if()begin\n'
+        s += s2
+        s += f'{ind.b}end\n'
+        return s
+    def RegbkSeqToClip(self, pkg=None, toclip=True, ind=None):
+        r"""
+        Build basic sequential part including state_main, clr_interrupts not in the control reg list...etc.
+        """
+        regbktemp = self.RegbkSwap(pkg)
+        ind = self.cur_ind.Copy() if not ind else ind
+        s = ''
+        s1 = ''
+        s2 = ''
+        w = 0
+        clr = self.regbk_clr_affix
+        for intr in self.regbk.raw_intr_stat:
+            w = max(w, len(clr+intr.name)+2)
+        for intr in self.regbk.raw_intr_stat:
+            if not clr.upper()+intr.name.upper() in self.regbk.regaddrsdict:
+                s1 += f'{ind[1]}{clr+intr.name+"_r":<{w}} <= \'0;\n' #TODO 
+                s2 += f'{ind[1]}{clr+intr.name+"_r":<{w}} <= {clr+intr.name}_w;\n' #TODO 
+        s += self.SeqStr(s1,s2,ind)
+        if toclip:
+            ToClip(s)
+        self.regbk = regbktemp
+        return s 
+
     def RegbkToFile(self, pkg=None, ind=None):
         regbktemp = self.RegbkSwap(pkg)
         ind = self.cur_ind if not ind else ind
