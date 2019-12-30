@@ -1053,6 +1053,8 @@ class SVARGstr(SVstr):
     def Pluslsplit(self):
         bcnt = False 
         prvc = ''
+        if self.End():
+            return None
         for i,c in enumerate(self.s):
             if c == '"':
                 if prvc == '\\':
@@ -1065,6 +1067,9 @@ class SVARGstr(SVstr):
                     self.s = self.s[i+1:].lstrip()
                     return _s, c
             prvc = c
+        _s = self.s
+        self.s = ''
+        return _s, '' 
     def PlusSplit(self):
         l = []
         parse = self.Pluslsplit()
