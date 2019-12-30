@@ -39,7 +39,7 @@ class SrcGen(SVgen):
         ind = self.cur_ind.Copy() 
         yield ''
         s = '\n'
-        s += f'{ind.b}`include ' + f'"{self.regbkstr}.sv" // Please manually modify the path\n\n' 
+        s += f'{ind.b}`include ' + f'"{self.regbkstr}Defines.sv" // Please manually modify the path\n\n' 
         s += f'{ind.b}import {self.regbkstr}::*;\n'
         s += f'{ind.b}module ' + self.regbkstr+ ' #(\n'
         s += f'{ind.b})(\n'
@@ -58,13 +58,13 @@ class SrcGen(SVgen):
         yield s
     def RegbkLogicStr(self, w, reg, bw, tp, ind):
         bwstr = '' if bw ==1 else f'[{bw}-1:0] ' 
-        return  f'{ind.b}{tp+" "+bwstr:<{w[0]}}{reg+"_r,":<{w[1]}} {reg}_w;\n'
+        return  f'{ind.b}{tp+" "+bwstr:<{w[0]}}{reg+"_r":<{w[1]}} ,{reg}_w;\n'
     def RegbkRdataStr(self, reg, _slice, w, ind):
         #TODO slice dependent, now it only pad the MSB and it's usually the case
         pad = f'{SVRegbk.regbw_name}-{reg}{SVRegbk.bw_suf}'
         s =f'{ind.b}{reg:<{w[0]}}: rdata_w = '
-        pad = '{{'+f'{pad}'+'{1\'b0}},'
-        s += f'{pad:<{w[1]}} {reg.lower()}_r}};\n'
+        pad = '{{'+f'{pad}'+'{1\'b0}}'
+        s += f'{pad:<{w[1]}} ,{reg.lower()}_r}};\n'
         return s 
     def RegbkWdataSeqStr(self, reg, _slice, rw=None, ind=None):
         #TODO slice dependent, now it only pad the MSB and it's usually the case
@@ -134,7 +134,7 @@ class SrcGen(SVgen):
             bw,tp = gettpbw(reg)
             bwstr = '' if bw ==1 else f'[{bw}-1:0] ' 
             w[0] = max(w[0], len(f'{tp+" "+bwstr}'))
-            w[1] = max(w[1], len(reg.name)+3)
+            w[1] = max(w[1], len(reg.name)+2)
         for reg in self.regbk.addrs.enumls:
             bw,tp = gettpbw(reg)
             s += self.RegbkLogicStr( w, reg.name.lower(), bw, tp, ind)
@@ -148,9 +148,10 @@ class SrcGen(SVgen):
             return ""
         w[0] = 0
         for intr in self.regbk.raw_intr_stat:
-            w[1] = max(w[1], len(self.regbk_clr_affix+intr.name)+3)
+            w[1] = max(w[1], len(self.regbk_clr_affix+intr.name)+2)
         for intr in self.regbk.raw_intr_stat:
-            s += self.RegbkLogicStr( w, self.regbk_clr_affix+intr.name.lower(), 1, 'logic', ind)
+            if not self.regbk_clr_affix.upper()+intr.name.upper() in self.regbk.regaddrsdict:
+                s += self.RegbkLogicStr( w, self.regbk_clr_affix+intr.name.lower(), 1, 'logic', ind)
         s += '\n'
 
         s += f'{ind.b}// flags\n'
@@ -172,14 +173,14 @@ class SrcGen(SVgen):
         w = [0,0]
         print ( f'read condition: {self.regbk_read_cond}')
         s = f'{ind.b}always_comb begin\n'
-        s += f'{ind[1]}if (state_main_r == DISABLED) begin //Disabled default read value\n'
+        s += f'{ind[1]}if () begin //TODO Disabled default read value\n'
         s += f'{ind[2]}rdata_w = ({self.regbk_read_cond} && {self.regbk_addr_name}{self.regbk_addr_slice} == CLR_DISABLED)? 1 : \'0;\n'
         s += f'{ind[1]}end\n'
         s += f'{ind[1]}else if ({self.regbk_read_cond}) begin\n'
         s += f'{ind[2]}case ({self.regbk_addr_name}{self.regbk_addr_slice})\n'
         for i in self.regbk.addrs.enumls:
             w[0] = max(w[0], len(i.name))
-            w[1] = max(w[1], len(self.regbk.regbw_name+i.name+self.regbk.bw_suf)+12)
+            w[1] = max(w[1], len(self.regbk.regbw_name+i.name+self.regbk.bw_suf)+10)
         for reg in self.regbk.addrs.enumls:
             _slice = self.regbk.regslices.get(reg.name)
             s += self.RegbkRdataStr( reg.name, _slice, w, ind+3)
@@ -231,12 +232,15 @@ class SrcGen(SVgen):
         self.regbk = regbktemp
         return s 
     def SeqStr(self, s1, s2, ind=None):
-        ff_str = f'always_ff @(posedge {self.clk_name} or negedge {self.rst_name})begin' 
+        ff_str = f'always_ff @(posedge {self.clk_name} or negedge {self.rst_name}) begin' 
         s = f'{ind.b}{ff_str}\n'
+        rst_sign = '!' if self.rst_name[-1]=='n' else ''
+        s += f'{ind[1]}if ({rst_sign}{self.rst_name}) begin\n'
         s += s1
-        s += f'{ind.b}end\n'
-        s += f'{ind.b}else if()begin\n'
+        s += f'{ind[1]}end\n'
+        s += f'{ind[1]}else if() begin //TODO\n'
         s += s2
+        s += f'{ind[1]}end\n'
         s += f'{ind.b}end\n'
         return s
     def RegbkSeqToClip(self, pkg=None, toclip=True, ind=None):
@@ -254,8 +258,8 @@ class SrcGen(SVgen):
             w = max(w, len(clr+intr.name)+2)
         for intr in self.regbk.raw_intr_stat:
             if not clr.upper()+intr.name.upper() in self.regbk.regaddrsdict:
-                s1 += f'{ind[1]}{clr+intr.name+"_r":<{w}} <= \'0;\n' #TODO 
-                s2 += f'{ind[1]}{clr+intr.name+"_r":<{w}} <= {clr+intr.name}_w;\n' #TODO 
+                s1 += f'{ind[2]}{clr+intr.name+"_r":<{w}} <= \'0;\n' #TODO 
+                s2 += f'{ind[2]}{clr+intr.name+"_r":<{w}} <= {clr+intr.name}_w;\n' #TODO 
         s += self.SeqStr(s1,s2,ind)
         if toclip:
             ToClip(s)
@@ -270,10 +274,12 @@ class SrcGen(SVgen):
         banw = 25
         logicban = self.Line3BannerBlk( banw, '//', 'Logic') 
         logic = self.Str2Blk(self.RegbkLogicToClip, pkg, False)
+        seqban = self.Line3BannerBlk( banw, '//', 'Sequential') 
+        seq = self.Str2Blk(self.RegbkSeqToClip, pkg, False)
         regbkban = self.Line3BannerBlk( banw, '//', 'Reg bank') 
         rdata = self.Str2Blk(self.RegbkRdataToClip, pkg, False)
         wdata = self.Str2Blk(self.RegbkWdataToClip, pkg, False)
-        s = self.Genlist ( [(mod,), [Ind,logicban], [Ind,logic], [Ind,regbkban], [Ind,rdata], [Ind,wdata],  mod] )
+        s = self.Genlist ( [(mod,), [Ind,logicban], [Ind,logic], [Ind,seqban], [Ind,seq], [Ind,regbkban], [Ind,rdata], [Ind,wdata],  mod] )
         ToClip(s)
         p = self.FileWrite( self.genpath + self.regbkstr +'.sv', s, 'sv')
         print ('Regbk file write to', p) 

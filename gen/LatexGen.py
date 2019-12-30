@@ -97,7 +97,7 @@ class LatexGen(SVgen):
                     reg_bw_str = f'{reg_bw_str}-1:0'
                 s += f'{ind[2]}{{[{reg_bw_str}]}}: {reg_defaults[0]}\\\\\n'
         else:
-            reset = '\\TODO' if len(cmt) < 3 else cmt[2] 
+            reset = '\\TODO' if len(reg.cmt) < 3 else reg.cmt[2] 
             reset = self.L_(self.Lbrac(reset))
             s += f'{ind[2]}{reset}\n'
         s += f'{ind[1]}}}\n'
@@ -169,6 +169,7 @@ class LatexGen(SVgen):
         for reg in regbk.addrs.enumls:
             reg_slices = regbk.regslices.get(reg.name)
             defaults = self.Str2Lst(regbk.GetDefaultsStr(reg.name))
+            defaults.reverse()
             reg_bw = regbk.params.get(f'{reg.name}_BW')
             reg_bw = reg_bw.num if reg_bw else None
             reg_bw_str = self.L_(regbk.GetBWStr(reg.name))
@@ -188,8 +189,10 @@ class LatexGen(SVgen):
             width, rw = regbk.GetAddrCmt(reg) 
             reg_bw = width if not reg_bw else reg_bw
             s += self.RegFieldSubSec( reg, ofs, reg_bw+'b', rw) 
+            defaults = self.Str2Lst(regbk.GetDefaultsStr(reg))
+            defaults.reverse()
             s += self.RegFieldStr ( reg, regbk.regslices[reg], regbk.regtypes[reg], regbk.regmembtypes[reg], \
-                                    self.Str2Lst(regbk.GetDefaultsStr(reg)), rw)
+                                    defaults, rw)
             s += '\n'
         ToClip(s)
         return s
