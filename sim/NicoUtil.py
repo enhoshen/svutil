@@ -116,7 +116,8 @@ class StructBusCreator():
         buses = []
         attrs = self.structlist[self.structName].attrs
         if not attrs:
-            return buses.append ( CreateBus( ((hier, signalName, DIM),) ) )
+            b = CreateBus( ((hier, signalName, DIM),) ) 
+            return  CreateBus( ((hier, signalName, DIM),) ) 
         else:
             for  n , bw, dim ,t ,*_ in attrs :
                 if t=='logic':
