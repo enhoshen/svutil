@@ -7,6 +7,7 @@ from collections import deque
 from subprocess import Popen, PIPE
 from functools import reduce
 #Nico makefile specified
+ARGS = os.environ.get('ARGS','')
 TOPMODULE = os.environ.get('TOPMODULE','')
 TEST = os.environ.get('TEST','')
 #SVutil optional specified
@@ -97,7 +98,7 @@ class SVhier ():
     @property
     def Macros(self):
         if self._scope == None:
-            _l = deque([h.macros for _ , h in self.child.items()] )
+            _l = deque([self.macros])+deque([h.macros for _ , h in self.child.items()] )
             return _l 
         else:
             _l = self._scope.Macros
@@ -294,9 +295,19 @@ class SVparse():
         self.flag_parse = True
     @classmethod
     def ARGSParse(cls):
+        s = SVARGstr(ARGS)
+        l = s.PlusSplit()
+        for _l in l:
+            func = _l[0]
+            args = _l[1:]
+            if func == 'define':
+                m = s.define(args) 
+                for k,v in m.items():
+                    cls.gb_hier.macros[k]=v
         pass
     @classmethod
     def ParseFiles(cls , paths=[(True,INC)] ):
+        cls.ARGSParse()
         for p in paths:
             cls.paths.append(f'{cls.include_path}{p[1]}.sv' if p[0] else p[1] )
         print(cls.paths)
@@ -1038,6 +1049,44 @@ class SVstr():
         return st in self.s
     def End(self):
         return self.s==''
+class SVARGstr(SVstr):
+    def Pluslsplit(self):
+        bcnt = False 
+        prvc = ''
+        for i,c in enumerate(self.s):
+            if c == '"':
+                if prvc == '\\':
+                    pass 
+                else:
+                    bcnt = False if bcnt else True 
+            if bcnt == False:
+                if c == '+' or c ==' ':
+                    _s = self.s[0:i]
+                    self.s = self.s[i+1:].lstrip()
+                    return _s, c
+            prvc = c
+    def PlusSplit(self):
+        l = []
+        parse = self.Pluslsplit()
+        while parse:
+            if parse == ('','+'):
+                l.append([])
+            if parse[0] != '':
+                l[-1].append(parse[0])
+            parse = self.Pluslsplit()
+        return l
+    def define(self, args):
+        l = {} 
+        for a in args:
+            _a = a.split('=')
+            name = _a[0]
+            text = _a[1] if len(_a) > 1 else ''
+            func = lambda : text;
+            l[name]=([],text,func)
+        return l 
+    def incdir(self, args):
+        #TODO
+        return [] 
     
 def ParseFirstArgument():
     import sys
