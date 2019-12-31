@@ -535,7 +535,6 @@ class SVparse():
             _catch = _m(s , lines)
         else :
             _catch = self.ArrayParse(s,lines)
-            print(_catch)
             _catch = ( _catch[0], int(np.multiply.reduce(_catch[2])*self.cur_hier.types[_w][0][1]) \
                         ,_catch[2], _w)
         if _w == 'struct':

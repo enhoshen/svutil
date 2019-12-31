@@ -186,6 +186,7 @@ class SrcGen(SVgen):
             s += self.RegbkRdataStr( reg.name, _slice, w, ind+3)
         s += f'{ind[3]}default: rdata_w = \'0;\n'
         s += f'{ind[2]}endcase\n'
+        s += f'{ind[1]}end\n'
         s += f'{ind[1]}else {self.regbk_rdata_name}_w = o_{self.regbk_rdata_name};\n'
         s += f'{ind.b}end\n'
         if toclip:
@@ -281,7 +282,7 @@ class SrcGen(SVgen):
         wdata = self.Str2Blk(self.RegbkWdataToClip, pkg, False)
         s = self.Genlist ( [(mod,), [Ind,logicban], [Ind,logic], [Ind,seqban], [Ind,seq], [Ind,regbkban], [Ind,rdata], [Ind,wdata],  mod] )
         ToClip(s)
-        p = self.FileWrite( self.genpath + self.regbkstr +'.sv', s, 'sv')
+        p = self.FileWrite( self.genpath + self.regbkstr, s, 'sv')
         print ('Regbk file write to', p) 
         self.regbk = regbktemp
     def RegbkSwap(self, pkg=None):

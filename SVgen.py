@@ -89,12 +89,12 @@ class SVgen():
         s = next(blk,None)
         return s if s != None else ''
     def FileWrite(self , fpath, text, suf): 
-        if os.path.isfile(self.genpath+fpath):
+        if os.path.isfile(self.genpath+fpath+'.'+suf):
             print( "file exists, make a copy, rename the file right away")
             import time
             fpath = self.genpath + fpath +'_'+ time.strftime('%m%d%H') +'.'+ suf 
         else:
-            pass
+            fpath = self.genpath + fpath + '.' + suf 
         f = open( fpath,'w')
         f.write(text)
         return fpath
