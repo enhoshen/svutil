@@ -188,7 +188,10 @@ class SrcGen(SVgen):
         s += f'{ind[2]}endcase\n'
         s += f'{ind[1]}end\n'
         s += f'{ind[1]}else {self.regbk_rdata_name}_w = o_{self.regbk_rdata_name};\n'
-        s += f'{ind.b}end\n'
+        s += f'{ind.b}end\n\n'
+        s1 = f'{ind[2]}o_{self.regbk_rdata_name} <= \'0;\n' #TODO 
+        s2 = f'{ind[2]}o_{self.regbk_rdata_name} <= {self.regbk_rdata_name}_w;\n' #TODO 
+        s += self.SeqStr(s1, s2, ind)
         if toclip:
             ToClip(s)
         self.regbk = regbktemp
