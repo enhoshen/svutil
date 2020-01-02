@@ -4,7 +4,7 @@ import os
 import itertools
 import numpy as np
 
-class PYUtil():
+class PYUtil(SVutil):
     def __init__(self):
         self.hier = hiers.dic.get(HIER)
         self.regbkstr= hiers.dic.get(REGBK)

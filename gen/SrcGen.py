@@ -20,6 +20,7 @@ class SrcGen(SVgen):
     """
     def __init__(self, ind=Ind(0)):
         super().__init__()
+        self.verbose = 0
         self.regbk= SVRegbk(self.regbk) if self.regbk else None
         self.clk_name = 'i_clk'
         self.rst_name = 'i_rst_n'

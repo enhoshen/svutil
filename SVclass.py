@@ -1,5 +1,5 @@
 from SVparse import * 
-class SVclass():
+class SVclass(SVutil):
     def __init__(self):
         self.w = 20
         pass
@@ -53,7 +53,7 @@ class SVEnuml(SVclass):
     def __init__(self, enuml=None):
         self.w = 20
         self.data = enuml
-class SVRegbk(): 
+class SVRegbk(SVutil): 
     '''
     Register bank information parsed from a *Regbk package
         regfields: SVEnums
@@ -69,6 +69,7 @@ class SVRegbk():
     regbsizebw_name = 'REG_BSIZE_BW'
     regintr_name = 'raw_intr_stat'
     def __init__(self, pkg):
+        self.verbose = 0
         self.w = 20
         self.pkg = pkg
         self.addrs = SVEnums ( pkg.enums[self.regaddr_name] )
@@ -164,7 +165,7 @@ class SVRegbk():
             and read data.
         '''
         addr, regnums, regnames = self.GetAddrNField(reg)
-        datalst = self.RegfieldPack(regnums, data)
+        datalst = self.RegfieldExtract(regnums, data)
         return datalst, regnames 
     def ShowAddr(self, valuecb=hex):
         print ( f'{self.pkg.name:-^{3*self.w}}') #TODO name banner width
@@ -205,8 +206,8 @@ class SVRegbk():
         '''
         datalst = []
         for s, e in zip(regfieldlst, regfieldlst[1:]+[self.regbw]):
-            print( s, e, e-s)
+            #print( s, e, e-s)
             msk = ((1 << s) -1) ^ ((1 << e) -1) if s!=e else (1 << s)
-            print ( bin(msk))
+            #print ( bin(msk))
             datalst.append((data & msk) >> s)
         return datalst[0] if len(datalst)==1 else datalst

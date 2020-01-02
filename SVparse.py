@@ -6,12 +6,13 @@ from collections import namedtuple
 from collections import deque
 from subprocess import Popen, PIPE
 from functools import reduce
+from SVutil import SVutil 
 #Nico makefile specified
 ARGS = os.environ.get('ARGS','')
 TOPMODULE = os.environ.get('TOPMODULE','')
 TEST = os.environ.get('TEST','')
 #SVutil optional specified
-SVutil = os.environ.get('SVutil','')
+SVutilenv = os.environ.get('SVutil','')
 TESTMODULE = os.environ.get('TESTMODULE','')
 SV = os.environ.get('SV','')
 TOPSV = os.environ.get('TOPSV','')
@@ -237,7 +238,7 @@ class SVhier ():
                 f'{"child":^15}:{[x for x in self.child] !r:^}\n'+\
                 f'{"ports":^15}:{[io[0]+" "+n for io,n,*_ in self.ports] !r:^}\n'
         
-class SVparse():
+class SVparse(SVutil):
     # One SVparse object one file, and it's also SVhier
     verbose = 0
     parsed = False
@@ -375,8 +376,7 @@ class SVparse():
             commas (multiple identifiers) is not supported...
         '''
         #TODO signed keyword
-        if self.verbose == 3:
-            print(s)
+        self.print(s,verbose=3)
         s.lstrip()
         sign = s.SignParse() 
         bw = s.BracketParse()
@@ -384,8 +384,7 @@ class SVparse():
         n, d = s.IDDIMarrParse()
         tp = ('signed ' if sign==True else '') + 'logic'
         lst = [(_n,bw.Slice2num(self.cur_hier.Params),self.Tuple2num(_d),tp) for _n,_d in zip(n,d)]
-        if self.verbose == 3: 
-            print(lst)
+        self.print(lst,verbose=3)
         return lst 
     def ArrayParse(self, s , lines):
         dim = s.BracketParse()
@@ -605,8 +604,7 @@ class SVparse():
                     continue
                 else:
                     break
-        if self.verbose:
-            print(_s)
+        self.print(_s,verbose=4)
         _s = _s.replace('\\','')
         func = lambda *_args: reduce( lambda x,y: \
                                 re.sub( rf'(\b|(``)){y[1]}(\b(``)|\b)', str(y[0]),x )\
@@ -614,8 +612,7 @@ class SVparse():
         self.cur_hier.macros[name] = (args, _s, func)
         self.keyword['`'+name] = self.MacroParse
         self.parselist.add('`'+name)
-        if self.verbose:
-            print (re.sub( rf'(\b|(``))b(\b(``)|\b)','2',re.sub(rf'(\b|(``))a(\b(``)|\b)', '1', _s) ))
+        self.print (re.sub( rf'(\b|(``))b(\b(``)|\b)','2',re.sub(rf'(\b|(``))a(\b(``)|\b)', '4', _s) ), verbose=4)
     def MacroParse(self, s, lines):
         k = self.cur_key
         s.lstrip() 
@@ -626,8 +623,7 @@ class SVparse():
             s.s = SVstr(k).MacroFuncExpand(self.cur_hier.AllMacro) + s.s[span[1]:]
         else:
             s.s = SVstr(k).SimpleMacroExpand(self.cur_hier.AllMacro) + s.s
-        if self.verbose == 3:
-            print(k)
+        self.print(k,verbose=3)
     def IfDefParse( self, s, lines):
         self.cnt_ifdef += 1 
         self.cur_macrodef = 'ifdef'
@@ -721,7 +717,7 @@ class SVparse():
                 ofs = ofs+1 if _num == '' else _num+1
             _params[0][name[-1]] = num[-1]
         return name, num 
-class SVstr():
+class SVstr(SVutil):
     sp_chars = ['=','{','}','[',']','::',';',',','(',')','#']
     op_chars = ['+','-','*','/','(',')']
     verbose = 0
@@ -854,8 +850,7 @@ class SVstr():
         if _step == len(rules) :
             return
     def FunctionParse(self):
-        if self.verbose:
-            print(self.End())
+        self.print(self.End(),verbose=3)
         func = self.lsplit()
         if self.End():
             return func , []
@@ -912,8 +907,8 @@ class SVstr():
         try:
             return eval(ps.expr(_s).compile('file.py'))
         except:
-            if _s !='' and self.verbose:
-                print(f"S2num failed, return original string: {_s}")
+            if _s !='':
+                self.print(f"S2num failed, return original string: {_s}",verbose=1)
             return _s
     def Slice2num(self,params):
         if self.s == '':
@@ -973,8 +968,7 @@ class SVstr():
         exp = re.sub(rf'(?![)]$)[)]',  '")+"', exp)
         exp = re.sub(rf'[)]$', '")', exp) 
         while reobj:
-            if self.verbose:
-                print(exp)
+            self.print(exp,verbose=1)
             reobj = re.search( r'`(\w+)\b', exp )
             if reobj:
                 m0 = reobj.group(0)
@@ -983,8 +977,7 @@ class SVstr():
                     exp = re.sub(rf'{m0}\b', f'macros[\'{m}\'][2]()+"', exp) 
                 else:
                     exp = re.sub(rf'{m0}\b', f'macros[\'{m}\'][2]', exp) 
-        if self.verbose:
-            print(exp)
+            self.print(exp,verbose=1)
         try:
             return eval(ps.expr(exp).compile('file.py'))
         except:
@@ -1095,32 +1088,8 @@ class SVARGstr(SVstr):
 def ParseFirstArgument():
     import sys
     SVparse.ParseFiles([(True,sys.argv[1])])
-def Reset():
-    SVparse.parsed = False
-    package = {}
-    hiers = {}
-    paths = []
-    gb_hier = SVhier('files',None)
-    gb_hier.types =  {'integer':None,'int':None,'logic':None}
-def ShowFile(n,start=0,end=None):
-    f=open(SVparse.paths[n],'r')
-    l=f.readlines()
-    end = start+40 if end==None else end
-    for i,v in enumerate([ x+start for x in range(end-start)]):
-        print(f'{i+start:<4}|',l[v],end='')
-def ShowPaths():
-    for i,v in enumerate(SVparse.paths):
-        print (i ,':  ',v)
-def FileParse( paths = [(True,INC)]):
-    if SVparse.parsed == True:
-        return
-    paths = [paths] if type(paths) == tuple else paths
-    SVparse.ParseFiles( paths)
-    SVparse.parsed = True
-def TopAllParamEAdict():
-    return EAdict(hiers.dic[TOPMODULE].AllParam)
 hiers = EAdict(SVparse.hiers)
-class SVparseTemp():
+class SVparseSession(SVutil):
     def __getattr__(self , n ):
         return self.hiers[n]
     def __init__(self,name=None,scope=None):
@@ -1131,17 +1100,31 @@ class SVparseTemp():
         self.paths = []
         self.gb_hier = SVhier('files',None)
         self.gb_hier.types =  {'integer':None,'int':None,'logic':None}
-        self._top =  TOPMODULE
+        _top =  TOPMODULE
         self.top = _top if _top != None else ''
         self.base_path = os.environ.get("PWD").replace('/vcs','').replace('/verilator','').replace('/sim','')+'/'
-        print("supposed base path of the project:", base_path)
-        self.include_path = base_path + 'include/'
-        self.sim_path = base_path+'sim/'
-        self.src_path = base_path+'src/'
+        self.include_path = self.base_path + 'include/'
+        self.sim_path = self.base_path+'sim/'
+        self.src_path = self.base_path+'src/'
         self.cur_scope = '' 
         self.cur_path= ''
         self.flags = { 'pport': False , 'module' : False } #TODO
-    def Swap (self):
+    def SwapFrom(self):
+        self.verbose =SVparse.verbose
+        self.parsed =SVparse.parsed
+        self.package =SVparse.package
+        self.hiers =SVparse.hiers
+        self.paths =SVparse.paths
+        self.gb_hier =SVparse.gb_hier
+        self.top =SVparse.top
+        self.base_path =SVparse.base_path
+        self.include_path =SVparse.include_path
+        self.sim_path =SVparse.sim_path
+        self.src_path =SVparse.src_path
+        self.cur_scope =SVparse.cur_scope
+        self.cur_path =SVparse.cur_path
+        self.flags =SVparse.flags
+    def SwapTo (self):
         SVparse.verbose =self.verbose
         SVparse.parsed =self.parsed
         SVparse.package =self.package
@@ -1156,6 +1139,7 @@ class SVparseTemp():
         SVparse.cur_scope =self.cur_scope
         SVparse.cur_path =self.cur_path
         SVparse.flags =self.flags
+        hiers = EAdict(SVparse.hiers) #TODO
     def ParseFiles(self , paths=[(True,INC)] ):
         for p in paths:
             self.paths.append(f'{cls.include_path}{p[1]}.sv' if p[0] else p[1] )
@@ -1183,7 +1167,7 @@ class SVparseTemp():
         return paths
     def ParseFirstArgument(self):
         import sys
-        self.ParseFiles([(True,sys.argv[1])])
+        self.FileParse([(True,sys.argv[1])])
     def Reset(self):
         self.parsed = False
         self.package = {}
@@ -1201,11 +1185,12 @@ class SVparseTemp():
         for i,v in enumerate(self.paths):
             print (i ,':  ',v)
     def FileParse(self, paths = [(True,INC)]):
-        if self.parsed == True:
+        if SVparse.parsed == True:
             return
         paths = [paths] if type(paths) == tuple else paths
-        self.ParseFiles( paths)
-        self.parsed = True
+        SVparse.ParseFiles( paths)
+        SVparse.parsed = True
+        self.SwapFrom()
     def TopAllParamEAdict():
         return EAdict(self.gb_hier[TOPMODULE].AllParam)
 
@@ -1234,4 +1219,5 @@ if __name__ == '__main__':
     #print(SVparse.hiers['PECtlCfg'])
     SVstr.verbose = 1
     SVparse.verbose = 1
-    ParseFirstArgument()
+    S = SVparseSession()
+    S.ParseFirstArgument()

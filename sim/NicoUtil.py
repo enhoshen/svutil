@@ -1,7 +1,7 @@
 from nicotb import *
 from SVparse import *
 from SVclass import *
-from SimUtil import *
+from SVsim   import *
 import os
 import itertools
 import numpy as np
@@ -246,6 +246,7 @@ class NicoUtil(PYUtil):
     def DutPorts(self):
         return {  i:SVPort(v)for i,v in self.dut.Portsdic.items()}
     def DutPortDim(self, p):
+        ''' Find the port dimension based on the port name from dut module specified by TESTMODULE '''
         d = self.DutPorts[p].dimstrtuple
         return self.Tuple2num(d)
     def Tuple2num(self, t):

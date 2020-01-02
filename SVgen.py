@@ -21,7 +21,8 @@ class Ind():
         return Ind(self.n)
 class SVgen():
     def __init__(self , paths=[(True,INC)] ):
-        FileParse(paths)
+        self.session = SVparseSession()
+        self.session.FileParse(paths)
         self.genlist = {}    
         self.hclkmacro = 'HCYCLE'
         self.endcyclemacro = 'TIMEOUTCYCLE'
@@ -33,11 +34,11 @@ class SVgen():
         self.topfile  = SV.rstrip('.sv')
         self.incfile  = INC
         self.dutname = TESTMODULE 
-        self.dut = hiers.dic.get(self.dutname)
-        self.dutfile = hiers.dic.get(self.dutname+'_sv')
-        self.hier = hiers.dic.get(HIER) 
+        self.dut = self.session.hiers.get(self.dutname)
+        self.dutfile = self.session.hiers.get(self.dutname+'_sv')
+        self.hier = self.session.hiers.get(HIER) 
         self.regbkstr= REGBK 
-        self.regbk = hiers.dic.get(REGBK)
+        self.regbk = self.session.hiers.get(REGBK)
         self.genpath = './'
         self.endcycle = 10000
         self.cond = {} # syn 2ns test name etc.
