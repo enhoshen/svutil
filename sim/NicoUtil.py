@@ -94,14 +94,12 @@ class StructBusCreator():
     @classmethod
     def AllTypes(cls):
         cls.BasicTypes()
-        FileParse()
         for h in SVparse.hiers.values():
             for k,v in h.types.items():
                 StructBusCreator(k,v)
     @classmethod
     def TopTypes(cls):
         cls.BasicTypes()
-        FileParse( (False,TOPSV) )
         for T in SVparse.hiers[TOPMODULE].Types: # TOPMODULE defined in SVparse
             for k,v in T.items():
                 StructBusCreator(k,v)
@@ -216,7 +214,9 @@ class Busdict (EAdict):
             else  x.SetTo(n) if self.IsSB(x) else busfill(x) for x in self.dic.values() ]
 class NicoUtil(PYUtil):
     def __init__(self):
-        FileParse( (False,TOPSV) )
+        self.session = SVparseSession()
+        self.session.verbose = 1
+        self.session.FileParse([(False,TOPSV)])
         super().__init__()
         self.test = TEST
         self.testname = TEST.rsplit('_tb')[0]
@@ -224,9 +224,9 @@ class NicoUtil(PYUtil):
         self.topfile  = SV.rstrip('.sv')
         self.incfile  = INC
         self.dutname = TESTMODULE 
-        self.dut = hiers.dic.get(self.dutname)
-        self.top = hiers.dic.get(TOPMODULE)
-        self.dutfile = hiers.dic.get(self.dutname+'_sv')
+        self.dut = self.session.hiers.get(self.dutname)
+        self.top = self.session.hiers.get(TOPMODULE)
+        self.dutfile = self.session.hiers.get(self.dutname+'_sv')
         self.SBC = StructBusCreator
         self.SBC.TopTypes()
     def Macro2num (self, s):

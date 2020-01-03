@@ -308,6 +308,8 @@ class SVparse(SVutil):
         pass
     @classmethod
     def ParseFiles(cls , paths=[(True,INC)] ):
+        print ( PROJECT_PATH, INC)
+        print("supposed base path of the project:", cls.base_path)
         cls.ARGSParse()
         for p in paths:
             if not p[1] == '':
@@ -337,13 +339,13 @@ class SVparse(SVutil):
         return paths
     #TODO Testbench sv file parse
     def Readfile(self , path):
-        print(path)
+        self.print(path)
         self.f = open(path , 'r')
         self.cur_path = path
         self.lines = iter(self.f.readlines())
         self.cur_s , self.cur_cmt = self.Rdline(self.lines)
         while(1):
-            #print(self.cur_s)
+            self.print(self.cur_s,verbose=5)
             _w = ''
             if self.cur_s == None:
                 return
@@ -1103,7 +1105,14 @@ class SVparseSession(SVutil):
         self.gb_hier.types =  {'integer':None,'int':None,'logic':None}
         _top =  TOPMODULE
         self.top = _top if _top != None else ''
-        self.base_path = os.environ.get("PWD").replace('/vcs','').replace('/verilator','').replace('/sim','')+'/'
+        if PROJECT_PATH:
+            self.base_path = os.environ.get("PWD")+'/'+PROJECT_PATH
+        else:
+            match = re.search( r'/sim\b|/include\b|/src\b', os.environ.get("PWD"))
+            if match:
+                self.base_path = os.environ.get("PWD")[0:match.span()[0]] + '/'
+            else:
+                self.base_path = os.environ.get("PWD")
         self.include_path = self.base_path + 'include/'
         self.sim_path = self.base_path+'sim/'
         self.src_path = self.base_path+'src/'

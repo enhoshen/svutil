@@ -6,7 +6,7 @@ import numpy as np
 
 class PYUtil(SVutil):
     def __init__(self):
-        self.hier = hiers.dic.get(HIER)
-        self.regbkstr= hiers.dic.get(REGBK)
+        self.hier = self.session.hiers.get(HIER)
+        self.regbkstr= self.session.hiers.get(REGBK)
         self.regbk= SVRegbk(self.regbkstr) if self.regbkstr else None
         self.endcycle = 10000

@@ -20,7 +20,7 @@ class Ind():
     def Copy(self):
         return Ind(self.n)
 class SVgen():
-    def __init__(self , paths=[(True,INC)] ):
+    def __init__(self , paths=None ):
         self.session = SVparseSession()
         self.session.FileParse(paths)
         self.genlist = {}    
