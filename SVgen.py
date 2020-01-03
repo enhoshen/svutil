@@ -20,8 +20,8 @@ class Ind():
     def Copy(self):
         return Ind(self.n)
 class SVgen():
-    def __init__(self , paths=None ):
-        self.session = SVparseSession()
+    def __init__(self , paths=None, session=None ):
+        self.session = SVparseSession() if not session else session
         self.session.FileParse(paths)
         self.genlist = {}    
         self.hclkmacro = 'HCYCLE'

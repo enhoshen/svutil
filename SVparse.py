@@ -257,8 +257,6 @@ class SVparse(SVutil):
             base_path = os.environ.get("PWD")[0:match.span()[0]] + '/'
         else:
             base_path = os.environ.get("PWD")
-    print ( PROJECT_PATH, INC)
-    print("supposed base path of the project:", base_path)
     include_path = base_path + 'include/'
     sim_path = base_path+'sim/'
     src_path = base_path+'src/'

@@ -30,8 +30,8 @@ class DrawioGen(SVgen):
     textstyle_redleft = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#FF0505;" 
     arrowstyle1 = "endArrow=block; endFill=1;fontSize=8; html=1;"
     arrowboldstyle1 = "endArrow=classic;shape=flexArrow;fillColor=#000000;endWidth=4.938516283050313;endSize=2.5476510067114093;width=1.2080536912751678; html=1;"
-    def __init__(self, ind= Ind(0)):
-        super().__init__()
+    def __init__(self, ind= Ind(0), session =None):
+        super().__init__(session = session)
         self.arrow_width = 50 
         self.arrow_height = 50 
         self.text_width = 100 
@@ -92,7 +92,7 @@ class DrawioGen(SVgen):
             s += f'{k}={v}; ' 
         return s
     def ClassicArrowStr(self, value, style, shape, face , parent, ind):
-        _d = DrawioGen(ind)
+        _d = DrawioGen(ind,self.session)
         mcblk = _d.mxCellBlk( value, style, parent, edge='1')
         mxGeoBlk = _d.mxGeometryBlk( shape )
         _x = [ shape.x, shape.x+shape.w ] if face == 'right' else [ shape.x+shape.w, shape.x] 
@@ -102,7 +102,7 @@ class DrawioGen(SVgen):
         s = _d.Genlist( [ [mcblk, mxGeoBlk, srctrg] ] )
         return s 
     def CellGeoStr(self, value, shape, style, parent, ind):
-        _d = DrawioGen(ind)
+        _d = DrawioGen(ind,self.session)
         mcblk = _d.mxCellBlk( value, style, parent)
         mxGeo = _d.Str2Blk( _d.mxGeometry, shape)
         s = _d.Genlist( [ [mcblk, mxGeo ] ] )
@@ -122,7 +122,7 @@ class DrawioGen(SVgen):
         txt_sh.x = (shape.w-self.rec_txt_width)/2 
         textstyle = self.textstyle_rec1left if not flip else self.textstyle_rec1
         s += self.TextStr( value, txt_sh, textstyle, _p, ind+1) 
-        _d = DrawioGen(ind+1)
+        _d = DrawioGen(ind+1,self.session)
         mcblk = _d.mxCellBlk( "", "rounded=0;", _p)
         mxGeo = _d.Str2Blk( _d.mxGeometry, Shape( 0, 0, shape.w, shape.h) )
         s += _d.Genlist( [ [mcblk, mxGeo ] ] )
