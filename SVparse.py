@@ -310,7 +310,8 @@ class SVparse(SVutil):
     def ParseFiles(cls , paths=[(True,INC)] ):
         cls.ARGSParse()
         for p in paths:
-            cls.paths.append(f'{cls.include_path}{p[1]}.sv' if p[0] else p[1] )
+            if not p[1] == '':
+                cls.paths.append(f'{cls.include_path}{p[1]}.sv' if p[0] else p[1] )
         print(cls.paths)
         for p in cls.paths:
             n = (p.rsplit('/',maxsplit=1)[1] if '/' in p else p ).replace('.','_')
@@ -1109,21 +1110,6 @@ class SVparseSession(SVutil):
         self.cur_scope = '' 
         self.cur_path= ''
         self.flags = { 'pport': False , 'module' : False } #TODO
-    def SwapFrom(self):
-        self.verbose =SVparse.verbose
-        self.parsed =SVparse.parsed
-        self.package =SVparse.package
-        self.hiers =SVparse.hiers
-        self.paths =SVparse.paths
-        self.gb_hier =SVparse.gb_hier
-        self.top =SVparse.top
-        self.base_path =SVparse.base_path
-        self.include_path =SVparse.include_path
-        self.sim_path =SVparse.sim_path
-        self.src_path =SVparse.src_path
-        self.cur_scope =SVparse.cur_scope
-        self.cur_path =SVparse.cur_path
-        self.flags =SVparse.flags
     def SwapTo (self):
         SVparse.verbose =self.verbose
         SVparse.parsed =self.parsed
@@ -1139,8 +1125,11 @@ class SVparseSession(SVutil):
         SVparse.cur_scope =self.cur_scope
         SVparse.cur_path =self.cur_path
         SVparse.flags =self.flags
-        hiers = EAdict(SVparse.hiers) #TODO
+    def HiersUpdate(self):
+        global hiers
+        hiers = EAdict(self.hiers) #TODO
     def ParseFiles(self , paths=[(True,INC)] ):
+        ''' Deprecated '''
         for p in paths:
             self.paths.append(f'{cls.include_path}{p[1]}.sv' if p[0] else p[1] )
         print(self.paths)
@@ -1184,13 +1173,16 @@ class SVparseSession(SVutil):
     def ShowPaths(self):
         for i,v in enumerate(self.paths):
             print (i ,':  ',v)
-    def FileParse(self, paths = [(True,INC)]):
+    def FileParse(self, paths = None):
+        if not paths:
+            paths = [(True,INC)]
+        self.SwapTo()
         if SVparse.parsed == True:
             return
         paths = [paths] if type(paths) == tuple else paths
         SVparse.ParseFiles( paths)
-        SVparse.parsed = True
-        self.SwapFrom()
+        self.parsed = True
+        self.HiersUpdate()
     def TopAllParamEAdict():
         return EAdict(self.gb_hier[TOPMODULE].AllParam)
 
