@@ -28,8 +28,8 @@ class DrawioGen(SVgen):
     textstyle_rec1left = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=15"
     textstyle_red = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#FF0505;" 
     textstyle_redleft = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#FF0505;" 
-    arrowstyle1 = "endArrow=block; endFill=1;fontSize=8; html=1;"
-    arrowboldstyle1 = "endArrow=classic;shape=flexArrow;fillColor=#000000;endWidth=4.938516283050313;endSize=2.5476510067114093;width=1.2080536912751678; html=1;"
+    arrowstyle1 = "endArrow=block; html=1; endFill=1;fontSize=8;"
+    arrowboldstyle1 = "endArrow=classic;html=1;shape=flexArrow;fillColor=#000000;endWidth=4.938516283050313;endSize=2.5476510067114093;width=1.2080536912751678;"
     def __init__(self, ind= Ind(0), session =None):
         super().__init__(session = session)
         self.arrow_width = 50 

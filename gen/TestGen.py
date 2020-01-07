@@ -10,6 +10,7 @@ from functools import reduce
 class TestGen(SVgen):
     def __init__(self, ind=Ind(0)):
         super().__init__()
+        self.verbose = 0
         self.intrev = ( 'intr_ev', 'intr_any')
         self.eventlst = [self.intrev]
     def TbSVGen(self): 

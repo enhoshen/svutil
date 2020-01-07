@@ -147,57 +147,6 @@ class StructBusCreator():
             for d in range(DIM[0]):
                 buses.append( self.MDACreateStructBus(signalName+f'[{d}]', hier, DIM[1:])  )
             return buses
-class ProtoCreateBus ():
-    '''
-        this class member functions help createbuses, if you've already connected buses, 
-        ArgParse is not needed
-    '''
-    def __init__(self):
-        pass
-    def ArgParse(self, protoCallback, portCallback,*args , clk  , **kwargs):
-        '''
-            args[0] is the data bus, it could be a list, ex: [hrdata,hwdata] in AHB
-            portCallback should return list of buses for protocl buses
-            protoCallback should create the protocal object, ex: TwoWire.Master
-            see NicoProtocol inherited protobus classes
-        '''
-        kw = dict(kwargs)
-        if len(args) == 0:
-            self.data = kw['data'] 
-        else:
-            self.data = args[0]
-
-        if len(args)==1:
-            protolist =  portCallback( kw['name'] , hier=kw['hier']) if kw.get('hier') else portCallback(kw['name'])  
-            kw.pop('name')
-            if kw.get('hier'):
-                kw.pop('hier')
-            datalist = self.data if type(self.data) == list else [self.data] 
-            self.proto = protoCallback( *(protolist),*datalist ,clk=clk ,**kw)
-        else:
-            self.proto = protoCallback( *args , clk=clk ,**kw)
-    def SideChoose (self, side='master'):
-        if side == 'master':
-            self.master = self.proto
-            return
-        if side == 'slave':
-            self.slave = self.proto
-            return
-    def SendIter(self,it):
-        yield from self.master.SendIter(it)
-    def Monitor(self):
-        yield from self.slave.Monitor()
-    def MyMonitor(self,n):
-        yield from self.slave.MyMonitor(n)
-    @property
-    def Data(self):
-        return self.data
-    @Data.setter
-    def Data(self,data):
-        self.proto.data = GetBus(data)
-    @property
-    def values(self):
-        return [ x.values for x in self.data]
 class Busdict (EAdict):
     def Flatten(self, lst):
         return self.Flatten(lst[0]) + (self.Flatten(lst[1:]) if len(lst) > 1 else []) if type(lst) == list else [lst]
@@ -226,6 +175,37 @@ class Busdict (EAdict):
         self.SetToN()
         [ [i.SetTo(n) if self.IsSB(i) else busfill(i) for i in self.Flatten(x)] if type(x) == list\
             else  x.SetTo(n) if self.IsSB(x) else busfill(x) for x in self.dic.values() ]
+class ThreadCreator(SVutil):
+    '''
+        Helper class for creating simulation threads.
+    '''
+    def __init__(self, buses, regbk, ck_ev, intr_ev, init_ev, resp_ev, fin_ev):
+        self.buses = buses
+        self.regbk = regbk
+        self.ck_ev = ck_ev 
+        self.init_ev  = init_ev  
+        self.resp_ev  = resp_ev  
+        self.fin_ev   = fin_ev   
+        self.intr_ev  = intr_ev  
+        pass
+    def Phse3Send():
+        yield from TESTS[TEST_CFG]()
+        yield from RESPS[TEST_CFG]()
+        yield from FINS [TEST_CFG]()
+        self.print('Sim done')
+    def BasicRegwriteIt (regseq, rwseq, dataseq):
+        #if #TODO
+        for reg, rw, data in zip (regseq, rwseq, dataseq):
+            self.buses.i_write.value = rw 
+            addr, buses.i_wdata.value, regfields = self.regbk.RegWrite(reg, data)
+            self.print(reg, addr, hex(self.buses.i_wdata.value[0]), regfields, data, verbose=1)
+            self.buses.i_addr.value = addr 
+            self.buses.Write( 'i_write', 'i_wdata')
+            yield buses.i_addr.value
+            if not rw:
+                self.buses.o_rdata.Read()
+                print(hex(self.buses.o_rdata.value[0]))
+    
 class NicoUtil(PYUtil):
     def __init__(self):
         self.SBC = StructBusCreator

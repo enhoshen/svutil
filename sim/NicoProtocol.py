@@ -10,6 +10,57 @@ from nicotb.protocol import TwoWire
 from nicotb.protocol import OneWire 
 from nicotb.utils import RandProb
 
+class ProtoCreateBus ():
+    '''
+        this class member functions help createbuses, if you've already connected buses, 
+        ArgParse is not needed
+    '''
+    def __init__(self):
+        pass
+    def ArgParse(self, protoCallback, portCallback,*args , clk  , **kwargs):
+        '''
+            args[0] is the data bus, it could be a list, ex: [hrdata,hwdata] in AHB
+            portCallback should return list of buses for protocl buses
+            protoCallback should create the protocal object, ex: TwoWire.Master
+            see NicoProtocol inherited protobus classes
+        '''
+        kw = dict(kwargs)
+        if len(args) == 0:
+            self.data = kw['data'] 
+        else:
+            self.data = args[0]
+
+        if len(args)==1:
+            protolist =  portCallback( kw['name'] , hier=kw['hier']) if kw.get('hier') else portCallback(kw['name'])  
+            kw.pop('name')
+            if kw.get('hier'):
+                kw.pop('hier')
+            datalist = self.data if type(self.data) == list else [self.data] 
+            self.proto = protoCallback( *(protolist),*datalist ,clk=clk ,**kw)
+        else:
+            self.proto = protoCallback( *args , clk=clk ,**kw)
+    def SideChoose (self, side='master'):
+        if side == 'master':
+            self.master = self.proto
+            return
+        if side == 'slave':
+            self.slave = self.proto
+            return
+    def SendIter(self,it):
+        yield from self.master.SendIter(it)
+    def Monitor(self):
+        yield from self.slave.Monitor()
+    def MyMonitor(self,n):
+        yield from self.slave.MyMonitor(n)
+    @property
+    def Data(self):
+        return self.data
+    @Data.setter
+    def Data(self,data):
+        self.proto.data = GetBus(data)
+    @property
+    def values(self):
+        return [ x.values for x in self.data]
 
 class ReqAckBus ( ProtoCreateBus):
     def __init__( self , *args ,clk , side='master' , **kwargs ):

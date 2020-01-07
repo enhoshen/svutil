@@ -72,11 +72,11 @@ class SrcGen(SVgen):
         ind = self.cur_ind.Copy() if not ind else ind
         rstedge = 'negedge' if self.rst_name[-2:] == '_n' else 'posedge'
         s = f'{ind.b}always_ff @(posedge {self.clk_name} or {rstedge} {self.rst_name}) begin\n'
-        s += f'{ind[1]}if({"!" if self.rst_name[-2:] == "_n" else ""}{self.rst_name}) '
+        s += f'{ind[1]}if ({"!" if self.rst_name[-2:] == "_n" else ""}{self.rst_name}) '
         s += f'{reg.lower()}_r <= {reg}{SVRegbk.default_suf};\n'
         #s += f'{ind[1]}end\n'
         if rw and rw == 'RO':
-            s += f'{ind[1]}else if({self.regbk_ro_cg_cond} && ({reg.lower()}_r != {reg.lower()}_w)) '
+            s += f'{ind[1]}else if ({self.regbk_ro_cg_cond} && ({reg.lower()}_r != {reg.lower()}_w)) '
         else:
             s += f'{ind[1]}//else if ({self.regbk_cg_cond} && {self.regbk_addr_name}{self.regbk_addr_slice} == {reg}) \n'
             s += f'{ind[1]}else if ({self.regbk_cg_cond} && ({reg.lower()}_r != {reg.lower()}_w)) '
@@ -243,7 +243,7 @@ class SrcGen(SVgen):
         s += f'{ind[1]}if ({rst_sign}{self.rst_name}) begin\n'
         s += s1
         s += f'{ind[1]}end\n'
-        s += f'{ind[1]}else if() begin //TODO\n'
+        s += f'{ind[1]}else if () begin //TODO\n'
         s += s2
         s += f'{ind[1]}end\n'
         s += f'{ind.b}end\n'
@@ -259,13 +259,16 @@ class SrcGen(SVgen):
         s2 = ''
         w = 0
         clr = self.regbk_clr_affix
-        for intr in self.regbk.raw_intr_stat:
-            w = max(w, len(clr+intr.name)+2)
-        for intr in self.regbk.raw_intr_stat:
-            if not clr.upper()+intr.name.upper() in self.regbk.regaddrsdict:
-                s1 += f'{ind[2]}{clr+intr.name+"_r":<{w}} <= \'0;\n' #TODO 
-                s2 += f'{ind[2]}{clr+intr.name+"_r":<{w}} <= {clr+intr.name}_w;\n' #TODO 
-        s += self.SeqStr(s1,s2,ind)
+        if not self.regbk.raw_intr_stat:
+            print("interrupt struct not specified")
+        else:
+            for intr in self.regbk.raw_intr_stat:
+                w = max(w, len(clr+intr.name)+2)
+            for intr in self.regbk.raw_intr_stat:
+                if not clr.upper()+intr.name.upper() in self.regbk.regaddrsdict:
+                    s1 += f'{ind[2]}{clr+intr.name+"_r":<{w}} <= \'0;\n' #TODO 
+                    s2 += f'{ind[2]}{clr+intr.name+"_r":<{w}} <= {clr+intr.name}_w;\n' #TODO 
+            s += self.SeqStr(s1,s2,ind)
         if toclip:
             ToClip(s)
         self.regbk = regbktemp

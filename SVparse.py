@@ -136,10 +136,10 @@ class SVhier ():
     def AllParamKeys(self):
         return { x for i in self.Params for x in i.keys() }  
     @property
-    def AllParam(self):
+    def AllParams(self):
         return { k:v for i in self.Params for k,v in i.items() }
     @property
-    def AllParamsDetail(self):
+    def AllParamDetails(self):
         return { k:v for i in self.ParamsDetail for k,v in i.items() }
     @property
     def ShowParams(self):
@@ -151,7 +151,7 @@ class SVhier ():
     def ShowAllParams(self):
         w =30 
         print(f'{self.hier+" All Parameters":-^{2*w}}')
-        self.ParamStr(self.AllParam, w)
+        self.ParamStr(self.AllParams, w)
         return None
     @property
     def ShowParamsDetail(self):
@@ -161,11 +161,11 @@ class SVhier ():
         self.DictStr(self.paramsdetail,w)
         return None
     @property
-    def ShowAllParamsDetail(self):
+    def ShowAllParamDetails(self):
         w = 20 
         print(f'{self.hier+" All Parameters detail":-^{2*w}}')
         self.FieldStr(self.paramfield,w)
-        self.DictStr(self.AllParamsDetail,w)
+        self.DictStr(self.AllParamDetails,w)
         return None
     #########################
     # macros 
@@ -263,6 +263,7 @@ class SVparse(SVutil):
     cur_scope = '' 
     cur_path= ''
     flags = { 'pport': False , 'module' : False } #TODO
+    path_level = 0
     def __getattr__(self , n ):
         return hiers[n]
     def __init__(self,name=None,scope=None,parse=None):
@@ -337,7 +338,7 @@ class SVparse(SVutil):
         return paths
     #TODO Testbench sv file parse
     def Readfile(self , path):
-        self.print(path)
+        self.print(f'{"":>{SVparse.path_level*4}}',path, verbose=1)
         self.f = open(path , 'r')
         self.cur_path = path
         self.lines = iter(self.f.readlines())
@@ -359,6 +360,7 @@ class SVparse(SVutil):
                 if self.flag_parse or _w in self.alwaysparselist:
                     _catch = self.keyword[_w](self.cur_s,self.lines) 
     def IncludeRead( self, s , lines):
+        SVparse.path_level += 1
         parent_path = self.cur_path
         _s = s.s.replace('"','')
         p = [ self.include_path+_s , self.src_path+_s , self.sim_path+_s ]
@@ -369,6 +371,8 @@ class SVparse(SVutil):
                 n = path.rsplit('/',maxsplit=1)[1].replace('.','_')
                 cur_parse = SVparse( n , self.cur_hier )
                 cur_parse.Readfile(path)
+                
+        SVparse.path_level -= 1
         return
     def LogicParse(self, s ,lines):
         '''
@@ -610,7 +614,10 @@ class SVparse(SVutil):
         func = lambda *_args: reduce( lambda x,y: \
                                 re.sub( rf'(\b|(``)){y[1]}(\b(``)|\b)', str(y[0]),x )\
                                 , [i for i in zip(_args,args)], _s )
-        self.cur_hier.macros[name] = (args, _s, func)
+        if self.gb_hier.macros.get(name):
+            pass
+        else:
+            self.cur_hier.macros[name] = (args, _s, func)
         self.keyword['`'+name] = self.MacroParse
         self.parselist.add('`'+name)
         self.print (re.sub( rf'(\b|(``))b(\b(``)|\b)','2',re.sub(rf'(\b|(``))a(\b(``)|\b)', '4', _s) ), verbose=4)
@@ -909,7 +916,7 @@ class SVstr(SVutil):
             return eval(ps.expr(_s).compile('file.py'))
         except:
             if _s !='':
-                self.print(f"S2num failed, return original string: {_s}",verbose=1)
+                self.print(f"S2num failed, return original string: {_s}",verbose=2)
             return _s
     def Slice2num(self,params):
         if self.s == '':
@@ -969,7 +976,7 @@ class SVstr(SVutil):
         exp = re.sub(rf'(?![)]$)[)]',  '")+"', exp)
         exp = re.sub(rf'[)]$', '")', exp) 
         while reobj:
-            self.print(exp,verbose=1)
+            self.print(exp,verbose=3)
             reobj = re.search( r'`(\w+)\b', exp )
             if reobj:
                 m0 = reobj.group(0)
@@ -978,7 +985,7 @@ class SVstr(SVutil):
                     exp = re.sub(rf'{m0}\b', f'macros[\'{m}\'][2]()+"', exp) 
                 else:
                     exp = re.sub(rf'{m0}\b', f'macros[\'{m}\'][2]', exp) 
-            self.print(exp,verbose=1)
+            self.print(exp,verbose=3)
         try:
             return eval(ps.expr(exp).compile('file.py'))
         except:
@@ -1191,7 +1198,7 @@ class SVparseSession(SVutil):
         self.parsed = True
         self.HiersUpdate()
     def TopAllParamEAdict():
-        return EAdict(self.gb_hier[TOPMODULE].AllParam)
+        return EAdict(self.gb_hier[TOPMODULE].AllParams)
 
 if __name__ == '__main__':
 
