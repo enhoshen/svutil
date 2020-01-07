@@ -191,7 +191,11 @@ class LatexGen(SVgen):
             s += self.RegFieldSubSec( reg, ofs, reg_bw+'b', rw) 
             defaults = self.Str2Lst(regbk.GetDefaultsStr(reg))
             defaults.reverse()
-            s += self.RegFieldStr ( reg, regbk.regslices[reg], regbk.regtypes[reg], regbk.regmembtypes[reg], \
+            tps =[i for i in regbk.regtypes[reg]]
+            tps.reverse()
+            membtypes = [i for i in regbk.regmembtypes[reg]]
+            membtypes.reverse()
+            s += self.RegFieldStr ( reg, regbk.regslices[reg], tps, membtypes, \
                                     defaults, rw)
             s += '\n'
         ToClip(s)
