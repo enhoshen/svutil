@@ -146,14 +146,14 @@ class SrcGen(SVgen):
         intr = self.regbk.raw_intr_stat
         if not self.regbk.raw_intr_stat:
             print("interrupt struct not specified")
-            return ""
-        w[0] = 0
-        for intr in self.regbk.raw_intr_stat:
-            w[1] = max(w[1], len(self.regbk_clr_affix+intr.name)+2)
-        for intr in self.regbk.raw_intr_stat:
-            if not self.regbk_clr_affix.upper()+intr.name.upper() in self.regbk.regaddrsdict:
-                s += self.RegbkLogicStr( w, self.regbk_clr_affix+intr.name.lower(), 1, 'logic', ind)
-        s += '\n'
+        else:
+            w[0] = 0
+            for intr in self.regbk.raw_intr_stat:
+                w[1] = max(w[1], len(self.regbk_clr_affix+intr.name)+2)
+            for intr in self.regbk.raw_intr_stat:
+                if not self.regbk_clr_affix.upper()+intr.name.upper() in self.regbk.regaddrsdict:
+                    s += self.RegbkLogicStr( w, self.regbk_clr_affix+intr.name.lower(), 1, 'logic', ind)
+            s += '\n'
 
         s += f'{ind.b}// flags\n'
         for l in self.regbk_flag_logic_lst:
