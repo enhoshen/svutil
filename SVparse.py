@@ -240,7 +240,7 @@ class SVhier ():
         
 class SVparse(SVutil):
     # One SVparse object one file, and it's also SVhier
-    verbose = 0
+    verbose = 0 
     parsed = False
     package = {}
     hiers = {}
@@ -421,6 +421,7 @@ class SVparse(SVutil):
         tp = 'logic' if tp == '' else tp
         bw = s.BracketParse()
         name = s.IDParse()
+        self.print(name, verbose=4)
         if cmt != '':
             for i in cmt:
                 if 'reged' in i:
@@ -818,6 +819,9 @@ class SVstr(SVutil):
         n.append(name)
         dim = self.BracketParse()  
         d.append(dim) 
+        self.print(self.s, verbose=1) 
+        if self.End():
+            return n, d
         while self.s[0] == ',': 
             self.s = self.s[1:]
             name = self.IDParse()
@@ -1100,8 +1104,8 @@ hiers = EAdict(SVparse.hiers)
 class SVparseSession(SVutil):
     def __getattr__(self , n ):
         return self.hiers[n]
-    def __init__(self,name=None,scope=None):
-        self.verbose = 0
+    def __init__(self,name=None,scope=None, verbose=None):
+        self.verbose = 0 if not verbose else verbose
         self.parsed = False
         self.package = {}
         self.hiers = {}
@@ -1197,6 +1201,9 @@ class SVparseSession(SVutil):
         SVparse.ParseFiles( paths)
         self.parsed = True
         self.HiersUpdate()
+    def Reload(self, paths=None):
+        self.Reset()
+        self.FileParse(paths)
     def TopAllParamEAdict():
         return EAdict(self.gb_hier[TOPMODULE].AllParams)
 

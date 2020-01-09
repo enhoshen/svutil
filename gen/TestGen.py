@@ -9,10 +9,13 @@ import numpy as np
 from functools import reduce
 class TestGen(SVgen):
     def __init__(self, ind=Ind(0)):
-        super().__init__()
         self.verbose = 0
+        super().__init__(verbose=self.verbose)
         self.intrev = ( 'intr_ev', 'intr_any')
-        self.eventlst = [self.intrev]
+        self.initev = ( 'init_ev', 'init_cond')
+        self.respev = ( 'resp_ev', 'resp_cond')
+        self.finev  = ( 'fin_ev' , 'fin_cond')
+        self.eventlst = [self.intrev, self.initev, self.respev, self.finev]
     def TbSVGen(self): 
         ind = self.cur_ind.Copy() 
         yield ''
@@ -28,8 +31,8 @@ class TestGen(SVgen):
         s += f'int clk_cnt;\n'
         s += f'`Pos(rst_out, {self.rststr})\n' 
         s += f'`PosIf(ck_ev , {self.clkstr}, {self.rststr})\n' 
-        ev_lst = reduce( (lambda x,y: str(x[1])+', '+str(y[1])), self.eventlst + [("","")])[0:-2]
-        s += f'logic {ev_lst};\n'
+        ev_lst = reduce( (lambda x,y: x+', '+str(y[1])), self.eventlst + [("","")], '')[2:-2]
+        s += f'logic {ev_lst}; //TODO modify event condition\n'
         for ev in self.eventlst:
             s += f'`PosIf({ev[0]}, {ev[1]}, {self.rststr})\n' 
         s += f'`WithFinish\n\n' 
@@ -125,11 +128,11 @@ class TestGen(SVgen):
         s += f'{ind.b}import numpy as np \n'
         yield s
         s =  f'{ind.b}rst_out, ck_ev = CreateEvents(["rst_out", "ck_ev"])\n'
-        print(self.eventlst)
-        ev_lst = reduce( lambda x,y: str(x[0])+', '+str(y[0]), self.eventlst + [("","")])[0:-2]
-        print(ev_lst)
-        ev_lst_str = reduce( (lambda x,y: f'"{str(x[0])}", '+f'"{str(y[0])}"'), self.eventlst +[("","")])[0:-4]
-        print(ev_lst_str)
+        self.print(self.eventlst, verbose=3)
+        ev_lst = reduce( lambda x,y: x+', '+y[0], self.eventlst + [("","")], '')[2:-2]
+        self.print(ev_lst, verbose=3)
+        ev_lst_str = reduce( (lambda x,y: x+ ', '+f'"{str(y[0])}"'), self.eventlst +[("","")], '')[2:-4]
+        self.print(ev_lst_str, verbose=3)
         s += f'{ind.b}{ev_lst} = CreateEvents([{ev_lst_str}])\n\n'
         s += f'{ind.b}RegisterCoroutines([\n'
         s += f'{ind[1]}main()\n'
@@ -160,16 +163,27 @@ class TestGen(SVgen):
         s += f'{ind[1]}#Nico.SBC.TopTypes()\n'
         s += f'{ind[1]}#Nico.SBC.AllTypes()\n'
         s += f'{ind[1]}dic = {{}}\n'
+        w = [0, 0]
+        for p in module.ports:
+            p = SVPort(p)
+            w[0] = max(w[0], len(p.name))
+            w[1] = max(w[1], len(p.tp))
         for p in module.ports:
             #portfield =  EAdict( [ 'direction' , 'name' , 'dim' , 'tp' , 'bw' , 'bwstr', 'dimstr' ] )
             p = SVPort(p)
             tp = p.tp
-            dim = f'Nico.DutPortDim(\'{p.name}\')'
+            _q = '\''
+            dimf = f'Nico.DutPortDim(\'{p.name+_q:<{w[0]+1}})'
+            dim = f'Nico.DutPortDim(\'{p.name+_q})'
             if tp == 'logic' or tp == 'signed logic':
-                s += f'{ind[1]}dic[\'{p.name}\'] = '
-                s += f'CreateBus(( (\'\', \'{p.name}\', {dim},),  ))\n'
+                s += f'{ind[1]}dic[\''
+                s += f'{p.name + _q+"] ":<{w[0]+3}}'
+                s += f'= CreateBus(( (\'\', \'{p.name+_q:<{w[0]+2}}, {dimf},),  ))\n'
             else:
-                s += f'{ind[1]}dic[\'{p.name}\'] = Nico.SBC.Get(\'{p.tp}\' , \'{p.name}\', dim={dim})\n'     
+                s += f'{ind[1]}dic[\''
+                s += f'{p.name + _q+"] ":<{w[0]+3}}'
+                s +=  f'= Nico.SBC.Get(\'{p.tp+_q:<{w[1]+1}}, \'{p.name+_q}, dim={dim})\n'     
+
                 #TODO macro....
         s += f'{ind[1]}return Busdict(dic) # access by name without quotes\n'
         yield s
@@ -230,7 +244,7 @@ class TestGen(SVgen):
         p = self.TbWrite(text,'py')
         print ( "PY testbench written to " , p )
     def TbWrite(self , text , suf): 
-        fpath = self.genpath + self.test
+        fpath =  self.test
         return self.FileWrite(fpath,text,suf)
 if __name__ == '__main__':
     g = TestGen()

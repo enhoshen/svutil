@@ -5,8 +5,6 @@ from SVsim   import *
 import os
 import itertools
 import numpy as np
-from nicotb.protocol import TwoWire
-from nicotb.protocol import OneWire 
 from nicotb.utils import RandProb
  
 class StructBus():
@@ -175,36 +173,84 @@ class Busdict (EAdict):
         self.SetToN()
         [ [i.SetTo(n) if self.IsSB(i) else busfill(i) for i in self.Flatten(x)] if type(x) == list\
             else  x.SetTo(n) if self.IsSB(x) else busfill(x) for x in self.dic.values() ]
-class ThreadCreator(SVutil):
-    '''
-        Helper class for creating simulation threads.
-    '''
-    def __init__(self, buses, regbk, ck_ev, intr_ev, init_ev, resp_ev, fin_ev):
-        self.buses = buses
+class RegbkMaster(SVutil):
+    ''' Wrapper for register bank controller '''
+    def __init__ (self, regbk:SVRegbk, addr:Bus, write:Bus, wdata:Bus, rdata:Bus, master=None):
+        self.verbose = 1
+        self.master = master 
         self.regbk = regbk
-        self.ck_ev = ck_ev 
-        self.init_ev  = init_ev  
-        self.resp_ev  = resp_ev  
-        self.fin_ev   = fin_ev   
-        self.intr_ev  = intr_ev  
-        pass
-    def Phse3Send():
-        yield from TESTS[TEST_CFG]()
-        yield from RESPS[TEST_CFG]()
-        yield from FINS [TEST_CFG]()
-        self.print('Sim done')
-    def BasicRegwriteIt (regseq, rwseq, dataseq):
-        #if #TODO
+        self.addr = addr
+        self.write= write 
+        self.wdata= wdata
+        self.rdata= rdata
+        from nicotb.protocol import TwoWire
+        from nicotb.protocol import OneWire 
+        from protocol import Apb
+        self.proto_it_dict = { 
+                TwoWire.Master: self.RegWriteAddrIt,\
+                OneWire.Master: self.RegWriteAddrIt,\
+                Apb.Master: self.RegWriteIt
+            }
+    def Write(self):
+        self.addr.Write()
+        self.rw.Write()
+        self.wdata.Write()        
+    def Read(self):
+        self.rdata.Read()
+    def SendIter(self, regseq, rwseq, dataseq):
+        assert self.master, "Specify the protocol master"
+        it = self.proto_it_dict[type(self.master)]
+        yield from self.master.SendIter(it(regseq, rwseq, dataseq))
+    def RegWriteIt (self, regseq, rwseq, dataseq):
+        '''
+            Generate an iterable to loop through a sequence of register bank's
+            address, read/write, and data.
+            Args:
+                regseq: list of register name string
+                rwseq : list of read/write, 1 for write, 0 for read.
+                dataseq: list of data. Data can be either integer or list 
+                    of integer if the register has underlying register fields.
+                    SVRegbk.regwrite will handle the data compaction for you.
+                #TODO: string data of parsed parameters that can be converted
+                    SVRegbk
+        '''
+        w = 15 
         for reg, rw, data in zip (regseq, rwseq, dataseq):
-            self.buses.i_write.value = rw 
-            addr, buses.i_wdata.value, regfields = self.regbk.RegWrite(reg, data)
-            self.print(reg, addr, hex(self.buses.i_wdata.value[0]), regfields, data, verbose=1)
-            self.buses.i_addr.value = addr 
-            self.buses.Write( 'i_write', 'i_wdata')
-            yield buses.i_addr.value
+            addr, wdata, regfields = self.regbk.RegWrite(reg, data)
+            w = max(w, len(reg))
+            self.print('register bank access:', f'{reg:<{w}} {addr:<5}', hex(self.wdata.value[0]), regfields, data, verbose=1)
+            yield (addr, wdata, rw)
+    def RegWriteAddrIt (self, regseq, rwseq, dataseq):
+        '''
+            Used by nico protocol SendIter() thread with single data. This thread is 
+            a workaround by yield the address and manually Write() data and write buses.
+            That is, the corresponding protocol bus' data is the address bus.
+            Ex: regbus = TwoWire.Master(buses.i_req, buses.o_ack, buses.i_addr, ck_ev)
+                ...
+                regbus.SendIter(RegbkMasterObjec.RegwriteAddrIt(regseq, rwseq, dataseq))
+        '''
+        for addr, wdata, rw in self.RegWriteIt(regseq, rwseq, dataseq):
+            self.write.value = rw 
+            self.addr.value = addr 
+            self.write.Write()
+            self.addr.Write()
+            yield addr.value
             if not rw:
-                self.buses.o_rdata.Read()
-                print(hex(self.buses.o_rdata.value[0]))
+                self.Read()
+                self.print('register bank read: ', hex(addr), ':', hex(self.rdata.value[0]), verbose=1)
+class ThreadCreator(SVutil):
+    ''' Helper class for creating simulation threads. '''
+    def __init__(self, ck_ev):
+        self.ck_ev = ck_ev 
+        #self.init_ev  = init_ev  
+        #self.resp_ev  = resp_ev  
+        #self.fin_ev   = fin_ev   
+        #self.intr_ev  = intr_ev  
+    def Phse3Send(self, cfg):
+        yield from INITS[cfg]()
+        yield from RESPS[cfg]()
+        yield from FINS [cfg]()
+        self.print('Sim done')
     
 class NicoUtil(PYUtil):
     def __init__(self):
@@ -255,4 +301,4 @@ def clk_cnt():
         yield ck_ev
         n_clk+=1    
 if __name__=='__main__':
-    ParseFirstArgument()
+    n = NicoUtil()

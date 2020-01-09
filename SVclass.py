@@ -183,7 +183,7 @@ class SVRegbk(SVutil):
             Ex: [0,6,31]; the first data will be packed to data[5:0], then data[30:6] and data[31]
             this list corresponds to self.regfield['reg name'].nums
         '''
-        print(regfieldlst)
+        self.print(regfieldlst, verbose=3)
         data = 0
         try:
             iterator = iter(datalst)
@@ -206,8 +206,8 @@ class SVRegbk(SVutil):
         '''
         datalst = []
         for s, e in zip(regfieldlst, regfieldlst[1:]+[self.regbw]):
-            #print( s, e, e-s)
+            self.print( s, e, e-s, verbose=3)
             msk = ((1 << s) -1) ^ ((1 << e) -1) if s!=e else (1 << s)
-            #print ( bin(msk))
+            self.print ( bin(msk), verbose=3)
             datalst.append((data & msk) >> s)
         return datalst[0] if len(datalst)==1 else datalst
