@@ -14,14 +14,23 @@ class SVclass(SVutil):
                 print(f'{"":<{self.w}}', end='')
         print()
     @property
-    def ShowLine(self, char='='):
-        print(f'{"":{char}<{len(self.field.dic)*self.w}}')
+    def ShowLine(self):
+        print(f'{"":{self.linechar}<{len(self.field.dic)*self.w}}')
     @property
     def ShowField(self):
         for f in self.field.dic: 
             print(f'{f:<{self.w}}', end='')
         print() 
+    @property
+    def Show(self):
+        self.ShowField
+        self.ShowLine
+        self.ShowData 
     def ShowDataCb(self, cblst):
+        ''' 
+            cblst:callback list; applied to each field
+            Ex: ShowDataCb([hex,bin]) would print hex(field0), bin(field1)
+        '''
         for f, cb in zip(self.field.dic, cblst):
             s = cb(self.data[self.field.dic[f]]) if cb else self.data[self.field.dic[f]]
             s = s.__repr__() if type(s) != str else s
@@ -31,27 +40,35 @@ class SVParam(SVclass):
     field = SVhier.paramfield
     def __init__(self, param=None):
         self.w = 20
+        self.linechar = '='
         self.data = param
 class SVType(SVclass):
     field = SVhier.typefield
     def __init__(self, tp = None):
         self.w = 15
+        self.linechar = '='
         self.data = tp
 class SVPort(SVclass):
     field = SVhier.portfield
     def __init__(self, port=None):
         self.w = 20
+        self.linechar = '='
         self.data = port
 class SVEnums(SVclass):
     field = SVhier.enumsfield
     def __init__(self, enums=None):
         self.w = 30
+        self.linechar = '='
         self.data = enums
-        self.enumls = [ SVEnuml((name, num, cmt)) for name, num, cmt in zip( self.names, self.nums, self.cmts) ]
+        self.enumls = [ SVEnuml((name, num, cmt, idx, size, name_base)) \
+                        for name, num, cmt, idx, size, name_base in \
+                        zip( self.names, self.nums, self.cmts, self.idxs, self.sizes, self.name_bases) ]
 class SVEnuml(SVclass):
+    ''' enum literal '''
     field = SVhier.enumlfield
     def __init__(self, enuml=None):
         self.w = 20
+        self.linechar = '='
         self.data = enuml
 class SVRegbk(SVutil): 
     '''
@@ -120,10 +137,16 @@ class SVRegbk(SVutil):
             self.regmembtypes[i.upper()] = tt
         #self.regfields = pkg. TODO reg fields, defaults etc...
     def GetDefaultsStr(self, name):
+        reg = self.regaddrsdict.get(name)
         _s = self.regdefaultstr.get(name)
+        if not _s:
+            _s = self.regdefaultstr.get(reg.name_base) 
         return _s if _s else None
     def GetBWStr(self, name):
+        reg = self.regaddrsdict.get(name)
         _s = self.regbwstr.get(name)
+        if not _s:
+            _s = self.regbwstr.get(reg.name_base) 
         return _s if _s else None
     def GetType(self, tp):
         tp = self.pkg.AllType.get(tp)

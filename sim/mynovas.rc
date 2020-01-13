@@ -164,10 +164,10 @@ StickSet-TextColor = black
 [FSM_Dlg-Print]
 Orientation = Landscape
 [FileBrowser]
+nWaveRestoreRCDirHistory = "\"/home/enhoshen/research/lpAccel/sim/Address.rc\"" "\"/home/enhoshen/research/lpAccel/sim/novas.rc\"" "\"/home/enhoshen/research/lpAccel/sim/Controls.rc\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/I2cMaster_test1.rc\""
 nWaveOpenFsdbDirHistory = "\"/home/enhoshen/research/lpAccel/sim/loop.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072205_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_ug_072205\
 _syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest_5ns.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072206_syn_PEt\
-est.fsdb\"" "\"/home/enho.shen/GZE200/sim/Peripheral/RTC/SyncRTC_tb.fsdb\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/ApbI2cMaster_tb.fsdb\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/I2cTwoPhaseMaster_tb.fsdb\""
-nWaveRestoreRCDirHistory = "\"/home/enhoshen/research/lpAccel/sim/Address.rc\"" "\"/home/enhoshen/research/lpAccel/sim/novas.rc\"" "\"/home/enhoshen/research/lpAccel/sim/Controls.rc\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/I2cMaster_test1.rc\""
+est.fsdb\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/ApbI2cMaster_tb.fsdb\"" "\"/home/enho.shen/GZE200/sim/Peripheral/RTC/ApbSyncRTC_tb.fsdb\""
 [Form]
 version = Verdi_P-2019.06-1
 wave/unknownSave.fm = 100,100,520,275
@@ -265,18 +265,18 @@ Show_Cycle_Info = TRUE
 aboutVerdiDialog = 221,85,773,641
 VirtualFileEditorDialog = 297,235,637,403
 QwQuestionMsgDlg = 444,366,324,110
-CreateBusDialog = 886,724,788,709
 SetWindowTimeUnitDialog = 1063,1035,433,86
 ActiveFileDialog = 1005,942,549,272
 QwShortcutDialog = 1731,1217,800,600
 gridOptionsDialog = 1829,1477,421,269
 QwInfoMsgDlg = 1667,1236,750,250
-saveSigDlg = 1764,787,551,386
 restoreSigDlg = 1764,761,551,438
 QwUserAskDlg = 1322,1345,324,142
-openFileDlg = 1353,766,1374,484
 QwWarnMsgDlg = 1166,586,600,250
-qWaveSignalDialog = 1442,932,1404,568
+openFileDlg = 1353,738,1374,484
+CreateBusDialog = 1646,626,788,709
+qWaveSignalDialog = 1338,696,1404,568
+saveSigDlg = 1764,787,551,386
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile1]
 shortcut = 
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile3]
@@ -488,7 +488,7 @@ PointStyle = FALSE
 SetDefaultRadix = TRUE
 FilterTextField = FALSE
 anaAuto100VertFit = FALSE
-getSignalForm = 1442 932 1404 568 343 470 815 112
+getSignalForm = 1338 696 1404 568 343 470 815 112
 viewPort = 1080 472 1920 1017 377 165
 signalSpacing = 5
 digitalSignalHeight = 15
@@ -760,11 +760,11 @@ curveWindow_Drag&Drop_Mode = TRUE
 hspiceIncOpenMode = TRUE
 pcSelectMode = FALSE
 hierarchyDelimiter = /
-RecentFile1 = "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/ApbI2cMaster_tb.fsdb\""
-RecentFile2 = "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/I2cMaster_test1.rc\""
-RecentFile3 = "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/I2cTwoPhaseMaster_tb.fsdb\""
-RecentFile4 = "\"/home/enho.shen/GZE200/sim/Peripheral/RTC/SyncRTC_tb.fsdb\""
-RecentFile5 = "\"/home/enho.shen/Slave-wrapper/sim/vcs/Apb3_tb.fsdb\""
+RecentFile1 = "\"/home/enho.shen/GZE200/sim/Peripheral/RTC/ApbSyncRTC_tb.fsdb\""
+RecentFile2 = "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/ApbI2cMaster_tb.fsdb\""
+RecentFile3 = "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/I2cMaster_test1.rc\""
+RecentFile4 = "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/I2cTwoPhaseMaster_tb.fsdb\""
+RecentFile5 = "\"/home/enho.shen/GZE200/sim/Peripheral/RTC/SyncRTC_tb.fsdb\""
 open_file_time_range = FALSE
 value_window_aligment = Right
 signal_window_alignment = Left

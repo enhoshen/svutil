@@ -7,6 +7,7 @@ from collections import deque
 from subprocess import Popen, PIPE
 from functools import reduce
 from SVutil import SVutil 
+from SVstr import *
 #Nico makefile specified
 ARGS = os.environ.get('ARGS','')
 TOPMODULE = os.environ.get('TOPMODULE','')
@@ -40,12 +41,12 @@ class EAdict():  #easy access
     def __getattr__(self, n):
         return self.dic[n]
 class SVhier ():
-    paramfield = EAdict([ 'name' , 'dim' , 'tp', 'bw' , 'num' , 'bwstr' , 'dimstr', 'numstr' , 'paramtype'] )
+    paramfield = EAdict([ 'name' , 'dim' , 'tp', 'bw' , 'num' , 'bwstr' , 'dimstr', 'numstr' , 'paramtype', 'numstrlst'] )
     typefield  = EAdict([ 'name' , 'bw' , 'dim' , 'tp' , 'enumliteral', 'cmts' ] )
     portfield =  EAdict( [ 'direction' , 'name' , 'dim' , 'tp' , 'bw' , 'bwstr', 'dimstr', 'dimstrtuple' ] )
     enumfield  = EAdict( [ 'name', 'bw', 'dim', 'tp', 'enumliterals', 'cmts' ] )
-    enumsfield = EAdict( [ 'names' , 'nums' , 'cmts' ] )
-    enumlfield = EAdict( [ 'name' , 'num' , 'cmt' ] )
+    enumsfield = EAdict( [ 'names' , 'nums' , 'cmts', 'idxs', 'sizes', 'name_bases' ] )
+    enumlfield = EAdict( [ 'name' , 'num' , 'cmt', 'idx', 'size', 'name_base' ] )
     macrofield = EAdict( [ 'args', 'macrostr', 'lambda'] )
     def __init__(self,name,scope):
         self.hier= name # this is fucking ambiguous, but str method use it so it remains 
@@ -183,7 +184,7 @@ class SVhier ():
         for io , n in self.protoPorts:
             print(f'{io:<{w}}'f'{n:<{w}}'f'{"()":<{w}}')
         for io , n ,dim,tp , *_ in self.ports:
-            print(f'{io:<{w}}'f'{n:<{w}}'f'{dim.__repr__():<{w}}'f'{tp:<{w}}')
+            print(f'{io:<{w}}'f'{n:<{w}}'f'{dim.__str__():<{w}}'f'{tp:<{w}}')
         return
     @property
     def ShowConnect(self,**conf):
@@ -208,9 +209,9 @@ class SVhier ():
         for i in l:
             for idx,x in enumerate(i):
                 if idx < 4:
-                    print (f'{x.__repr__():^{w}}' , end=' ')
+                    print (f'{x.__str__():^{w}}' , end=' ')
                 else:
-                    print(f'\n{x.__repr__():^{4*w}}',end=' ')
+                    print(f'\n{x.__str__():^{4*w}}',end=' ')
             print()
     def ParamStr(self,dic,w=13):
         for i in ['name','value']:
@@ -218,7 +219,7 @@ class SVhier ():
         print(f'\n{"":=<{2*w}}')
         #l = self.params
         for k,v in dic.items():
-            print (f'{k:^{w}}'f'{self.valuecb(v).__repr__() if type(v)==int else v.__repr__():^{w}}', end=' ')
+            print (f'{k:^{w}}'f'{self.valuecb(v).__str__() if type(v)==int else v.__str__():^{w}}', end=' ')
             print()
     def FieldStr(self,field,w=13):
         for i in field.dic:
@@ -229,7 +230,7 @@ class SVhier ():
             for v in t:
                 print (f'{self.valuecb(v).__repr__() if type(v)==int else v.__repr__():^{w}}', end=' ')
             print()
-    def __repr__(self):
+    def __str__(self):
         sc = self._scope.hier if self._scope!=None else None
         return f'\n{self.hier:-^52}\n'+\
                 f'{"params":^15}:{[x for x in self.params] !r:^}\n'+\
@@ -307,13 +308,13 @@ class SVparse(SVutil):
         pass
     @classmethod
     def ParseFiles(cls , paths=[(True,INC)] ):
-        print ( PROJECT_PATH, INC)
-        print("supposed base path of the project:", cls.base_path)
+        print ('[SVparse]:project path:', PROJECT_PATH,', include path:', INC)
+        print("[SVparse]:assumed base path of the project:", cls.base_path)
         cls.ARGSParse()
         for p in paths:
             if not p[1] == '':
                 cls.paths.append(f'{cls.include_path}{p[1]}.sv' if p[0] else p[1] )
-        print(cls.paths)
+        print('[SVparse]:parsing list:',cls.paths)
         for p in cls.paths:
             n = (p.rsplit('/',maxsplit=1)[1] if '/' in p else p ).replace('.','_')
             cur_parse = SVparse( n , cls.gb_hier)
@@ -409,8 +410,18 @@ class SVparse(SVutil):
                 _s, cmt = self.Rdline(lines)
                 s += _s
         numstr = s.rstrip().rstrip(';').rstrip(',').s.lstrip('=').lstrip()
+        numstrlst = SVstr(numstr).S2lst()
         num =self.cur_hier.params[name]=s.lstrip('=').S2num(self.cur_hier.Params)
-        self.cur_hier.paramsdetail[name] = ( name , self.Tuple2num(dim) , tp, bw , num , bwstr, dimstr, numstr ,self.cur_key )
+        self.cur_hier.paramsdetail[name] = ( name ,\
+                                             self.Tuple2num(dim) ,\
+                                             tp,\
+                                             bw ,\
+                                             num ,\
+                                             bwstr,\
+                                             dimstr,\
+                                             numstr ,\
+                                             self.cur_key,\
+                                             numstrlst)
         if self.flag_port == 'pport' :
             self.cur_hier.paramports[name] = num 
         return name , num
@@ -449,6 +460,7 @@ class SVparse(SVutil):
         enums = SVstr(_s).ReplaceSplit(['{',','] )
         cmts = [ '' for i in range(len(enums)-1) ] + [cmt]
         while '}' not in s:
+            #TODO ifdef ifndef blabla
             _s, cmt = self.Rdline(lines)
             s += _s
             _s = _s.lsplit('}') if '}' in _s else _s.s
@@ -457,14 +469,14 @@ class SVparse(SVutil):
             cmts += [ '' for i in range(len(_enum)-1) ] + [cmt]
         #_s = s.lsplit('}')
         #enums = SVstr(_s).ReplaceSplit(['{',','] )
-        enum_name, enum_num = self.Enum2Num( enums, params=self.cur_hier.Params )
+        enum_name, enum_num, cmts, idxs, sizes, name_bases= self.Enum2Num( enums, cmts, params=self.cur_hier.Params )
         for _name, _num in zip( enum_name, enum_num):
             self.cur_hier.params[_name] = _num
             self.cur_hier.paramsdetail[_name] = ( _name , () , '', 1 , _num , '', '', '','enum literal')
         s.lsplit('}')
         n = s.IDarrParse()
         for _n in n:
-            self.cur_hier.enums[_n] = ( enum_name, enum_num , cmts )
+            self.cur_hier.enums[_n] = ( enum_name, enum_num , cmts, idxs, sizes, name_bases )
         return [( _n,bw.Slice2num(self.cur_hier.Params),() , 'enum' , enums, cmts ) for _n in n]
         
     def ImportParse(self, s , lines):
@@ -572,7 +584,8 @@ class SVparse(SVutil):
                 _w = s.lsplit()
                 self.cur_hier.regs[pre_w] = _w
     def HierParse(self,  s , lines):
-        name = s.IDParse()
+        self.cur_s = s
+        name = self.cur_s.IDParse()
         new_hier = SVhier(name, self.cur_hier)
         SVparse.hiers[name] = new_hier        
         self.cur_hier = new_hier
@@ -582,19 +595,20 @@ class SVparse(SVutil):
         self.flag_port = ''
         while(1):
             _w=''
-            if s == None:
+            if self.cur_s == None:
                 break        
-            if s.End():
-                s, self.cur_cmt = self.Rdline(lines)
+            if self.cur_s.End():
+                self.cur_s, self.cur_cmt = self.Rdline(lines)
                 continue
-            _w = s.lsplit()
+            _w = self.cur_s.lsplit()
             self.PortFlag(_w)
             if _w == _end:
                 break 
             if _w in self.keyword:
                 _k = self.cur_key
                 self.cur_key = _w
-                _catch = self.keyword[_w](s,lines)
+                _catch = self.keyword[_w](self.cur_s,lines)
+                self.print(self.cur_key,':', self.cur_s,verbose=56)
                 self.cur_key = _k
         self.cur_hier = self.cur_hier.scope   
     def DefineParse ( self, s, lines):
@@ -610,7 +624,7 @@ class SVparse(SVutil):
                     continue
                 else:
                     break
-        self.print(_s,verbose=4)
+        self.print(_s,verbose=56)
         _s = _s.replace('\\','')
         func = lambda *_args: reduce( lambda x,y: \
                                 re.sub( rf'(\b|(``)){y[1]}(\b(``)|\b)', str(y[0]),x )\
@@ -621,15 +635,19 @@ class SVparse(SVutil):
             self.cur_hier.macros[name] = (args, _s, func)
         self.keyword['`'+name] = self.MacroParse
         self.parselist.add('`'+name)
+        self.cur_s.s = ''
         self.print (re.sub( rf'(\b|(``))b(\b(``)|\b)','2',re.sub(rf'(\b|(``))a(\b(``)|\b)', '4', _s) ), verbose=4)
     def MacroParse(self, s, lines):
+        #TODO not gonna work properly
         k = self.cur_key
-        s.lstrip() 
+        s.lstrip()
         _s = s.s
-        reobj = re.search( r'`^[(]', _s)
+        reobj = re.search( r'^[(]', _s)
         if reobj:
             span = SVstr(_s).FirstBracketSpan()
-            s.s = SVstr(k).MacroFuncExpand(self.cur_hier.AllMacro) + s.s[span[1]:]
+            s.s = SVstr(k+_s).MacroFuncExpand(self.cur_hier.AllMacro) + s.s[span[1]+1:]
+            self.print(k+_s, verbose=4)
+            self.print(s.s, verbose=4)
         else:
             s.s = SVstr(k).SimpleMacroExpand(self.cur_hier.AllMacro) + s.s
         self.print(k,verbose=3)
@@ -701,14 +719,18 @@ class SVparse(SVutil):
         return reduce(lambda x,y : x+f'[{y}]' , t , '')
     def Bw2num(self, bw):
         return SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier.Params)
-    def Enum2Num(self, enum, params={}):
+    def Enum2Num(self, enum, cmt, params={}):
         ofs =0
+        cmts = []
         name = []
+        name_base = []
+        idx = []
+        size = []
         num = []
         import copy
         _params = copy.deepcopy(params)
         _params.appendleft({})
-        for e in enum:
+        for e,c in zip(enum, cmt):
             _s = SVstr(e)
             _name = _s.IDParse()
             bw = _s.BracketParse()
@@ -717,385 +739,24 @@ class SVparse(SVutil):
             if type(bw)==tuple:
                 bw = (0,bw[1]-1) if bw[0]=='' else bw
                 for i in range (bw[1]-bw[0]+1):
+                    idx.append (bw[0]+i)
+                    size.append(bw[1]-bw[0]+1)
                     name.append(_name+str(bw[0]+i))
+                    name_base.append(_name)
                     num.append( ofs+i if _num=='' else _num + i)
+                    cmts.append(c)
                 ofs = ofs + bw[1] - bw[0] + 1 if _num=='' else _num + bw[1] - bw[0] + 1
             else:
+                idx.append(0)
+                size.append(0)
+                cmts.append(c)
+                name_base.append(_name)
                 name.append(_name) #TODO
                 num.append ( ofs if _num == '' else _num)
                 ofs = ofs+1 if _num == '' else _num+1
             _params[0][name[-1]] = num[-1]
-        return name, num 
-class SVstr(SVutil):
-    sp_chars = ['=','{','}','[',']','::',';',',','(',')','#']
-    op_chars = ['+','-','*','/','(',')']
-    verbose = 0
-    def __init__(self,s):
-        self.s = s
-    def __repr__(self):
-        return self.s
-    def __add__(self, foo ):
-        return SVstr( self.s+ foo.s )
-    def __iadd__(self,foo ):
-        self.s += foo.s
-        return self
-    def split( self, sep=None, maxsplit=-1):
-        return self.s.split(sep=sep,maxsplit=maxsplit)
-    def lstrip(self,chars=None):
-        self.s = self.s.lstrip(chars)
-        return self
-    def rstrip(self,chars=None):
-        self.s = self.s.rstrip(chars)
-        return self
-    def lsplit(self,sep=None):    
-        #split sep or any special chars from the start
-        self.lstrip()
-        if self.End():
-            return ''
-        _s = self.s
-        if sep == None:    
-            _idx = SVstr(_s).FirstSPchar()
-            _spidx = _s.find(' ')
-            if _idx != -1 and (_idx < _spidx or _spidx == -1):
-                if _idx == 0:
-                    _s , self.s = _s[0] , _s[1:]
-                else:
-                    _s , self.s = _s[0:_idx] , _s[_idx:]
-            else:
-                _s  = _s.split(maxsplit=1)
-                self.s = _s[1] if len(_s)>1 else ''
-                _s = _s[0]
-            return _s
-        _s = _s.split(sep,maxsplit=1)
-        if len(_s)!=0:
-            self.s=_s[1]
-            _s = _s[0]
-        else:
-            _s = ''
-            self.s=''
-        return _s
-    def FirstSPchar(self):
-        # FUCKING cool&concise implementation:
-        return next( (i for i,x in enumerate(self.s) if x in self.sp_chars) , -1)
-        #_specC = [ x for x in (map(self.s.find,self.sp_chars)) if x > -1]
-        #_idx = -1 if len(_specC) == 0 else min(_specC)
-        #return _idx
-    def CommentParse(self):
-        _s = self.s.rstrip()
-        if '//' in _s:
-            self.s = _s.split('//')[0] 
-            return _s.split('//')[1:]
-        else:
-            return ''
-    def IDParse (self):
-        '''
-            find one identifier at the start of the string
-            TODO multiple ID ( often sperated by , ) 
-        '''
-        if self.End():
-            return ''
-        self.s = self.s.lstrip()
-        _idx = self.FirstSPchar()
-        if _idx != -1:
-            _s = self.s[0:_idx]
-            self.s = self.s[_idx:]
-            return _s.rstrip()
-        _s = self.s.rstrip('\n').rstrip().split(maxsplit=1)
-        self.s =  _s[1] if len(_s)>1 else ''
-        return _s[0].rstrip(';')
-    def IDarrParse(self):
-        n= []
-        name = self.IDParse()
-        n.append(name)
-        while self.s[0] == ',': 
-            self.s = self.s[1:]
-            name = self.IDParse()
-            n.append(name)
-        return n
-    def IDDIMarrParse(self):
-        n = []
-        d = []
-        name = self.IDParse()
-        n.append(name)
-        dim = self.BracketParse()  
-        d.append(dim) 
-        self.print(self.s, verbose=1) 
-        if self.End():
-            return n, d
-        while self.s[0] == ',': 
-            self.s = self.s[1:]
-            name = self.IDParse()
-            n.append(name)
-            dim = self.BracketParse()  
-            d.append(dim) 
-        return n, d
-    def SignParse (self):
-        self.lstrip()
-        if 'signed' in self.s:
-            self.s = self.s.replace('signed','')
-            return True
-        else:
-            return False
-    def BracketParse(self,  bracket = '[]' ):
-        # find and convert every brackets at the start of the string
-        self.s = self.s.lstrip()
-        num = []
-        while(1):
-            if self.End() or self.s[0] != bracket[0]:
-                break
-            rbrack = self.s.find(bracket[1])
-            num.append(self.s[1:rbrack] )
-            self.s=self.s[rbrack+1:].lstrip()
-        return tuple(num)
-    def TypeParse(self , typekeylist ):
-        tp = ''
-        temp = SVstr(self.s).lsplit()
-        if temp in typekeylist or '::' in temp:
-            tp = temp
-            self.lsplit()
-        return tp
-    def KeywordParse(self, key , rules ):
-        _step = 0
-        self.s = self.s.lsplit()
-        if self.s == None:
-            raise StopIteration
-        if _step == len(rules) :
-            return
-    def FunctionParse(self):
-        self.print(self.End(),verbose=3)
-        func = self.lsplit()
-        if self.End():
-            return func , []
-        if self.s[0] == '(':
-            _s , self.s = self.split(')',maxsplit=1)
-            args = SVstr(_s).ReplaceSplit(['(',','])
-            return func,args
-        else:
-            return func, []
-    def NumParse(self,params):
-        # split the equal sign at the start of the string
-        # return left string as num, meaning that it converts
-        # the remain string no matter what ( determine if 
-        # a string is an equation is hard), leaving the object
-        # empty
-        num = self.lstrip('=').S2num(params)
-        self.s = ''
-        return num 
-    def Arit2num(self, s):
-        pass
-    def S2num(self,params):
-        _s = self.s.lstrip()
-        if '$clog2' in _s:
-            _temp = self.s.split('(')[1].split(')')[0] 
-            _s = _s.replace( _s[_s.find('$'):_s.find(')')+1] , 'int(np.log2('+ _temp + '))')
-        _s_no_op = SVstr(_s).ReplaceSplit(self.op_chars+[',', "'", '{', '}'])
-        #TODO package import :: symbol  , white spaces around '::' not handled
-        for w in _s_no_op:
-            if '::' in w:
-                _pkg , _param = w.split('::')
-                _s = _s.replace(_pkg+'::'+_param,str(SVparse.package[_pkg].params[_param]) )
-            for p in params:    
-                if w in p:
-                    _s = re.sub(rf'\b{w}\b', str(p[w]), _s)
-                    #_s = _s.replace( w , str(p[w]) )
-                    break
-        _s = _s.replace("\'{", ' [ ').replace('{',' [ ').replace('}',' ] ').replace(',',' , ')
-        slist = _s.split()
-        for i,v in enumerate(slist):
-            if '\'b' in v:
-                _n = v.split('\'b')[1]
-                slist[i] = f'int( "{_n}", 2)'
-            if '\'h' in v:
-                _n = v.split('\'h')[1]
-                slist[i] = f'int( "{_n}", 16)'
-            if '\'o' in v:
-                _n = v.split('\'o')[1]
-                slist[i] = f'int( "{_n}", 8)'
-            if '\'d' in v:
-                _n = v.split('\'d')[1]
-                slist[i] = f'int("{_n}")'
-        _s = ' '.join(slist)
-        #_s = _s.replace('\'','')
-        try:
-            return eval(ps.expr(_s).compile('file.py'))
-        except:
-            if _s !='':
-                self.print(f"S2num failed, return original string: {_s}",verbose=2)
-            return _s
-    def Slice2num(self,params):
-        if self.s == '':
-            return 1
-        _temp = self.s.replace('::','  ')
-        _idx = _temp.find(':')
-        _s,_e = self.s[0:_idx] , self.s[_idx+1:]
-        try:
-            return SVstr(_s).S2num(params)-SVstr(_e).S2num(params)+1
-        except(TypeError):
-            print('Slice2num fail, TypeError')
-            print (self.s)
-    def Slice2TwoNum(self,params):
-        if self.s == '':
-            return 1
-        _temp = self.s.replace('::','  ')
-        _idx = _temp.find(':')
-        _s,_e = self.s[0:_idx] , self.s[_idx+1:]
-        try:
-            return (SVstr(_s).S2num(params),SVstr(_e).S2num(params))
-        except(TypeError):
-            print('Slice2num fail, TypeError')
-            print (self.s)
-    def SimpleMacroExpand(self, macros):
-        '''
-            Expand a simple substituion macro
-            the string must start with ` and end with a word character
-        '''
-        _s = self.s.rstrip().lstrip()
-        exp = _s
-        reobj = True
-        while reobj:
-            reobj = re.search(r'`(\w+)\b', exp)
-            if reobj:
-                m0 = reobj.group(0)
-                m = reobj.group(1)
-                exp = re.sub(rf'{m0}\b', f'macros[\'{m}\'][2]()', exp)
-        try:
-            return eval(ps.expr(exp).compile('file.py'))
-        except:
-            print('macro expansion error')
-    def MacroFuncExpand(self, macros):
-        '''
-            Expand a potentially nested macro to a string.
-            Limitation: the string start with ` and end with )
-            Arguments:
-                macros: the dictionary to find required macro definitions
-        '''
-        _s = self.s.rstrip().lstrip()
-        exp = _s
-        reobj = True
-        exp = re.sub(rf'[\']', '\\\'', exp)
-        exp = re.sub(rf'["]', '\\\"', exp)
-        exp = re.sub(rf'[(]', '("', exp)
-        exp = re.sub(rf'[,]', '","' , exp)  
-        exp = re.sub(rf'(?!^[`])[`]', '"+`', exp)      
-        exp = re.sub(rf'(?![)]$)[)]',  '")+"', exp)
-        exp = re.sub(rf'[)]$', '")', exp) 
-        while reobj:
-            self.print(exp,verbose=3)
-            reobj = re.search( r'`(\w+)\b', exp )
-            if reobj:
-                m0 = reobj.group(0)
-                m = reobj.group(1)
-                if macros[m][0] == []:
-                    exp = re.sub(rf'{m0}\b', f'macros[\'{m}\'][2]()+"', exp) 
-                else:
-                    exp = re.sub(rf'{m0}\b', f'macros[\'{m}\'][2]', exp) 
-            self.print(exp,verbose=3)
-        try:
-            return eval(ps.expr(exp).compile('file.py'))
-        except:
-            print('macro expansion error')
-    def MultiMacroExpand(self, macros):
-        _s = self.s
-        nested = -1 
-        rbkt= 0
-        exp = _s
-        reobj = True
-        while reobj:
-            reobj = re.search ( r'`(\w+)\b', exp)
-            if reobj:
-                span = reobj.span()
-                for i,c in enumerate(exp[span[0]:]):
-                    if c == '(':
-                        nested += 1
-                    if c == ')':
-                        nested -= 1
-                        if nested == -1:
-                            rbkt = i
-                if rbkt == 0:
-                    rbkt = span[1]
-                    exp = exp[0:span[0]] + SVstr(exp[span[0]:rbkt]).SimpleMacroExpand(macros) + exp[rbkt:]
-                else:
-                    exp = exp[0:span[0]] + SVstr(exp[span[0]:rbkt+1]).MacroFuncExpand(macros) + exp[rbkt+1:]
-                nested = -1 
-                rbkt = 0
-        return exp
-    def FirstBracketSpan(self):
-        '''
-            Find the first enclosed round bracket span if the 
-            string start with (
-        '''
-        if self.s[0] != '(':
-            return (0,0)
-        rbkt = 0
-        nested = 0 
-        reobj = re.search ( r'`(\w+)\b', exp)
-        for i,c in enumerate():
-            if c == '(':
-                nested += 1
-            if c == ')':
-                nested -= 1
-                if nested == -1:
-                    rbkt = i
-        return (0,rbkt)
-    def DeleteList(self,clist):
-        _s = self.s
-        for c in clist:
-            _s = _s.replace(c,'')
-        return _s
-    def ReplaceSplit(self, clist):
-        _s = self.s
-        for c in clist:
-            _s = _s.replace(c, ' ')
-        return _s.split()
-    def __len__(self):
-        return len(self.s)
-    def __contains__(self,st):
-        return st in self.s
-    def End(self):
-        return self.s==''
-class SVARGstr(SVstr):
-    def Pluslsplit(self):
-        bcnt = False 
-        prvc = ''
-        if self.End():
-            return None
-        for i,c in enumerate(self.s):
-            if c == '"':
-                if prvc == '\\':
-                    pass 
-                else:
-                    bcnt = False if bcnt else True 
-            if bcnt == False:
-                if c == '+' or c ==' ':
-                    _s = self.s[0:i]
-                    self.s = self.s[i+1:].lstrip()
-                    return _s, c
-            prvc = c
-        _s = self.s
-        self.s = ''
-        return _s, '' 
-    def PlusSplit(self):
-        l = []
-        parse = self.Pluslsplit()
-        while parse:
-            if parse == ('','+'):
-                l.append([])
-            if parse[0] != '':
-                l[-1].append(parse[0])
-            parse = self.Pluslsplit()
-        return l
-    def define(self, args):
-        l = {} 
-        for a in args:
-            _a = a.split('=')
-            name = _a[0]
-            text = _a[1] if len(_a) > 1 else ''
-            func = lambda : text;
-            l[name]=([],text,func)
-        return l 
-    def incdir(self, args):
-        #TODO
-        return [] 
+        return name, num, cmts, idx, size, name_base
+ 
     
 def ParseFirstArgument():
     import sys

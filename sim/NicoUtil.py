@@ -237,7 +237,7 @@ class RegbkMaster(SVutil):
             yield addr.value
             if not rw:
                 self.Read()
-                self.print('register bank read: ', hex(addr), ':', hex(self.rdata.value[0]), verbose=1)
+                self.print('register bank read: ', hex(addr), ':', hex(self.rdata.value[0]), verbose=1, trace=None)
 class ThreadCreator(SVutil):
     ''' Helper class for creating simulation threads. '''
     def __init__(self, ck_ev):
