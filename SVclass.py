@@ -42,6 +42,17 @@ class SVParam(SVclass):
         self.w = 20
         self.linechar = '='
         self.data = param
+class SVStruct(SVclass):
+    field = SVhier.typefield
+    def __init__(self, tp = None):
+        self.w = 15
+        self.linechar = '='
+        self.datas = [ SVType(t) for t in tp] 
+    @property
+    def ShowData(self):
+        for d in self.datas:
+            d.ShowData
+        
 class SVType(SVclass):
     field = SVhier.typefield
     def __init__(self, tp = None):
@@ -60,9 +71,13 @@ class SVEnums(SVclass):
         self.w = 30
         self.linechar = '='
         self.data = enums
-        self.enumls = [ SVEnuml((name, num, cmt, idx, size, name_base)) \
-                        for name, num, cmt, idx, size, name_base in \
-                        zip( self.names, self.nums, self.cmts, self.idxs, self.sizes, self.name_bases) ]
+        #self.enumls = [ SVEnuml((name, num, cmt, idx, size, name_base)) \
+        #                for name, num, cmt, idx, size, name_base in \
+        #                zip( self.names, self.nums, self.cmts, self.idxs, self.sizes, self.name_bases) ]
+        self.enumls = [ SVEnuml(d) for d in zip(*self.data)]
+    def __str__(self):
+        slst = [ str(i)+':'+x.__str__() for i,x in enumerate(self.enumls)]
+        return '[ '+' , '.join(slst)+' ]'
 class SVEnuml(SVclass):
     ''' enum literal '''
     field = SVhier.enumlfield
@@ -70,6 +85,13 @@ class SVEnuml(SVclass):
         self.w = 20
         self.linechar = '='
         self.data = enuml
+    def __repr__(self):
+        type_ = type(self)
+        module = type_.__module__
+        qualname = type_.__qualname__
+        return f"<{module}.{qualname} {self.name} at {hex(id(self))}>"
+    def __str__(self):
+        return f"<SVEnuml: {self.name}>"
 class SVRegbk(SVutil): 
     '''
     Register bank information parsed from a *Regbk package
@@ -169,6 +191,7 @@ class SVRegbk(SVutil):
             Return the address and regfield given the register name
             the address is multiplied by regaddrbw
         '''
+        #TODO  multi-dimensional register
         addr = self.regaddrsdict[reg].num * self.regbsize
         regfield = self.regfields.get(reg)
         nums = regfield.nums if regfield else [0]
@@ -191,7 +214,7 @@ class SVRegbk(SVutil):
         datalst = self.RegfieldExtract(regnums, data)
         return datalst, regnames 
     def ShowAddr(self, valuecb=hex):
-        print ( f'{self.pkg.name:-^{3*self.w}}') #TODO name banner width
+        print ( f'{self.pkg.name:-^{3*self.w}}')
         SVEnuml().ShowField
         SVEnuml().ShowLine
         for i in self.addrs.enumls:

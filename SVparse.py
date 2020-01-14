@@ -496,7 +496,19 @@ class SVparse(SVutil):
             if _param in self.package[_pkg].paramsdetail:
                 self.cur_hier.paramsdetail[_param] = self.package[_pkg].paramsdetail[_param]  
             if _param in self.package[_pkg].types:
-                self.cur_hier.types[_param] = self.package[_pkg].types[_param] 
+                tp = self.package[_pkg].types[_param] 
+                f = SVhier.typefield
+                if len(tp)==1:
+                    _tp = self.package[_pkg].types.get(tp[0][f.tp])
+                    if tp:
+                        self.cur_hier.types[tp[0][f.tp]] = tp 
+                else:
+                    for t in tp:
+                        _tp = self.package[_pkg].types.get(t[f.tp])
+                        if _tp:
+                            self.print(t[f.tp])
+                            self.cur_hier.types[t[f.tp]] = _tp 
+                self.cur_hier.types[_param] = tp 
     def StructParse(self ,s ,lines ):
         _step = 0      
         rule = [ '{' , '}' ]
