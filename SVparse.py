@@ -457,16 +457,17 @@ class SVparse(SVutil):
         cmt = self.cur_cmt
         cmts = []
         _s = SVstr(s.s).lsplit('}') if '}' in s else s.s
-        enums = SVstr(_s).ReplaceSplit(['{',','] )
+        enums = [ i for i in re.split( r'{ *| *, *', _s) if i != '']
         cmts = [ '' for i in range(len(enums)-1) ] + [cmt]
         while '}' not in s:
             #TODO ifdef ifndef blabla
             _s, cmt = self.Rdline(lines)
             s += _s
             _s = _s.lsplit('}') if '}' in _s else _s.s
-            _enum = SVstr(_s).ReplaceSplit(['{',','] )
+            _enum = [ i for i in re.split( r'{ *| *, *', _s) if i != '']
             enums += _enum
             cmts += [ '' for i in range(len(_enum)-1) ] + [cmt]
+            self.print(_enum, verbose='EnumParse')
         #_s = s.lsplit('}')
         #enums = SVstr(_s).ReplaceSplit(['{',','] )
         enum_name, enum_num, cmts, idxs, sizes, name_bases= self.Enum2Num( enums, cmts, params=self.cur_hier.Params )
@@ -506,7 +507,7 @@ class SVparse(SVutil):
                     for t in tp:
                         _tp = self.package[_pkg].types.get(t[f.tp])
                         if _tp:
-                            self.print(t[f.tp])
+                            self.print(t[f.tp],verbose='ImportParse')
                             self.cur_hier.types[t[f.tp]] = _tp 
                 self.cur_hier.types[_param] = tp 
     def StructParse(self ,s ,lines ):

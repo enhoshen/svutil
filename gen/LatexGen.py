@@ -12,6 +12,9 @@ class LatexGen(SVgen):
         super().__init__()
         self.default_input_delay = 30
         self.regbk= SVRegbk(self.regbk) if self.regbk else None
+    def Reload(self):
+        self.session.Reload()
+        self.regbk= SVRegbk(self.regbk) if self.regbk else None
     def L_(self, s):
         return s.replace('_','\_')
     def ParameterStr(self , param):
@@ -87,7 +90,7 @@ class LatexGen(SVgen):
         if reg_defaults:
             if reg_slices :
                 for _slice, _default in zip ( reg_slices, reg_defaults):
-                    s += f'{ind[2]}{{[{_slice[1]}]}}: {_default}\\\\\n'
+                    s += f'{ind[2]}{{[{_slice[1]}]}}: {_default.__str__()}\\\\\n'
                 s = s[:-2]+'\n'
             else:
                 try:
@@ -95,7 +98,7 @@ class LatexGen(SVgen):
                     reg_bw_str = '0' if reg_bw_str == 0 else f'{reg_bw_str}:0' 
                 except: 
                     reg_bw_str = f'{reg_bw_str}-1:0'
-                s += f'{ind[2]}{{[{reg_bw_str}]}}: {reg_defaults[0]}\\\\\n'
+                s += f'{ind[2]}{{[{reg_bw_str}]}}: {reg_defaults[0].__str__()}\\\\\n'
         else:
             reset = '\\TODO' if len(reg.cmt) < 3 else reg.cmt[2] 
             reset = self.L_(self.Lbrac(reset))
@@ -117,7 +120,7 @@ class LatexGen(SVgen):
             s += f'{ind[2]}\\regDES{{\\TODO\\\\\n'
             if _membtype and _membtype[0].tp == 'enum':
                 s += f'{ind[3]}{self.DespStr(_membtype[0].enumliteral, ind[3])}'
-            s += f'{ind[3]}}}{{{_default}}}{{N/A}}\n'
+            s += f'{ind[3]}}}{{{_default.__str__()}}}{{N/A}}\n'
             s += f'{ind[2]}}}\n'
         s += f'{ind.b}\\end{{regfieldtable}}\n'
         return s
@@ -168,8 +171,10 @@ class LatexGen(SVgen):
         regbk = SVRegbk(pkg) if pkg and type(pkg)==str else self.regbk
         for reg in regbk.addrs.enumls:
             reg_slices = regbk.regslices.get(reg.name)
-            defaults = self.Str2Lst(regbk.GetDefaultsStr(reg.name))
-            defaults.reverse()
+            defaults = self.L_(regbk.GetDefaultsStr(reg.name, lst=True))
+            self.print(defaults)
+            if defaults:
+                defaults.reverse()
             reg_bw = regbk.params.get(f'{reg.name}_BW')
             reg_bw = reg_bw.num if reg_bw else None
             reg_bw_str = self.L_(regbk.GetBWStr(reg.name))
@@ -189,8 +194,9 @@ class LatexGen(SVgen):
             width, rw = regbk.GetAddrCmt(reg) 
             reg_bw = width if not reg_bw else reg_bw
             s += self.RegFieldSubSec( reg, ofs, reg_bw+'b', rw) 
-            defaults = self.Str2Lst(regbk.GetDefaultsStr(reg))
-            defaults.reverse()
+            defaults = self.L_(regbk.GetDefaultsStr(reg, lst=True))
+            if defaults:
+                defaults.reverse()
             tps =[i for i in regbk.regtypes[reg]]
             tps.reverse()
             membtypes = [i for i in regbk.regmembtypes[reg]]
@@ -214,7 +220,11 @@ class LatexGen(SVgen):
     def Lbrac(self, s):
         return s.replace('[','{[').replace(']', ']}')
     def L_ (self, s):
-        return s.replace('_', '\_') if s else None
+        if type(s) == str:
+            return s.replace('_', '\_') if s else None
+        if type(s) == list:
+            return [ self.L_(i) for i in s]
+        return None
     def Str2Lst(self,s):
         if not s:
             return s

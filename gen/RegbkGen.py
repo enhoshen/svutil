@@ -31,8 +31,13 @@ class RegbkGen(SrcGen):
         self.regbk_write_cond = 'write_valid'
         self.regbk_read_cond = 'read_valid'
         self.regbk_cg_cond = 'regbk_cg'
+        self.regbk_wo_cg_cond = 'regbk_wo_cg'
         self.regbk_ro_cg_cond = 'regbk_ro_cg'
-        self.regbk_flag_logic_lst = [ self.regbk_write_cond, self.regbk_read_cond, self.regbk_cg_cond, self.regbk_ro_cg_cond ]
+        self.regbk_flag_logic_lst = [   self.regbk_write_cond,\
+                                        self.regbk_read_cond,\
+                                        self.regbk_cg_cond,\
+                                        self.regbk_ro_cg_cond,\
+                                        self.regbk_wo_cg_cond ]
         self.regbk_clr_affix = 'clr_'
     def ModBlk(self): 
         ind = self.cur_ind.Copy() 
@@ -57,8 +62,10 @@ class RegbkGen(SrcGen):
         yield s
     def LogicStr(self, w, reg, bw, tp, ind):
         return self.RegLogicStr(w, reg, bw, tp, ind)
-    def RdataStr(self, reg, _slice, w, ind):
+    def RdataStr(self, reg, _slice, w, rw, ind):
         #TODO slice dependent, now it only pad the MSB and it's usually the case
+        if rw and rw=='WO':
+            return ''
         pad = f'{SVRegbk.regbw_name}-{reg}{SVRegbk.bw_suf}'
         s =f'{ind.b}{reg:<{w[0]}}: rdata_w = '
         pad = '{{'+f'{pad}'+'{1\'b0}}'
@@ -88,7 +95,7 @@ class RegbkGen(SrcGen):
             if self.regbk_clr_affix.upper() in reg:
                 s += f'{ind[1]}if ({self.regbk_read_cond} && {self.regbk_addr_name}{self.regbk_addr_slice} == {reg}) '
                 s += f'{reg.lower()}_w = \'1;\n'
-                s += f'{ind[1]}else {reg.lower()}_w = \'0;\n'
+                s += f'{ind[1]}else {reg.lower()}_w = \'0;//TODO\n'
             else:
                 s += f'{ind[1]}{reg.lower()}_w = {reg.lower()}_r;\n'
             s += f'{ind[1]}//TODO\n{ind.b}end\n'
@@ -180,8 +187,9 @@ class RegbkGen(SrcGen):
             w[0] = max(w[0], len(i.name))
             w[1] = max(w[1], len(self.regbk.regbw_name+i.name+self.regbk.bw_suf)+10)
         for reg in self.regbk.addrs.enumls:
+            width, rw = self.regbk.GetAddrCmt(reg.name)
             _slice = self.regbk.regslices.get(reg.name)
-            s += self.RdataStr( reg.name, _slice, w, ind+3)
+            s += self.RdataStr( reg.name, _slice, w, rw, ind+3)
         s += f'{ind[3]}default: rdata_w = \'0;\n'
         s += f'{ind[2]}endcase\n'
         s += f'{ind[1]}end\n'

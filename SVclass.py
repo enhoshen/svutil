@@ -102,6 +102,7 @@ class SVRegbk(SVutil):
     bw_suf  = '_BW'
     reserved_name = 'RESERVED'
     regaddr_name = 'regaddr'
+    regaddr_arr_name = 'regaddr_arr'
     regbw_name = 'REG_BW'
     regaddrbw_name = 'REG_ADDR_BW'
     regbsize_name = 'REG_BSIZE'
@@ -115,6 +116,8 @@ class SVRegbk(SVutil):
         self.addrsdict = { x.name: x for x in self.addrs.enumls }
         self.regaddrs = self.addrs
         self.regaddrsdict = self.addrsdict
+        self.regaddrs_arr = SVEnums ( pkg.enums[self.regaddr_arr_name] )
+        self.regaddrs_arrdict = { x.name: x for x in self.regaddrs_arr.enumls }
         self.regbw = pkg.params[self.regbw_name]
         self.regaddrbw = pkg.params[self.regaddrbw_name]
         self.regbsize = pkg.params[self.regbsize_name]
@@ -123,8 +126,8 @@ class SVRegbk(SVutil):
         self.regmembtypes = {}
         self.regfields = {} 
         self.regslices = {}
-        self.regdefaultstr = {} 
-        self.regbwstr = {}
+        self.regdefaults = {}
+        self.regbws = {}
         self.params = {} 
         self.raw_intr_stat = self.GetType('raw_intr_stat')
         for i,v in pkg.paramsdetail.items():
@@ -132,10 +135,10 @@ class SVRegbk(SVutil):
             self.params[i]=(_v)
             _s = i.split(self.default_suf)
             if len(_s) == 2:
-                self.regdefaultstr[_s[0]] = _v.numstr
+                self.regdefaults[_s[0]] = _v
             _s = i.split(self.bw_suf)
             if len(_s) == 2:
-                self.regbwstr[_s[0]] = _v.numstr
+                self.regbws[_s[0]] = _v
         for i,v in pkg.enums.items():
             _v = SVEnums(v)
             _s = i.split(self.regfield_suf)
@@ -158,18 +161,30 @@ class SVRegbk(SVutil):
             self.regtypes[i.upper()] = _v
             self.regmembtypes[i.upper()] = tt
         #self.regfields = pkg. TODO reg fields, defaults etc...
-    def GetDefaultsStr(self, name):
+    def GetDefaultsStr(self, name, lst=False):
         reg = self.regaddrsdict.get(name)
-        _s = self.regdefaultstr.get(name)
-        if not _s:
-            _s = self.regdefaultstr.get(reg.name_base) 
-        return _s if _s else None
-    def GetBWStr(self, name):
+        d  = self.regdefaults.get(name)
+        if not d:
+            d = self.regdefaults.get(reg.name_base)
+        if not d:
+            return None
+        if lst:
+            _s = d.numstrlst
+        else:
+            _s = d.numstr
+        return _s 
+    def GetBWStr(self, name, lst=False):
         reg = self.regaddrsdict.get(name)
-        _s = self.regbwstr.get(name)
-        if not _s:
-            _s = self.regbwstr.get(reg.name_base) 
-        return _s if _s else None
+        bw = self.regbws.get(name)
+        if not bw:
+            bw = self.regbws.get(reg.name_base) 
+        if not bw:
+            return None 
+        if lst:
+            _s = bw.numstrlst
+        else:
+            _s = bw.numstr
+        return _s 
     def GetType(self, tp):
         tp = self.pkg.AllType.get(tp)
         return [ SVType(t) for t in tp] if tp else None
@@ -178,7 +193,7 @@ class SVRegbk(SVutil):
         width = ''
         rw = ''
         for c in cmt:
-            if re.search(r'RW|R/W|RO',c):
+            if re.search(r'RW|R/W|RO|WO',c):
                 rw= c.lstrip().rstrip()
                 continue
             if re.search(r"\d",c):
