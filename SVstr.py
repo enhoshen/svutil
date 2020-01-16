@@ -101,7 +101,6 @@ class SVstr(SVutil):
         n.append(name)
         dim = self.BracketParse()  
         d.append(dim) 
-        self.print(self.s, verbose=1) 
         if self.End():
             return n, d
         while self.s[0] == ',': 
@@ -189,18 +188,8 @@ class SVstr(SVutil):
         _s = _s.replace("\'{", ' [ ').replace('{',' [ ').replace('}',' ] ').replace(',',' , ')
         slist = _s.split()
         for i,v in enumerate(slist):
-            if '\'b' in v:
-                _n = v.split('\'b')[1]
-                slist[i] = f'int( "{_n}", 2)'
-            if '\'h' in v:
-                _n = v.split('\'h')[1]
-                slist[i] = f'int( "{_n}", 16)'
-            if '\'o' in v:
-                _n = v.split('\'o')[1]
-                slist[i] = f'int( "{_n}", 8)'
-            if '\'d' in v:
-                _n = v.split('\'d')[1]
-                slist[i] = f'int("{_n}")'
+            _n, _= SVstr(v).BaseConvert()
+            slist[i] = _n if _n else slist[i]
         _s = ' '.join(slist)
         #_s = _s.replace('\'','')
         try:
@@ -209,6 +198,20 @@ class SVstr(SVutil):
             if _s !='':
                 self.print(f"S2num failed, return original string: {_s}",verbose=2)
             return _s
+    def BaseConvert(self):
+        mapping = { '\'b': '0b', '\'h': '0x', '\'o': '0o', '\'d': '', '\'':''}
+        rule = rf'(\'[bB]|\'[hH]|\'[oO]|\'[dD]|\')'
+        if re.search( rule, self.s):
+            lst = re.split(rule, self.s) 
+            _base = mapping[lst[1].lower()]
+            _size = lst[0] 
+            _n = f'{_base}{lst[2]}'
+            if lst[1] == '\'':
+                _n = f'0b{"":{lst[2]}<{32}}'
+                self.print(_n, lst[2], verbose='BaseConvert')
+            return _n, _size
+        else:
+            return None, None
     def S2lst(self):
         # TODO
         if not '{' in self.s:
@@ -233,7 +236,7 @@ class SVstr(SVutil):
             return eval(ps.expr(_s.s).compile('file.py'))
         except:
             self.print(f"S2lst {_s.s} failed, return original string: {self.s}",verbose=2)
-            return self.s
+            return [self.s]
     def Slice2num(self,params):
         if self.s == '':
             return 1
