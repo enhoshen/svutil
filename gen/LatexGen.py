@@ -117,6 +117,7 @@ class LatexGen(SVgen):
         if reg_slices[0][0] == SVRegbk.reserved_name:
             s += f'{ind[1]}\\regfield{{{reg_slices[0][1]}}}{{RESERVED}}{{N/A}}{{reserved}}\n'
             reg_slices.pop(0)
+        self.print( reg_types)
         for _slice, _type, _membtype, _default in zip(reg_slices, reg_types, reg_membtypes, reg_defaults):
             _slice_name = _slice[0].replace('_', '\_')
             s += f'{ind[1]}\\regfield{{{_slice[1]}}}{{{_slice_name}}}{{{rw}}}{{\n'

@@ -59,6 +59,12 @@ class SVType(SVclass):
         self.w = 15
         self.linechar = '='
         self.data = tp
+    def __repr__(self):
+        type_ = type(self)
+        module = type_.__module__
+        qualname = type_.__qualname__
+        return f"<{module}.{qualname} {self.name} at {hex(id(self))}>"
+        
 class SVPort(SVclass):
     field = SVhier.portfield
     def __init__(self, port=None):
@@ -159,6 +165,12 @@ class SVRegbk(SVutil):
                 if len(reserved)!=0:
                     self.regslices[_s[0]].insert(0, (self.reserved_name , reserved))
         for i,v in pkg.types.items():
+            while True:
+                _v = v[0]
+                if len(v)==1 and pkg.types.get(SVType(_v).tp):
+                    v = pkg.types.get(SVType(_v).tp)
+                else:
+                    break
             _v = [ SVType(vv) for vv in v]
             tt = [ self.GetType(vv.tp) for vv in _v ]
             self.regtypes[i.upper()] = _v
