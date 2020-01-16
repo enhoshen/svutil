@@ -226,7 +226,11 @@ class SVstr(SVutil):
             spans = re.sub(r'{' , '[',spans)
             _s = _s.SpanReplace(span, spans)
         self.print(_s,verbose=46)
-        return eval(ps.expr(_s.s).compile('file.py'))
+        try:
+            return eval(ps.expr(_s.s).compile('file.py'))
+        except
+            self.print(f"S2lst {_s.s} failed, return original string: {self.s}",verbose=2)
+            return self.s
     def Slice2num(self,params):
         if self.s == '':
             return 1
