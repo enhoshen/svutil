@@ -35,4 +35,9 @@ class SVutil():
             return '' 
         if trace == 1:
             return f'[{fn:<{w}},line:{ins.lineno}, in {ins.function}]'
-
+def V_ (verbose):
+    try:
+        verbose = int(verbose)
+    except:
+        pass
+    return verbose

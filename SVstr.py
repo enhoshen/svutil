@@ -3,12 +3,12 @@ import parser as ps
 import re
 import os
 from subprocess import Popen, PIPE
-from SVutil import SVutil 
+from SVutil import SVutil, V_
 VERBOSE = os.environ.get('VERBOSE',0)
 class SVstr(SVutil):
     sp_chars = ['=','{','}','[',']','::',';',',','(',')','#']
     op_chars = ['+','-','*','/','(',')']
-    verbose = VERBOSE 
+    verbose = V_(VERBOSE)
     def __init__(self,s):
         self.s = s
     def __repr__(self):
@@ -154,15 +154,18 @@ class SVstr(SVutil):
             return func,args
         else:
             return func, []
-    def NumParse(self,params):
+    def NumParse(self,params,macros=None):
         '''
             split the equal sign at the start of the string
             return left string as num, meaning that it converts
             the remain string no matter what ( determine if 
             a string is an equation is hard), leaving the object
-            empty
+            empty. Try to expand text macro if macros is provided.
         '''
-        num = self.lstrip('=').S2num(params)
+        _s = self.lstrip('=') 
+        if macros:
+            _s = SVstr(_s.MultiMacroExpand(macros))
+        num = _s.S2num(params)
         self.s = ''
         return num 
     def Arit2num(self, s):
@@ -228,7 +231,7 @@ class SVstr(SVutil):
         self.print(_s,verbose=46)
         try:
             return eval(ps.expr(_s.s).compile('file.py'))
-        except
+        except:
             self.print(f"S2lst {_s.s} failed, return original string: {self.s}",verbose=2)
             return self.s
     def Slice2num(self,params):
@@ -270,7 +273,7 @@ class SVstr(SVutil):
         try:
             return eval(ps.expr(exp).compile('file.py'))
         except:
-            print('macro expansion error')
+            self.print('macro expansion error')
     def MacroFuncExpand(self, macros):
         '''
             Expand a potentially nested macro to a string.
@@ -302,7 +305,7 @@ class SVstr(SVutil):
         try:
             return eval(ps.expr(exp).compile('file.py'))
         except:
-            print('macro expansion error')
+            self.print('macro expansion error')
     def MultiMacroExpand(self, macros):
         _s = self.s
         nested = -1 

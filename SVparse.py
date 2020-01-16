@@ -6,7 +6,7 @@ from collections import namedtuple
 from collections import deque
 from subprocess import Popen, PIPE
 from functools import reduce
-from SVutil import SVutil 
+from SVutil import SVutil, V_
 from SVstr import *
 #Nico makefile specified
 ARGS = os.environ.get('ARGS','')
@@ -242,7 +242,7 @@ class SVhier ():
         
 class SVparse(SVutil):
     # One SVparse object one file, and it's also SVhier
-    verbose =  VERBOSE
+    verbose = V_(VERBOSE) 
     parsed = False
     package = {}
     hiers = {}
@@ -412,7 +412,8 @@ class SVparse(SVutil):
                 s += _s
         numstr = s.rstrip().rstrip(';').rstrip(',').s.lstrip('=').lstrip()
         numstrlst = SVstr(numstr).S2lst()
-        num =self.cur_hier.params[name]=s.lstrip('=').S2num(self.cur_hier.Params)
+        #num =self.cur_hier.params[name]=s.lstrip('=').S2num(self.cur_hier.Params)
+        num = self.cur_hier.params[name] = s.NumParse(self.cur_hier.Params, self.cur_hier.AllMacro)
         self.cur_hier.paramsdetail[name] = ( name ,\
                                              self.Tuple2num(dim) ,\
                                              tp,\
@@ -754,7 +755,7 @@ class SVparse(SVutil):
             _name = _s.IDParse()
             bw = _s.BracketParse()
             bw = SVstr(bw[0]).Slice2TwoNum(_params) if bw else SVstr('').Slice2TwoNum(_params)
-            _num = _s.NumParse(_params) 
+            _num = _s.NumParse(_params,self.cur_hier.AllMacro) 
             if type(bw)==tuple:
                 bw = (0,bw[1]-1) if bw[0]=='' else bw
                 for i in range (bw[1]-bw[0]+1):
