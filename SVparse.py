@@ -21,6 +21,7 @@ INC = os.environ.get('INC','')
 HIER= os.environ.get('HIER','')
 REGBK= os.environ.get('REGBK','')
 PROJECT_PATH = os.environ.get('PROJECT_PATH','')
+VERBOSE = os.environ.get('VERBOSE',0)
 def ToClip(s):
     clip = os.environ.get('XCLIP')
     clip = 'xclip' if not clip else clip 
@@ -241,7 +242,7 @@ class SVhier ():
         
 class SVparse(SVutil):
     # One SVparse object one file, and it's also SVhier
-    verbose = 0 
+    verbose =  VERBOSE
     parsed = False
     package = {}
     hiers = {}
@@ -457,17 +458,22 @@ class SVparse(SVutil):
         cmt = self.cur_cmt
         cmts = []
         _s = SVstr(s.s).lsplit('}') if '}' in s else s.s
-        enums = [ i for i in re.split( r'{ *| *, *', _s) if i != '']
-        cmts = [ '' for i in range(len(enums)-1) ] + [cmt]
+        enums = [ i for i in re.split( r'{ *| *, *', _s) ]
+        cmt = [''] if cmt =='' else cmt
+        cmts = [ [''] for i in range(len(enums)-1) ] + [cmt]
         while '}' not in s:
             #TODO ifdef ifndef blabla
             _s, cmt = self.Rdline(lines)
+            cmt = [''] if cmt =='' else cmt
             s += _s
             _s = _s.lsplit('}') if '}' in _s else _s.s
-            _enum = [ i for i in re.split( r'{ *| *, *', _s) if i != '']
+            _enum = [ i for i in re.split( r'{ *| *, *', _s) ]
             enums += _enum
-            cmts += [ '' for i in range(len(_enum)-1) ] + [cmt]
-            self.print(_enum, verbose='EnumParse')
+            cmts += [ [''] for i in range(len(_enum)-1) ] + [cmt]
+        _pair = [ (e,c)  for e,c in zip(enums, cmts) if e !='']
+        enums = [ p[0] for p in _pair ]
+        cmts  = [ p[1] for p in _pair ]
+        self.print(enums,cmts, verbose='EnumParse')
         #_s = s.lsplit('}')
         #enums = SVstr(_s).ReplaceSplit(['{',','] )
         enum_name, enum_num, cmts, idxs, sizes, name_bases= self.Enum2Num( enums, cmts, params=self.cur_hier.Params )
@@ -779,7 +785,7 @@ class SVparseSession(SVutil):
     def __getattr__(self , n ):
         return self.hiers[n]
     def __init__(self,name=None,scope=None, verbose=None):
-        self.verbose = 0 if not verbose else verbose
+        self.verbose = VERBOSE if not verbose else verbose
         self.parsed = False
         self.package = {}
         self.hiers = {}
@@ -904,7 +910,7 @@ if __name__ == '__main__':
     #for i in SVparse.hiers.keys():
     #    print (i)
     #print(SVparse.hiers['PECtlCfg'])
-    SVstr.verbose = 1
-    SVparse.verbose = 1
+    SVstr.verbose = VERBOSE 
+    SVparse.verbose = VERBOSE 
     S = SVparseSession()
     S.ParseFirstArgument()

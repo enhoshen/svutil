@@ -206,7 +206,9 @@ class RegbkMaster(SVutil):
             Generate an iterable to loop through a sequence of register bank's
             address, read/write, and data.
             Args:
-                regseq: list of register name string, or the integer address offset
+                regseq: list of register name string, or the integer address offset,
+                        or even a tuple of (register name, offset) representing an
+                        offset starting from the register 
                 rwseq : list of read/write, 1 for write, 0 for read.
                 dataseq: list of data. Data can be either integer or list 
                     of integer if the register has underlying register fields.
@@ -222,8 +224,13 @@ class RegbkMaster(SVutil):
             if type(reg) == int:
                 assert type(data)==int, "raw register address offset only takes integer data"
                 addr, wdata, regfields = reg, data, 'undefined regfields' 
-            else:
+            elif type(reg) == tuple:
+                addr, wdata, regfields = self.regbk.RegWrite(reg[0], data)
+                addr += reg[1]
+            elif type(reg) == str:
                 addr, wdata, regfields = self.regbk.RegWrite(reg, data)
+            else:
+                raise TypeError('un-recognized register sequence type')
             w = max(w, len(reg))
             self.print('register bank access:', f'{reg:<{w}} {addr:<5}', hex(self.wdata.value[0]), regfields, data, verbose=1)
             yield (addr, wdata, rw)

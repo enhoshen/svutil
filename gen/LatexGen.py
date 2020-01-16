@@ -76,13 +76,16 @@ class LatexGen(SVgen):
             s += f'{ind.b}\\signal{{ {name} }} {{{io}}} {{ \n'
             s += f'{ind[1]}\\signalDES{{ {desp} {ind[1]}}} {{ {width} }} {{ {active} }} {{ {clk} }} {{ No }} {{ {delay}\\%}}  }}\n'
         return s
-    def RegMemMapStr(self, reg, reg_bsize=4, reg_slices=None, reg_defaults=None, reg_bw=None, reg_bw_str=None, rw=None): #reg is a SVEnuml object
+    def RegMemMapStr(self, reg, reg_bsize=4, reg_slices=None, reg_defaults=None, reg_bw=None, reg_bw_str=None, rw=None, arr=None): #reg is a SVEnuml object
         ind = Ind(1)
-        name = reg.name.replace('_','\_')
+        name = self.L_(reg.name)
+        arr_suf = self.L_(SVRegbk.arr_num_suf)
         ofs  = reg.num*reg_bsize
-        s = f'{ind.b}\\memmap{{\\hyperref[subsubsec:{reg.name.lower()}]{{{name}}}}}'
+        arr = '' if arr=='' else f' [{name}{arr_suf}]' 
+        s = f'{ind.b}\\memmap{{\\hyperref[subsubsec:{reg.name.lower()}]{{{name}}}{arr}}}'
         s += f'{{{hex(ofs).upper().replace("X","x")}}}{{{reg_bw}}}{{{rw}}}{{\n'
         s += f'{ind[1]}\\memDES{{\n'
+        s += '' if arr == '' else f'{ind[2]}Array register of size {name}{arr_suf}'
         s += f'{ind[1]}}}{{\n'
         reg_slices = self.RegSliceList(reg_slices) if reg_slices else None
         if reg_slices and reg_slices[0][0] == SVRegbk.reserved_name:
@@ -124,12 +127,15 @@ class LatexGen(SVgen):
             s += f'{ind[2]}}}\n'
         s += f'{ind.b}\\end{{regfieldtable}}\n'
         return s
-    def RegFieldSubSec(self, reg, ofs, size, rw):
+    def RegFieldSubSec(self, reg, ofs, size, rw, arr=None, reg_bsize=4):
         ind = Ind(0)
         _name = self.L_(reg) 
+        arr_suf = self.L_(SVRegbk.arr_num_suf)
+        arr_ofs = '' if not arr else f'+:{reg_bsize}{_name}{arr_suf}'
         s = f'{ind.b}\\subsubsection{{{_name}}} \\label{{subsubsec:{reg.lower()}}}\n'
         s += f'{ind[1]}\\begin{{paragitemize}}\n'
-        s += f'{ind[2]}\\item \\textbf{{Address Offset:}} {ofs}\n'
+        s += f'{ind[2]}\\item \\textbf{{Address Offset:}} {ofs}{arr_ofs}\n'
+        s += '' if arr=='' else f'{ind[2]}\\item \\textbf{{Register array size:}} {_name}{arr_ofs}\n'
         s += f'{ind[2]}\\item \\textbf{{Size:}} {size}\n'
         s += f'{ind[2]}\\item \\textbf{{Read/Write Access:}} {rw}\n'
         s += f'{ind[1]}\\end{{paragitemize}}\n'
@@ -172,16 +178,16 @@ class LatexGen(SVgen):
         for reg in regbk.addrs.enumls:
             reg_slices = regbk.regslices.get(reg.name)
             defaults = self.L_(regbk.GetDefaultsStr(reg.name, lst=True))
-            self.print(defaults)
+            self.print(defaults, verbose='RegMemMap')
             if defaults:
                 defaults.reverse()
             reg_bw = regbk.params.get(f'{reg.name}_BW')
             reg_bw = reg_bw.num if reg_bw else None
             reg_bw_str = self.L_(regbk.GetBWStr(reg.name))
-            width, rw = regbk.GetAddrCmt(reg.name) 
+            width, rw, arr= regbk.GetAddrCmt(reg.name) 
             reg_bw = width if not reg_bw else reg_bw
             reg_bw_str = width if not reg_bw_str else reg_bw_str
-            s += self.RegMemMapStr(reg, regbk.regbsize, reg_slices, defaults, reg_bw, reg_bw_str, rw ) 
+            s += self.RegMemMapStr(reg, regbk.regbsize, reg_slices, defaults, reg_bw, reg_bw_str, rw, arr ) 
         ToClip(s)
         return s
     def RegFieldDescription(self, pkg=None):
@@ -191,9 +197,9 @@ class LatexGen(SVgen):
             ofs = regbk.addrsdict[reg].num*regbk.regbsize
             ofs = hex(ofs).upper().replace('X', 'x')
             reg_bw = self.L_(regbk.GetBWStr(reg))
-            width, rw = regbk.GetAddrCmt(reg) 
+            width, rw, arr= regbk.GetAddrCmt(reg) 
             reg_bw = width if not reg_bw else reg_bw
-            s += self.RegFieldSubSec( reg, ofs, reg_bw+'b', rw) 
+            s += self.RegFieldSubSec( reg, ofs, reg_bw+'b', rw, arr, regbk.regbsize) 
             defaults = self.L_(regbk.GetDefaultsStr(reg, lst=True))
             if defaults:
                 defaults.reverse()

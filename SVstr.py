@@ -4,10 +4,11 @@ import re
 import os
 from subprocess import Popen, PIPE
 from SVutil import SVutil 
+VERBOSE = os.environ.get('VERBOSE',0)
 class SVstr(SVutil):
     sp_chars = ['=','{','}','[',']','::',';',',','(',')','#']
     op_chars = ['+','-','*','/','(',')']
-    verbose = 0
+    verbose = VERBOSE 
     def __init__(self,s):
         self.s = s
     def __repr__(self):

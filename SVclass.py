@@ -100,6 +100,7 @@ class SVRegbk(SVutil):
     regfield_suf = '_regfield'
     default_suf  = '_DEFAULT'
     bw_suf  = '_BW'
+    arr_num_suf = '_NUM'
     reserved_name = 'RESERVED'
     regaddr_name = 'regaddr'
     regaddr_arr_name = 'regaddr_arr'
@@ -112,17 +113,18 @@ class SVRegbk(SVutil):
         self.verbose = 0
         self.w = 20
         self.pkg = pkg
-        self.addrs = SVEnums ( pkg.enums[self.regaddr_name] )
+        self.addrs = pkg.enums.get(self.regaddr_name) 
+        self.addrs = SVEnums(self.addrs) if self.addrs else None
         self.addrsdict = { x.name: x for x in self.addrs.enumls }
         self.regaddrs = self.addrs
         self.regaddrsdict = self.addrsdict
         self.regaddrs_arr = pkg.enums.get(self.regaddr_arr_name)
         self.regaddrs_arr = SVEnums(self.regaddrs_arr) if self.regaddrs_arr else None
         self.regaddrs_arrdict = { x.name: x for x in self.regaddrs_arr.enumls } if self.regaddrs_arr else None
-        self.regbw = pkg.params[self.regbw_name]
-        self.regaddrbw = pkg.params[self.regaddrbw_name]
-        self.regbsize = pkg.params[self.regbsize_name]
-        self.regbsizebw = pkg.params[self.regbsizebw_name]
+        self.regbw =      pkg.params.get(self.regbw_name)
+        self.regaddrbw =  pkg.params.get(self.regaddrbw_name)
+        self.regbsize =   pkg.params.get(self.regbsize_name)
+        self.regbsizebw = pkg.params.get(self.regbsizebw_name)
         self.regtypes = {}
         self.regmembtypes = {}
         self.regfields = {} 
@@ -193,6 +195,7 @@ class SVRegbk(SVutil):
         cmt = self.addrsdict[reg].cmt 
         width = ''
         rw = ''
+        arr= ''
         for c in cmt:
             if re.search(r'RW|R/W|RO|WO',c):
                 rw= c.lstrip().rstrip()
@@ -200,7 +203,10 @@ class SVRegbk(SVutil):
             if re.search(r"\d",c):
                 width = c.lstrip().rstrip()
                 continue
-        return width, rw
+            if re.search(r"arr|ARR", c):
+                arr = c.lstrip().rstrip()
+                continue
+        return width, rw, arr
             
     def GetAddrNField(self, reg):
         '''

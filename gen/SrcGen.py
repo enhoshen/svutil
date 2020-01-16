@@ -15,6 +15,9 @@ class SrcGen(SVgen):
     def RegLogicStr(self, w, reg, bw, tp, ind):
         bwstr = '' if bw ==1 else f'[{bw}-1:0] ' 
         return  f'{ind.b}{tp+" "+bwstr:<{w[0]}}{reg+"_r":<{w[1]}} ,{reg}_w;\n'
+    def RegLogicArrStr(self, w, reg, bw, tp, dim, ind):
+        bwstr = '' if bw ==1 else f'[{bw}-1:0] ' 
+        return  f'{ind.b}{tp+" "+bwstr:<{w[0]}}{reg+"_r "+dim:<{w[1]}} ,{reg}_w {dim};\n'
     def SeqCeStr(self, s1, s2, ce='', ind=None):
         ff_str = f'always_ff @(posedge {self.clk_name} or negedge {self.rst_name}) begin' 
         s = f'{ind.b}{ff_str}\n'
