@@ -4,6 +4,11 @@ class SVutil():
     trace_format_width = 0
     def __init__(self):
         pass
+    def V_(self, verbose):
+        try:
+            self.verbose = int(verbose)
+        except:
+            pass
     def Verbose(self, v):
         ''' set verbose level '''
         self.verbose = v if v else 0
@@ -35,6 +40,9 @@ class SVutil():
             return '' 
         if trace == 1:
             return f'[{fn:<{w}},line:{ins.lineno}, in {ins.function}]'
+        if trace == 2:
+            return f'[{fn:<{w}}, in {ins.function}]'
+
 def V_ (verbose):
     try:
         verbose = int(verbose)

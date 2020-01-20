@@ -176,7 +176,7 @@ class Busdict (EAdict):
 class RegbkMaster(SVutil):
     ''' Wrapper for register bank controller '''
     def __init__ (self, regbk:SVRegbk, addr:Bus, write:Bus, wdata:Bus, rdata:Bus, master=None):
-        self.verbose = 1
+        self.V_(VERBOSE) 
         self.master = master 
         self.regbk = regbk
         self.addr = addr
@@ -220,20 +220,29 @@ class RegbkMaster(SVutil):
                     SVRegbk
         '''
         w = 15 
-        for reg, rw, data in zip (regseq, rwseq, dataseq):
+        for reg, rw, data in itertools.zip_longest (regseq, rwseq, dataseq, fillvalue=0):
+            offset = ''
             if type(reg) == int:
                 assert type(data)==int, "raw register address offset only takes integer data"
                 addr, wdata, regfields = reg, data, 'undefined regfields' 
             elif type(reg) == tuple:
                 addr, wdata, regfields = self.regbk.RegWrite(reg[0], data)
-                addr += reg[1]
+                offset =reg[1] * self.regbk.regbsize
+                addr += offset 
+                offset = f'+{offset}'
+                reg = reg[0]
+                w = max(w, len(reg+offset))
             elif type(reg) == str:
                 addr, wdata, regfields = self.regbk.RegWrite(reg, data)
+                w = max(w, len(reg))
             else:
                 raise TypeError('un-recognized register sequence type')
-            w = max(w, len(reg))
-            self.print('register bank access:', f'{reg:<{w}} {addr:<5}', hex(self.wdata.value[0]), regfields, data, verbose=1)
+            self.print(f'register bank {"write" if rw else "read "}:', f'{reg+offset:<{w}} {addr:<5}', f'{hex(wdata):<10}', regfields, data, verbose=1, trace=2)
             yield (addr, wdata, rw)
+            if not rw:
+                self.Read()
+                dlst, regfields = self.regbk.RegRead(reg, self.rdata.value[0])
+                #self.print(f'{"":<{2}}register bank read:', f'{reg+offset:<{w}} {addr:<5}', dlst, regfields, verbose=1, trace=2)
     def RegWriteAddrIt (self, regseq, rwseq, dataseq):
         '''
             Used by nico protocol SendIter() thread with single data. This thread is 
@@ -246,12 +255,10 @@ class RegbkMaster(SVutil):
         for addr, wdata, rw in self.RegWriteIt(regseq, rwseq, dataseq):
             self.write.value = rw 
             self.addr.value = addr 
+            self.wdata.value = wdata
             self.write.Write()
-            self.addr.Write()
+            self.wdata.Write()
             yield addr.value
-            if not rw:
-                self.Read()
-                self.print('register bank read: ', hex(addr), ':', hex(self.rdata.value[0]), verbose=1, trace=None)
 class ThreadCreator(SVutil):
     ''' Helper class for creating simulation threads. '''
     def __init__(self, ck_ev):

@@ -2,6 +2,7 @@ from SVparse import *
 class SVclass(SVutil):
     def __init__(self):
         self.w = 20
+        self.V_(VERBOSE) 
         pass
     def __getattr__(self, n):
         return self.data[self.field.dic[n]]
@@ -116,7 +117,7 @@ class SVRegbk(SVutil):
     regbsizebw_name = 'REG_BSIZE_BW'
     regintr_name = 'raw_intr_stat'
     def __init__(self, pkg):
-        self.verbose = 0
+        self.V_(VERBOSE) 
         self.w = 20
         self.pkg = pkg
         self.addrs = pkg.enums.get(self.regaddr_name) 
@@ -263,7 +264,6 @@ class SVRegbk(SVutil):
             Ex: [0,6,31]; the first data will be packed to data[5:0], then data[30:6] and data[31]
             this list corresponds to self.regfield['reg name'].nums
         '''
-        self.print(regfieldlst, verbose=3)
         data = 0
         try:
             iterator = iter(datalst)

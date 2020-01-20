@@ -20,7 +20,7 @@ class RegbkGen(SrcGen):
     """
     def __init__(self, ind=Ind(0)):
         super().__init__()
-        self.verbose = 0
+        self.V_(VERBOSE) 
         self.regbk= SVRegbk(self.regbk) if self.regbk else None
         self.regbk_addr_name = 'i_addr'
         self.regbk_write_name = 'i_write'
