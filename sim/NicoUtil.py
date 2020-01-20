@@ -242,7 +242,7 @@ class RegbkMaster(SVutil):
             if not rw:
                 self.Read()
                 dlst, regfields = self.regbk.RegRead(reg, self.rdata.value[0])
-                #self.print(f'{"":<{2}}register bank read:', f'{reg+offset:<{w}} {addr:<5}', dlst, regfields, verbose=1, trace=2)
+                self.print(f'{"":<{2}}register bank read:', f'{reg+offset:<{w}} {addr:<5}', dlst, regfields, verbose=1, trace=2)
     def RegWriteAddrIt (self, regseq, rwseq, dataseq):
         '''
             Used by nico protocol SendIter() thread with single data. This thread is 

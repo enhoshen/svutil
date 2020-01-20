@@ -21,7 +21,8 @@ class RegbkGen(SrcGen):
     def __init__(self, ind=Ind(0)):
         super().__init__()
         self.V_(VERBOSE) 
-        self.regbk= SVRegbk(self.regbk) if self.regbk else None
+        self.regbkhier = self.regbk
+        self.regbk= SVRegbk(self.regbkhier) if self.regbkhier else None
         self.regbk_addr_name = 'i_addr'
         self.regbk_write_name = 'i_write'
         self.regbk_wdata_name = 'i_wdata'
@@ -39,6 +40,10 @@ class RegbkGen(SrcGen):
                                         self.regbk_ro_cg_cond,\
                                         self.regbk_wo_cg_cond ]
         self.regbk_clr_affix = 'clr_'
+    def Reload(self):
+        self.session.Reload()
+        self.regbkhier = self.session.hiers.get(self.regbkstr)
+        self.regbk= SVRegbk(self.regbkhier) if self.regbkhier else None
     def ModBlk(self): 
         ind = self.cur_ind.Copy() 
         yield ''
@@ -61,11 +66,12 @@ class RegbkGen(SrcGen):
         s = '\n' + ind.b +'endmodule'
         yield s
     def LogicStr(self, w, reg, bw, tp, arr=None, ind=None):
-        if arr != '':
+        ind = self.cur_ind.Copy() if not ind else ind
+        if arr and arr != '':
             dim = f'[{reg.upper()}{SVRegbk.arr_num_suf}]'
-            return self.RegLogicArrStr(w, reg, bw, tp, dim, ind)
+            return self.RegLogicArrStr(w, reg, bw, tp, dim, ind=ind)
         else:
-            return self.RegLogicStr(w, reg, bw, tp, ind)
+            return self.RegLogicStr(w, reg, bw, tp, ind=ind)
     def RdataStr(self, reg, _slice, w, rw, ind=None):
         #TODO slice dependent, now it only pad the MSB and it's usually the case
         ind = self.cur_ind.Copy() if not ind else ind
@@ -206,7 +212,7 @@ class RegbkGen(SrcGen):
                 w[1] = max(w[1], len(self.regbk_clr_affix+intr.name)+2)
             for intr in self.regbk.raw_intr_stat:
                 if not self.regbk_clr_affix.upper()+intr.name.upper() in self.regbk.regaddrsdict:
-                    s += self.LogicStr( w, self.regbk_clr_affix+intr.name.lower(), 1, 'logic', ind)
+                    s += self.LogicStr( w, self.regbk_clr_affix+intr.name.lower(), 1, 'logic', ind=ind)
             s += '\n'
 
         s += f'{ind.b}// flags\n'
