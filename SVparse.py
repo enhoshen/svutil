@@ -432,6 +432,10 @@ class SVparse(SVutil):
         #bw = s.BracketParse()
         tp = s.TypeParse(self.cur_hier.AllTypeKeys.union(self.gb_hier.SelfTypeKeys) ) 
         tp = 'logic' if tp == '' else tp
+        sign = s.SignParse()
+        if sign and tp =='logic':
+            self.print('hey')
+            tp = 'logic signed'
         bw = s.BracketParse()
         name = s.IDParse()
         self.print(name, verbose=4)
