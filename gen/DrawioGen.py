@@ -123,7 +123,7 @@ class DrawioGen(SVgen):
         textstyle = self.textstyle_rec1left if not flip else self.textstyle_rec1
         s += self.TextStr( value, txt_sh, textstyle, _p, ind+1) 
         _d = DrawioGen(ind+1,self.session)
-        mcblk = _d.mxCellBlk( "", "rounded=0;", _p)
+        mcblk = _d.mxCellBlk( "", "fillColor=none;rounded=0;", _p)
         mxGeo = _d.Str2Blk( _d.mxGeometry, Shape( 0, 0, shape.w, shape.h) )
         s += _d.Genlist( [ [mcblk, mxGeo ] ] )
         return s
@@ -194,10 +194,14 @@ class DrawioGen(SVgen):
             grp_id = DrawioGen.unique_id
             s += self.GroupStr( grp_sh, portsparent, ind+1) 
             _p = f'SVgen-mxCell--{grp_id}'
+            
+            txt_style = self.textstyle2
+            if flip:
+                txt_style += "align=left;"
             if reged:
-                txt_style = self.textstyle_red if not flip else self.textstyle_redleft
-            else:
-                txt_style = self.textstyle2 if not flip else self.textstyle2left
+                txt_style += "fontColor=#FF0505;"
+            if '[' in txt:
+                txt_style += "fontStyle=1;"
             s += self.TextStr(txt, txt_sh, txt_style, _p, ind+2)
             
             arrow_style = self.arrowboldstyle1 if boldarrow else self.arrowstyle1 
@@ -221,10 +225,10 @@ class DrawioGen(SVgen):
         port = self.Str2Blk ( self.ModulePortArrowStr, module, '1', flip)
         modblk = self.Str2Blk( self.ModuleBlockStr , module, '1', flip)
         return self.Genlist( [ (mxg,rt) , [indblk,port] , [indblk,modblk], rt, mxg] )
-    def DutPortToClip ( self, module=None, flip=False):
+    def ToClip ( self, module=None, flip=False):
         m = self.dut if not module else module
         ToClip(self.InterfaceDiagramGen(m,flip))
-    def DutPortToClipTwoSide ( self, module =None ):
+    def ToClipTwoSide ( self, module =None ):
         m = self.dut if not module else module
         indblk = self.IndBlk()
         mxg = self.mxPageBlk()
@@ -238,13 +242,13 @@ class DrawioGen(SVgen):
         s += self.Genlist( [  [indblk,portflip], [indblk,modblkflip], rt, mxg] )
         ToClip(s)
         return s
-    def DutPortToFileTwoSide( path):
+    def ToFileTwoSide(self, path, module=None):
         f = open( path, 'w')
-        s = self.DutPortToClipTwoSide() 
+        s = self.ToClipTwoSide(module) 
         f.write(s)
-    def DutPortToFile ( self, path, flip=False):
+    def ToFile (self, path, module=None, flip=False):
         f = open( path, 'w')
-        s = self.InterfaceDiagramGen(g.dut,flip) 
+        s = self.InterfaceDiagramGen(module,flip) 
         ToClip(s)
         f.write(s)
 if __name__ == '__main__':

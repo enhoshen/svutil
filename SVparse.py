@@ -434,7 +434,6 @@ class SVparse(SVutil):
         tp = 'logic' if tp == '' else tp
         sign = s.SignParse()
         if sign and tp =='logic':
-            self.print('hey')
             tp = 'logic signed'
         bw = s.BracketParse()
         name = s.IDParse()
@@ -669,9 +668,9 @@ class SVparse(SVutil):
         reobj = re.search( r'^[(]', _s)
         if reobj:
             span = SVstr(_s).FirstBracketSpan()
-            s.s = SVstr(k+_s).MacroFuncExpand(self.cur_hier.AllMacro) + s.s[span[1]+1:]
-            self.print(k+_s, verbose=4)
-            self.print(s.s, verbose=4)
+            s.s = SVstr(k+_s[:span[1]+1]).MacroFuncExpand(self.cur_hier.AllMacro) + s.s[span[1]+1:]
+            self.print(k+_s[:span[1]+1], verbose='MacroParse')
+            self.print(s.s, verbose='MacroParse')
         else:
             s.s = SVstr(k).SimpleMacroExpand(self.cur_hier.AllMacro) + s.s
         self.print(k,verbose=3)
@@ -790,7 +789,7 @@ class SVparseSession(SVutil):
     def __getattr__(self , n ):
         return self.hiers[n]
     def __init__(self,name=None,scope=None, verbose=None):
-        self.verbose = VERBOSE if not verbose else verbose
+        self.verbose = V_(VERBOSE) 
         self.parsed = False
         self.package = {}
         self.hiers = {}
