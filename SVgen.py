@@ -90,8 +90,8 @@ class SVgen(SVutil):
     def Nextblk(self, blk):
         s = next(blk,None)
         return s if s != None else ''
-    def FileWrite(self , fpath, text, suf): 
-        if os.path.isfile(self.genpath+fpath+'.'+suf):
+    def FileWrite(self , fpath, text, suf, overwrite=False): 
+        if os.path.isfile(self.genpath+fpath+'.'+suf) and not overwrite:
             print( "file exists, make a copy, rename the file right away")
             import time
             fpath = self.genpath + fpath +'_'+ time.strftime('%m%d%H') +'.'+ suf 
@@ -111,6 +111,24 @@ class SVgen(SVutil):
         s += f'{ind.b}{cmtc}{text:^{w}}\n'
         s += f'{ind.b}{cmtc}{"":=^{w}}\n'
         yield s
+    def FindFormatWidth(self, lst):
+        '''
+            Find from a list of strings the largest width,
+            used in format string formatting the seperation width.
+            lst is a list of tuple or string, return a tuple of
+            integer or a single integer of the width. 
+        '''
+        if type(lst[0]) == str:
+            w = 0
+            for i in lst:
+                w = max(w, len(i))
+            return w
+        if type(lst[0]) == tuple:
+            w = [ 0 for i in lst[0] ]
+            for i in lst:
+                for idx, j in enumerate(i):
+                    w[idx] = max(w[idx], len(j))
+            return w
 if __name__ == "__main__":
     g = SVgen()
     pass

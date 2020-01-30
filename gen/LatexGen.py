@@ -73,7 +73,7 @@ class LatexGen(SVgen):
             
         for name,io,desp,width,active,clk in memblist:
             delay = self.default_input_delay if not 'clk' in sig[pfield.name] else 'N/A'
-            s += f'{ind.b}\\signal{{ {name} }} {{{io}}} {{ \n'
+            s += f'{ind.b}\\signal{{ {name} }} {{{io}}} {{ \\TODO\n'
             s += f'{ind[1]}\\signalDES{{ {desp} {ind[1]}}} {{ {width} }} {{ {active} }} {{ {clk} }} {{ No }} {{ {delay}\\%}}  }}\n'
         return s
     def RegMemMapStr(self, reg, reg_bsize=4, reg_slices=None, reg_defaults=None, reg_bw=None, reg_bw_str=None, rw=None, arr=None): #reg is a SVEnuml object

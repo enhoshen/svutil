@@ -31,9 +31,9 @@ class RegbkGen(SrcGen):
         self.regbk_addr_slice = f'[{self.regbk.regaddrbw_name}-1:{(self.regbk.regbsizebw_name)}]'
         self.regbk_write_cond = 'write_valid'
         self.regbk_read_cond = 'read_valid'
-        self.regbk_cg_cond = 'regbk_cg'
-        self.regbk_wo_cg_cond = 'regbk_wo_cg'
-        self.regbk_ro_cg_cond = 'regbk_ro_cg'
+        self.regbk_cg_cond = 'regbk_ce'
+        self.regbk_wo_cg_cond = 'regbk_wo_ce'
+        self.regbk_ro_cg_cond = 'regbk_ro_ce'
         self.regbk_flag_logic_lst = [   self.regbk_write_cond,\
                                         self.regbk_read_cond,\
                                         self.regbk_cg_cond,\
@@ -146,7 +146,7 @@ class RegbkGen(SrcGen):
         s = f'{ind.b}always_comb begin\n'
         if rw and rw == 'RO':
             if self.regbk_clr_affix.upper() in reg:
-                s += f'{ind[1]}if ({self.regbk_read_cond} && ({self.regbk_addr_name}{self.regbk_addr_slice} - {reg}  == {dim})) '
+                s += f'{ind[1]}if ({self.regbk_read_cond} && (({self.regbk_addr_name}{self.regbk_addr_slice} - {reg}) == {dim})) '
                 s += f'{reg.lower()}_w[{dim}] = \'1;\n'
                 s += f'{ind[1]}else {reg.lower()}_w[{dim}] = \'0;//TODO\n'
             else:
@@ -257,7 +257,7 @@ class RegbkGen(SrcGen):
 
         # non-array registers
         case_ind = 2 if len(arr_reg)==0 else 3
-        s += f'{ind[2]}else\n' if len(arr_reg)!= 0 else ''
+        s += f'{ind[2]}else begin\n' if len(arr_reg)!= 0 else ''
         s += f'{ind[case_ind]}case ({self.regbk_addr_name}{self.regbk_addr_slice})\n'
         for reg, width, rw, arr in nonarr_reg:
             _slice = self.regbk.regslices.get(reg.name)
