@@ -83,7 +83,6 @@ class RegbkGen(SrcGen):
         s += f'{pad:<{w[1]}} ,{reg.lower()}_r}};\n'
         return s 
     def RdataArrStr(self, reg, ifelse, w, rw=None, ind=None):
-        #TODO slice dependent, now it only pad the MSB and it's usually the case
         if rw and rw=='WO':
             return ''
         pad = f'{SVRegbk.regbw_name}-{reg}{SVRegbk.bw_suf}'

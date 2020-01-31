@@ -176,7 +176,7 @@ class Busdict (EAdict):
 class RegbkMaster(SVutil):
     ''' Wrapper for register bank controller '''
     def __init__ (self, regbk:SVRegbk, addr:Bus, write:Bus, wdata:Bus, rdata:Bus, master=None):
-        self.V_(VERBOSE) 
+        self.verbose = V_(VERBOSE) 
         self.master = master 
         self.regbk = regbk
         self.addr = addr
@@ -314,8 +314,7 @@ class NicoUtil(PYUtil):
         return self.Tuple2num(d)
     def Tuple2num(self, t):
         return tuple(map(lambda x : self.Macro2num(x),t))
-global ck_ev
-def clk_cnt():
+def clk_cnt(ck_ev):
 
     global n_clk
     while(1):

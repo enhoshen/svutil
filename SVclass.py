@@ -1,4 +1,5 @@
 from SVparse import * 
+from SVutil import *
 class SVclass(SVutil):
     def __init__(self):
         self.w = 20
@@ -117,7 +118,7 @@ class SVRegbk(SVutil):
     regbsizebw_name = 'REG_BSIZE_BW'
     regintr_name = 'raw_intr_stat'
     def __init__(self, pkg):
-        self.V_(VERBOSE) 
+        self.verbose = V_(VERBOSE) 
         self.w = 20
         self.pkg = pkg
         self.addrs = pkg.enums.get(self.regaddr_name) 

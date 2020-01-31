@@ -51,13 +51,13 @@ class LatexGen(SVgen):
                 io = sig[pfield.direction]
                 io = 'Input' if io =='input' else 'Output'
                 memb_tp = self.cur_module.AllType.get(memb[tpfield.tp])
-                desp='\n'
+                desp='\\TODO\n'
                 if memb_tp :
                     if memb_tp[0][tpfield.tp] =='enum':
                         desp += self.DespStr(memb_tp[0][tpfield.enumliteral], ind )
                 memblist.append( (name, io, desp, width, active, clk)  )
         else:
-            desp='\n'
+            desp='\\TODO\n'
             if sig_tp =='enum' :
                 desp += self.DespStr(sig[tpfield.enumliteral], ind)
             if (sig_tp!='logic' and sig_tp!='logic signed' and len(tp)==1 ):
@@ -73,7 +73,7 @@ class LatexGen(SVgen):
             
         for name,io,desp,width,active,clk in memblist:
             delay = self.default_input_delay if not 'clk' in sig[pfield.name] else 'N/A'
-            s += f'{ind.b}\\signal{{ {name} }} {{{io}}} {{ \\TODO\n'
+            s += f'{ind.b}\\signal{{ {name} }} {{{io}}} {{\n'
             s += f'{ind[1]}\\signalDES{{ {desp} {ind[1]}}} {{ {width} }} {{ {active} }} {{ {clk} }} {{ No }} {{ {delay}\\%}}  }}\n'
         return s
     def RegMemMapStr(self, reg, reg_bsize=4, reg_slices=None, reg_defaults=None, reg_bw=None, reg_bw_str=None, rw=None, arr=None): #reg is a SVEnuml object
@@ -85,7 +85,7 @@ class LatexGen(SVgen):
         s = f'{ind.b}\\memmap{{\\hyperref[subsubsec:{reg.name.lower()}]{{{name}}}{arr}}}'
         s += f'{{{hex(ofs).upper().replace("X","x")}}}{{{reg_bw}}}{{{rw}}}{{\n'
         s += f'{ind[1]}\\memDES{{\n'
-        s += '' if arr == '' else f'{ind[2]}Array register of size {name}{arr_suf}'
+        s += f'{ind[2]}\\TODO\n' if arr == '' else f'{ind[2]}Array register of size {name}{arr_suf}'
         s += f'{ind[1]}}}{{\n'
         reg_slices = self.RegSliceList(reg_slices) if reg_slices else None
         if reg_slices and reg_slices[0][0] == SVRegbk.reserved_name:
@@ -148,7 +148,7 @@ class LatexGen(SVgen):
             desp += f'{ind[2]}{_s}:\\\\\n'
         desp = desp[:-3]+'\n'
         return desp
-    def SignalDescription( self, module=None):
+    def SignalDesp( self, module=None):
         module = self.dut if not module else module
         self.cur_module = module
         pfield = SVhier.portfield
@@ -164,7 +164,7 @@ class LatexGen(SVgen):
                 clk = name.replace('_','\_')
         ToClip(s)
         return s
-    def ParameterDescription(self, module=None, local=True):
+    def ParameterDesp(self, module=None, local=True):
         module = self.dut if not module else module
         self.cur_module = module
         param = module.AllParamsDetail if not local else module.paramsdetail
@@ -173,7 +173,7 @@ class LatexGen(SVgen):
             s += self.ParameterStr(p)
         ToClip(s)
         return s
-    def RegMemMapDescription(self, pkg=None):
+    def RegMemMapDesp(self, pkg=None):
         s = ''
         regbk = SVRegbk(pkg) if pkg and type(pkg)==str else self.regbk
         for reg in regbk.addrs.enumls:
@@ -191,7 +191,7 @@ class LatexGen(SVgen):
             s += self.RegMemMapStr(reg, regbk.regbsize, reg_slices, defaults, reg_bw, reg_bw_str, rw, arr ) 
         ToClip(s)
         return s
-    def RegFieldDescription(self, pkg=None):
+    def RegFieldDesp(self, pkg=None):
         s = ''
         regbk = SVRegbk(pkg) if pkg and type(pkg)==str else self.regbk
         for reg in regbk.regfields:
