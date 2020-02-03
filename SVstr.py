@@ -419,8 +419,11 @@ class SVARGstr(SVstr):
             _a = a.split('=')
             name = _a[0]
             text = _a[1] if len(_a) > 1 else ''
-            func = lambda : text;
+            func = lambda text=text: text;
             l[name]=([],text,func)
+            self.print(func(), func, verbose="ARGSParse")
+        for k,v in l.items():
+            self.print(v[2](), verbose="ARGSParse")
         return l 
     def incdir(self, args):
         #TODO

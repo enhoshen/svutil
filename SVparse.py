@@ -302,10 +302,12 @@ class SVparse(SVutil):
         for _l in l:
             func = _l[0]
             args = _l[1:]
+            SVutil(cls.verbose).print(func, args, verbose='ARGSParse')
             if func == 'define':
                 m = s.define(args) 
                 for k,v in m.items():
                     cls.gb_hier.macros[k]=v
+                    SVutil(cls.verbose).print(k,v[2](), verbose='ARGSParse')
         pass
     @classmethod
     def ParseFiles(cls , paths=[(True,INC)] ):

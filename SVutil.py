@@ -2,7 +2,8 @@ import os
 import inspect
 class SVutil():
     trace_format_width = 0
-    def __init__(self):
+    def __init__(self, verbose=None):
+        self.verbose = verbose
         pass
     def V_(self, verbose):
         try:
