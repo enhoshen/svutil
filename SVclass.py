@@ -229,7 +229,7 @@ class SVRegbk(SVutil):
             the address is multiplied by regaddrbw
         '''
         #TODO  multi-dimensional register
-        if type(reg)=int:
+        if type(reg)==int:
             addr = reg
         else:
             addr = self.regaddrsdict[reg].num * self.regbsize
