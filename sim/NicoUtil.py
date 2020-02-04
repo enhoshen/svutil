@@ -191,6 +191,15 @@ class RegbkMaster(SVutil):
                 OneWire.Master: self.RegWriteAddrIt,\
                 Apb.Master: self.RegWriteIt
             }
+        self.regfieldfmt = lambda f, endl=f'\n{"":>8}': f'{endl+"Reg fields:"+f.__str__() if f else ""}'
+        self.addrfmt = lambda addr: f'Address: {addr:<5}'
+        self.wdatafmt = lambda wdata: f'{"written: "+hex(wdata):<10}'
+        self.regfmt  = lambda reg, offset, rw, w: f'Register bank {"write" if rw else "read"}:{reg+offset:<{w}}'
+        self.readfmt = lambda reg, offset, addr, dlst, regfields, w:\
+                            f'{"":<{2}}{self.regfmt(reg, offset, False, w)} {self.addrfmt(addr)} {"read data: "+dlst.__str__():<5} {self.regfieldfmt(regfields)}'
+        self.writefmt = lambda reg, rw,  offset, addr, wdata, regfields, data, w:\
+                            f'{self.regfmt(reg, offset, rw, w)} {self.addrfmt(addr)}{self.wdatafmt(wdata)} '\
+                            + f'{self.regfieldfmt(regfields)} {" original:"+data.__str__()}' 
     def Write(self):
         self.addr.Write()
         self.rw.Write()
@@ -237,12 +246,14 @@ class RegbkMaster(SVutil):
                 w = max(w, len(reg))
             else:
                 raise TypeError('un-recognized register sequence type')
-            self.print(f'register bank {"write" if rw else "read "}:', f'{reg+offset:<{w}} {addr:<5}', f'{hex(wdata):<10}', regfields, data, verbose=1, trace=2)
+            def ReadCb(_):
+                if not rw:
+                    self.Read()
+                    dlst, regfields = self.regbk.RegRead(reg, self.rdata.value[0])
+                    self.print( self.readfmt(reg, offset, addr,  dlst, regfields, w), verbose=1, trace=2)
+            self.master.callbacks = [ReadCb]
+            self.print(self.writefmt(reg, rw,  offset, addr, wdata, regfields, data, w), verbose=1, trace=2)
             yield (addr, wdata, rw)
-            if not rw:
-                self.Read()
-                dlst, regfields = self.regbk.RegRead(reg, self.rdata.value[0])
-                self.print(f'{"":<{2}}register bank read:', f'{reg+offset:<{w}} {addr:<5}', dlst, regfields, verbose=1, trace=2)
     def RegWriteAddrIt (self, regseq, rwseq, dataseq):
         '''
             Used by nico protocol SendIter() thread with single data. This thread is 

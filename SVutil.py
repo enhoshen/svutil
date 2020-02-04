@@ -9,7 +9,7 @@ class SVutil():
         try:
             self.verbose = int(verbose)
         except:
-            pass
+            self.verbose = verbose
     def Verbose(self, v):
         ''' set verbose level '''
         self.verbose = v if v else 0
