@@ -272,6 +272,50 @@ class ThreadCreator(SVutil):
         yield from RESPS[cfg]()
         yield from FINS [cfg]()
         self.print('Sim done')
+class EventTrigger(SVutil):
+    ''' Helper class for triggering a python event at the same time write to a nicotb bus '''
+    # TODO
+    def __init__(self, ck_ev=None, clk_cnt=None, pulse_width=None):
+        self.V_(VERBOSE)
+        self.clk = ck_ev
+        self.clk_cnt = clk_cnt
+        self.pulse_width = pulse_width
+        self.sig_trig_type = {'LEVEL':self.SVSigTriggerLevel, 'Edge': self.SVSigTriggerEdge, 'Pulse': self.SVSigTriggerPulse}
+        pass
+    def Trigger(self, ev_name, sig_name=None, trig_type='LEVEL'):
+        ''' Trigger ev_name in python and sig_name(optional) in verilog '''
+        self.PYEVTrigger(ev_name)
+        if sig_name:
+            Fork(self.sig_trig_type[trig_type](sig_name))
+    def Triggers(self, ev_tuples, trig_type='LEVEL'):
+        ''' Trigger each of the event pairs in ev_tuples '''
+        for ev, sig in ev_tuples:
+            self.Trigger(ev, sig, trig_type)
+    def PYEVTrigger(self, name):
+        ev = GetEvent(name)
+        SignalEvent(ev)
+    def SVSigTriggerLevel(self, name):
+        ev_bus = CreateBus((name,))
+        ev_bus.value[0] = 1
+        ev_bus.Write()
+        yield self.clk
+        self.print( f'Event {name} level triggered')
+    def SVSigTriggerEdge(self, name):
+        ev_bus = CreateBus((name,))
+        ev_bus.value[0] = 1
+        ev_bus.Write()
+        yield self.clk
+        self.print( f'Event {name} edge triggered')
+        ev_bus.value[0] = 0
+        ev_bus.Write()
+    def SVSigTriggerPulse(self, name): 
+        ev_bus = CreateBus((name,))
+        ev_bus.value[0] = 1
+        ev_bus.Write()
+        yield self.clk
+        self.print( f'Event {name} pulse triggered')
+        yield from itertools.repeat(self.clk, self.width-1)
+        ev_bus.value[0] = 0
     
 class NicoUtil(PYUtil):
     def __init__(self):

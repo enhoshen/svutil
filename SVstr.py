@@ -419,7 +419,7 @@ class SVARGstr(SVstr):
             _a = a.split('=')
             name = _a[0]
             text = _a[1] if len(_a) > 1 else ''
-            func = lambda text=text: text;
+            func = lambda *,text=text: text;
             l[name]=([],text,func)
             self.print(func(), func, verbose="ARGSParse")
         for k,v in l.items():
