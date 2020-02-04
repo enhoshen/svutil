@@ -192,11 +192,11 @@ class RegbkMaster(SVutil):
                 Apb.Master: self.RegWriteIt
             }
         self.regfieldfmt = lambda f, endl=f'\n{"":>8}': f'{endl+"Reg fields:"+f.__str__() if f else ""}'
-        self.addrfmt = lambda addr: f'Address: {addr:<5}'
+        self.addrfmt = lambda addr: f'Address: {addr.__str__():<5}'
         self.wdatafmt = lambda wdata: f'{"written: "+hex(wdata):<10}'
-        self.regfmt  = lambda reg, offset, rw, w: f'Register bank {"write" if rw else "read"}:{reg+offset:<{w}}'
+        self.regfmt  = lambda reg, offset, rw, w: f'Register bank {"write" if rw else "read":>5}:{reg.__str__()+offset.__str__():<{w}}'
         self.readfmt = lambda reg, offset, addr, dlst, regfields, w:\
-                            f'{"":<{2}}{self.regfmt(reg, offset, False, w)} {self.addrfmt(addr)} {"read data: "+dlst.__str__():<5} {self.regfieldfmt(regfields)}'
+                            f'{self.regfmt(reg, offset, False, w)} {self.addrfmt(addr)} {"read data: "+dlst.__str__():<5} {self.regfieldfmt(regfields)}'
         self.writefmt = lambda reg, rw,  offset, addr, wdata, regfields, data, w:\
                             f'{self.regfmt(reg, offset, rw, w)} {self.addrfmt(addr)}{self.wdatafmt(wdata)} '\
                             + f'{self.regfieldfmt(regfields)} {" original:"+data.__str__()}' 
@@ -246,13 +246,14 @@ class RegbkMaster(SVutil):
                 w = max(w, len(reg))
             else:
                 raise TypeError('un-recognized register sequence type')
-            def ReadCb(_):
+            def MsgCb(_):
                 if not rw:
                     self.Read()
-                    dlst, regfields = self.regbk.RegRead(reg, self.rdata.value[0])
-                    self.print( self.readfmt(reg, offset, addr,  dlst, regfields, w), verbose=1, trace=2)
-            self.master.callbacks = [ReadCb]
-            self.print(self.writefmt(reg, rw,  offset, addr, wdata, regfields, data, w), verbose=1, trace=2)
+                    dlst, rf= self.regbk.RegRead(reg, self.rdata.value[0])
+                    self.print( self.readfmt(reg, offset, addr,  dlst, rf, w), verbose=1, trace=2)
+                else:
+                    self.print(self.writefmt(reg, rw,  offset, addr, wdata, regfields, data, w), verbose=1, trace=2)
+            self.master.callbacks = [MsgCb]
             yield (addr, wdata, rw)
     def RegWriteAddrIt (self, regseq, rwseq, dataseq):
         '''
