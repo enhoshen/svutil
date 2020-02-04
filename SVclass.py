@@ -126,6 +126,7 @@ class SVRegbk(SVutil):
         self.addrsdict = { x.name: x for x in self.addrs.enumls }
         self.regaddrs = self.addrs
         self.regaddrsdict = self.addrsdict
+        self.regaddrsreversedict = {v:k for k,v in self.addrsdict.items()}
         self.regaddrs_arr = pkg.enums.get(self.regaddr_arr_name)
         self.regaddrs_arr = SVEnums(self.regaddrs_arr) if self.regaddrs_arr else None
         self.regaddrs_arrdict = { x.name: x for x in self.regaddrs_arr.enumls } if self.regaddrs_arr else None
@@ -228,7 +229,10 @@ class SVRegbk(SVutil):
             the address is multiplied by regaddrbw
         '''
         #TODO  multi-dimensional register
-        addr = self.regaddrsdict[reg].num * self.regbsize
+        if type(reg)=int:
+            addr = reg
+        else:
+            addr = self.regaddrsdict[reg].num * self.regbsize
         regfield = self.regfields.get(reg)
         nums = regfield.nums if regfield else [0]
         names = regfield.names if regfield else None
