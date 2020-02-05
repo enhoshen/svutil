@@ -191,7 +191,7 @@ class RegbkMaster(SVutil):
                 OneWire.Master: self.RegWriteAddrIt,\
                 Apb.Master: self.RegWriteIt
             }
-        self.regfieldfmt = lambda f, endl=f'\n{"":>8}': f'{endl+"Reg fields:"+f.__str__() if f else ""}'
+        self.regfieldfmt = lambda f, endl=f'\n{"":>8}': f'{endl+"Reg fields:"+f.__str__()+endl if f else ""}'
         self.addrfmt = lambda addr: f'Address: {addr.__str__():<5}'
         self.wdatafmt = lambda wdata: f'{"written: "+hex(wdata):<10}'
         self.regfmt  = lambda reg, offset, rw, w: f'Register bank {"write" if rw else "read":>5}:{reg.__str__()+offset.__str__():<{w}}'
@@ -229,6 +229,7 @@ class RegbkMaster(SVutil):
                     SVRegbk
         '''
         w = 15 
+        orig_cb = self.master.callbacks
         for reg, rw, data in itertools.zip_longest (regseq, rwseq, dataseq, fillvalue=0):
             offset = ''
             if type(reg) == int:
@@ -253,7 +254,7 @@ class RegbkMaster(SVutil):
                     self.print( self.readfmt(reg, offset, addr,  dlst, rf, w), verbose=1, trace=2)
                 else:
                     self.print(self.writefmt(reg, rw,  offset, addr, wdata, regfields, data, w), verbose=1, trace=2)
-            self.master.callbacks = [MsgCb]
+            self.master.callbacks = [MsgCb] + orig_cb
             yield (addr, wdata, rw)
     def RegWriteAddrIt (self, regseq, rwseq, dataseq):
         '''
@@ -292,42 +293,80 @@ class EventTrigger(SVutil):
         self.clk = ck_ev
         self.clk_cnt = clk_cnt
         self.pulse_width = pulse_width
+        self.sim_pass_ev = None
+        self.sim_stop_ev = None
+        self.time_out_ev = None
         self.sig_trig_type = {'LEVEL':self.SVSigTriggerLevel, 'Edge': self.SVSigTriggerEdge, 'Pulse': self.SVSigTriggerPulse}
         pass
-    def Trigger(self, ev_name, sig_name=None, trig_type='LEVEL'):
-        ''' Trigger ev_name in python and sig_name(optional) in verilog '''
+    def RegEvents(self, sim_pass_ev, sim_stop_ev, time_out_ev):
+        self.sim_pass_ev = sim_pass_ev
+        self.sim_stop_ev = sim_stop_ev
+        self.time_out_ev = time_out_ev
+    def Trigger(self, ev_name, sig_name=None, trig_type='LEVEL', high=True):
+        ''' 
+            Trigger ev_name in python and sig_name(optional) in verilog 
+                ev_name: an integer event created by CreateEvent/CreateEvents or event name's string
+                sig_name: signal string name
+        '''
         self.PYEVTrigger(ev_name)
         if sig_name:
-            Fork(self.sig_trig_type[trig_type](sig_name))
-    def Triggers(self, ev_tuples, trig_type='LEVEL'):
+            Fork(self.sig_trig_type[trig_type](sig_name, high))
+    def Triggers(self, ev_tuples, trig_type='LEVEL', high=True):
         ''' Trigger each of the event pairs in ev_tuples '''
         for ev, sig in ev_tuples:
-            self.Trigger(ev, sig, trig_type)
+            self.Trigger(ev, sig, trig_type, high)
     def PYEVTrigger(self, name):
         ev = GetEvent(name)
         SignalEvent(ev)
-    def SVSigTriggerLevel(self, name):
+    def SVSigTriggerLevel(self, name, high=True):
         ev_bus = CreateBus((name,))
-        ev_bus.value[0] = 1
+        ev_bus.value[0] = 1 if high else 0
         ev_bus.Write()
         yield self.clk
-        self.print( f'Event {name} level triggered')
-    def SVSigTriggerEdge(self, name):
+        self.print( f'Event bus {name} level triggered')
+    def SVSigTriggerEdge(self, name, high=True):
         ev_bus = CreateBus((name,))
-        ev_bus.value[0] = 1
+        ev_bus.value[0] = 1 if high else 0
         ev_bus.Write()
         yield self.clk
-        self.print( f'Event {name} edge triggered')
+        self.print( f'Event bus {name} edge triggered')
         ev_bus.value[0] = 0
         ev_bus.Write()
-    def SVSigTriggerPulse(self, name): 
+    def SVSigTriggerPulse(self, name, high=True): 
         ev_bus = CreateBus((name,))
-        ev_bus.value[0] = 1
+        ev_bus.value[0] = 1 if high else 0
         ev_bus.Write()
         yield self.clk
-        self.print( f'Event {name} pulse triggered')
+        self.print( f'Event bus {name} pulse triggered')
         yield from itertools.repeat(self.clk, self.width-1)
-        ev_bus.value[0] = 0
+        ev_bus.value[0] = 0 if high else 1
+    @property
+    def SimPass(self):
+        if not self.sim_pass_ev:
+            sim_pass_ev = CreateEvent('sim_pass_ev')
+            self.Trigger(sim_pass_ev, 'sim_pass')
+            return sim_pass_ev
+        else:
+            self.Trigger(self.sim_pass_ev, 'sim_pass')
+            return self.sim_pass_ev 
+    @property
+    def SimStop(self):
+        if not self.sim_stop_ev:
+            sim_stop_ev = CreateEvent('sim_stop_ev')
+            self.Trigger(sim_stop_ev, 'sim_stop')
+            return sim_stop_ev 
+        else:
+            self.Trigger(self.sim_stop_ev, 'sim_stop')
+            return self.sim_stop_ev 
+    @property
+    def TimeOut(self):
+        if not self.time_out_ev:
+            time_out_ev = CreateEvent('time_out_ev')
+            self.Trigger(time_out_ev, 'time_out')
+            return time_out_ev 
+        else:
+            self.Trigger(self.time_out_ev , 'time_out')
+            return self.time_out_ev 
     
 class NicoUtil(PYUtil):
     def __init__(self):

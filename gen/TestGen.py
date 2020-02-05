@@ -13,11 +13,11 @@ class TestGen(SVgen):
         self.eventlst = [   ( 'intr_ev', 'intr_any'),
                             ( 'init_ev', 'init_cond'),                         
                             ( 'resp_ev', 'resp_cond'), 
-                            ( 'fin_ev' , 'fin_cond'),
-                            ( 'sim_stop_ev' , 'sim_stop'),
-                            ( 'sim_pass_ev' , 'sim_pass'),
-                            ( 'time_out_ev' , 'time_out')]
-        self.pyeventlgclst = ['sim_pass', 'sim_stop', 'time_out']
+                            ( 'fin_ev' , 'fin_cond'),]
+                            #( 'sim_stop_ev' , 'sim_stop'),
+                            #( 'sim_pass_ev' , 'sim_pass'),
+                            #( 'time_out_ev' , 'time_out')]
+        self.pyeventlgclst = [] #['sim_pass', 'sim_stop', 'time_out']
         self.clk_domain_lst = [('','')]
     def TbSVBasicBlk(self): 
         ind = self.cur_ind.Copy() 

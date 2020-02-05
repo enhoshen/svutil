@@ -15,10 +15,12 @@ class SVutil():
         self.verbose = v if v else 0
     def print(self,*arg,verbose=None, trace=1, level=False,**kwarg):
         '''
-            Customized message print controlled with verbose level for each messages seperately. 
+            Customized message print controlled with verbose level for each messages seperately
+            and trace setting for code tracing configuration 
                 Args:
                     verbose: determine the verbose level of the message, if not given, messages
                         is printed nonetheless
+                    trace: see self.Trace
                     level: print messages with lower verbose level than self.verbose if True
                         or else only the specific verbose level messages are printed
         '''
@@ -33,6 +35,7 @@ class SVutil():
             if self.verbose == verbose:
                 print(ins, *arg,**kwarg)
     def Trace(self, ins, trace):
+        ''' code tracing using inspect module '''
         home = os.environ.get('HOME','')
         fn = ins.filename.replace(home,"")
         self.trace_format_width = max(self.trace_format_width, len(fn))
