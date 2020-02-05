@@ -35,44 +35,49 @@ class LatexGen(SVgen):
         return s
     def SignalStr(self , sig, clk=None):
         ind=Ind(1)
-        pfield = SVhier.portfield
         tpfield = SVhier.typefield
-        sig_tp = sig[pfield.tp]
+        sig = SVPort(sig)
+        sig_tp = sig.tp
         s = ''
         memblist = []
-        tp = self.cur_module.AllType.get(sig_tp)  
+        if self.cur_module.AllType.get(sig_tp):
+            tp = [SVType(i) for i in self.cur_module.AllType.get(sig_tp)]
+        else:
+            tp = None
         if sig_tp != 'logic' and sig_tp != 'logic signed' and len(tp) != 1: 
             for memb in self.cur_module.AllType[sig_tp]:
-                name = sig[pfield.name].replace('_','\_') +'.'+ memb[tpfield.name].replace('_','\_')
-                width = str(memb[tpfield.bw])
+                memb = SVType(memb)
+                name = self.L_(sig.name+memb.name +' '+sig.dimstr)
+                width = str(memb.bw)
                 active = 'LOW' if name[-2:] == '_n' else  ( 'HIGH' if width =='1' else 'N/A' )
                 if '-1:0' in width:
                     width = width.split('-')[0][1:]
-                io = sig[pfield.direction]
+                io = sig.direction
                 io = 'Input' if io =='input' else 'Output'
-                memb_tp = self.cur_module.AllType.get(memb[tpfield.tp])
+                memb_tp = self.cur_module.AllType.get(memb.tp)
                 desp='\\TODO\n'
                 if memb_tp :
-                    if memb_tp[0][tpfield.tp] =='enum':
-                        desp += self.DespStr(memb_tp[0][tpfield.enumliteral], ind )
+                    memb_tp = [SVType(i) for i in memb_tp]
+                    if memb_tp[0].tp =='enum':
+                        desp += self.DespStr(memb_tp[0].enumliteral, ind )
                 memblist.append( (name, io, desp, width, active, clk)  )
         else:
             desp='\\TODO\n'
             if sig_tp =='enum' :
-                desp += self.DespStr(sig[tpfield.enumliteral], ind)
+                desp += self.DespStr(sig.enumliteral, ind)
             if (sig_tp!='logic' and sig_tp!='logic signed' and len(tp)==1 ):
-                desp += self.DespStr(tp[0][tpfield.enumliteral], ind)
-            name = sig[pfield.name].replace('_','\_')
-            width = '1' if sig[pfield.bwstr] == '' else sig[pfield.bwstr].replace('_','\_')
-            active = 'LOW' if name[-2:] == '_n' else  ( 'HIGH' if width =='1' and not 'clk' in sig[pfield.name] else 'N/A' )
+                desp += self.DespStr(tp[0].enumliteral, ind)
+            name = self.L_(sig.name+' '+sig.dimstr)
+            width = '1' if sig.bwstr == '' else sig.bwstr.replace('_','\_')
+            active = 'LOW' if name[-2:] == '_n' else  ( 'HIGH' if width =='1' and not 'clk' in sig.name else 'N/A' )
             if '-1:0' in width:
                 width = width.split('-')[0][1:]
-            io = sig[pfield.direction]
+            io = sig.direction
             io = 'Input' if io =='input' else 'Output'
             memblist.append( ( name, io, desp, width, active, clk) )
             
         for name,io,desp,width,active,clk in memblist:
-            delay = self.default_input_delay if not 'clk' in sig[pfield.name] else 'N/A'
+            delay = self.default_input_delay if not 'clk' in sig.name else 'N/A'
             s += f'{ind.b}\\signal{{ {name} }} {{{io}}} {{\n'
             s += f'{ind[1]}\\signalDES{{ {desp} {ind[1]}}} {{ {width} }} {{ {active} }} {{ {clk} }} {{ No }} {{ {delay}\\%}}  }}\n'
         return s
