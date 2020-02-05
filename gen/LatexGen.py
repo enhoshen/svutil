@@ -85,7 +85,7 @@ class LatexGen(SVgen):
         s = f'{ind.b}\\memmap{{\\hyperref[subsubsec:{reg.name.lower()}]{{{name}}}{arr}}}'
         s += f'{{{hex(ofs).upper().replace("X","x")}}}{{{reg_bw}}}{{{rw}}}{{\n'
         s += f'{ind[1]}\\memDES{{\n'
-        s += f'{ind[2]}\\TODO\n' if arr == '' else f'{ind[2]}Array register of size {name}{arr_suf}'
+        s += f'{ind[2]}\\TODO\n' if arr == '' else f'{ind[2]}Array register of size {name}{arr_suf}\n'
         s += f'{ind[1]}}}{{\n'
         reg_slices = self.RegSliceList(reg_slices) if reg_slices else None
         if reg_slices and reg_slices[0][0] == SVRegbk.reserved_name:

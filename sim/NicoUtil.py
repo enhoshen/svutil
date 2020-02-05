@@ -256,6 +256,7 @@ class RegbkMaster(SVutil):
                     self.print(self.writefmt(reg, rw,  offset, addr, wdata, regfields, data, w), verbose=1, trace=2)
             self.master.callbacks = [MsgCb] + orig_cb
             yield (addr, wdata, rw)
+            self.master.callbacks = orig_cb
     def RegWriteAddrIt (self, regseq, rwseq, dataseq):
         '''
             Used by nico protocol SendIter() thread with single data. This thread is 

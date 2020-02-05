@@ -522,6 +522,8 @@ class SVparse(SVutil):
                             self.print(t[f.tp],verbose='ImportParse')
                             self.cur_hier.types[t[f.tp]] = _tp 
                 self.cur_hier.types[_param] = tp 
+            if _param in self.package[_pkg].enums:
+                self.cur_hier.enums[_param] = self.package[_pkg].enums[_param]
     def StructParse(self ,s ,lines ):
         _step = 0      
         rule = [ '{' , '}' ]
