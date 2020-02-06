@@ -47,7 +47,7 @@ class LatexGen(SVgen):
         if sig_tp != 'logic' and sig_tp != 'logic signed' and len(tp) != 1: 
             for memb in self.cur_module.AllType[sig_tp]:
                 memb = SVType(memb)
-                name = self.L_(sig.name+memb.name +' '+sig.dimstr)
+                name = self.L_(sig.name+'.'+memb.name +' '+sig.dimstr)
                 width = str(memb.bw)
                 active = 'LOW' if name[-2:] == '_n' else  ( 'HIGH' if width =='1' else 'N/A' )
                 if '-1:0' in width:
