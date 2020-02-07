@@ -21,7 +21,7 @@ class Ind():
         return Ind(self.n)
 class SVgen(SVutil):
     def __init__(self , paths=None, session=None, verbose=None ):
-        self.verbose = VERBOSE if not verbose else verbose 
+        self.V_(VERBOSE)
         self.session = SVparseSession(verbose=self.verbose) if not session else session
         self.session.FileParse(paths)
         self.genlist = {}    

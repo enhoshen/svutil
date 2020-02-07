@@ -13,7 +13,7 @@ class SVutil():
     def Verbose(self, v):
         ''' set verbose level '''
         self.verbose = v if v else 0
-    def print(self,*arg,verbose=None, trace=1, level=False,**kwarg):
+    def print(self,*arg,verbose=None, trace=1, level=None,**kwarg):
         '''
             Customized message print controlled with verbose level for each messages seperately
             and trace setting for code tracing configuration 
@@ -24,15 +24,16 @@ class SVutil():
                     level: print messages with lower verbose level than self.verbose if True
                         or else only the specific verbose level messages are printed
         '''
+        level = level if level else 0
         ins = inspect.getframeinfo(inspect.currentframe().f_back)
         ins = self.Trace(ins, trace)
         if not verbose:
             print(ins,*arg,**kwarg)
-        if level:
-            if self.verbose >= verbose: 
+        try:
+            if self.level >= level and verbose == self.verbose:
                 print(ins, *arg,**kwarg)
-        else:
-            if self.verbose == verbose:
+        except:
+            if verbose == self.verbose:
                 print(ins, *arg,**kwarg)
     def Trace(self, ins, trace):
         ''' code tracing using inspect module '''

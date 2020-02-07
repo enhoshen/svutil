@@ -13,25 +13,34 @@ class TestGen(SVgen):
         self.eventlst = [   ( 'intr_ev', 'intr_any'),
                             ( 'init_ev', 'init_cond'),                         
                             ( 'resp_ev', 'resp_cond'), 
-                            ( 'fin_ev' , 'fin_cond'),]
+                            ( 'fin_ev' , 'fin_cond'),
                             ( 'sim_stop_ev' , 'sim_stop'),
                             ( 'sim_pass_ev' , 'sim_pass'),
                             ( 'time_out_ev' , 'time_out')]
         self.pyeventlgclst = ['sim_pass', 'sim_stop', 'time_out']
         self.clk_domain_lst = [('','')]
-    def TbSVBasicBlk(self): 
+    def SVDefineBlk(self): 
         ind = self.cur_ind.Copy() 
         yield ''
         s = '\n'
+        s += 'import "DPI-C" function string getenv(input string env_name);\n'
         s += '`timescale 1ns/1ns\n'
         s += '`include ' + f'"{self.incfile}.sv"\n' 
         s += f'`define {self.endcyclemacro} 100\n'  
         s += f'`define {self.hclkmacro} 5\n'  
         s += f'`define TEST_CFG //TODO\n'
         s += f'`define FSDBNAME(suffix) `"{self.fsdbname}``suffix``.fsdb`"\n'
-        s += 'module ' + TOPMODULE + ';\n'
         s = s.replace('\n',f'\n{ind.b}')
         yield s
+    def ModBlk(self):
+        ind = self.cur_ind.Copy() 
+        yield ''
+        s = f'{ind.b}module ' + TOPMODULE + ';\n'
+        yield s+self.InitialStr(ind=ind)
+        s = '\n' + ind.b +'endmodule'
+        yield s
+    def InitialStr(self, ind=None):
+        ind = self.cur_ind.Copy() if not ind else ind
         ck_lst   = reduce( (lambda x,y: x+', '+f'{y[0]+"_" if y[0] != "" else ""}clk'),       self.clk_domain_lst , '')[2:]
         rst_lst  = reduce( (lambda x,y: x+', '+f'{y[0]+"_" if y[0] != "" else ""}rst{y[1]}'), self.clk_domain_lst , '')[2:]
         ccnt_lst = reduce( (lambda x,y: x+', '+f'{y[0]+"_" if y[0] != "" else ""}clk_cnt'),   self.clk_domain_lst, '') [2:]
@@ -56,7 +65,7 @@ class TestGen(SVgen):
             s += f'always #(2*`{self.hclkmacro}) {_aff}clk_cnt = {_aff}clk_cnt+1;\n'
         s += f'\ninitial begin'
         s = s.replace('\n',f'\n{ind[1]}')
-        _s =  f'\n$fsdbDumpfile(`FSDBNAME(`TEST_CFG));\n' 
+        _s =  f'\n$fsdbDumpfile({{"{self.fsdbname}_", getenv("TEST_CFG"), ".fsdb"}});\n' 
         _s +=  f'$fsdbDumpvars(0,{TEST},"+all");\n'
 
         for pyev in self.pyeventlgclst:
@@ -83,31 +92,35 @@ class TestGen(SVgen):
         _s += f'while ({_aff}clk_cnt < `{self.endcyclemacro} && sim_stop == 0 && time_out ==0) begin\n'
         _s += f'    @ (posedge {_aff}clk)\n'
         _s += f'    {_aff}clk_cnt <= {_aff}clk_cnt + 1;\n'
-        _s += f'end\n\n'
+        _s += f'end\n'
         #_s += f'#(2*`{self.hclkmacro+"*`"+self.endcyclemacro}) $display("timeout");\n' #TODO
-        _s += '$display("=========================================");\n'
-        _s += f'if ({_aff}clk_cnt >= `{self.endcyclemacro}|| time_out)\n'
-        _s += f'    $display("[Error] Simulation Timeout.");\n'
-        _s += f'else if (sim_pass)\n'
-        _s += f'    $display("[Info] Congrat! Simulation Passed.");\n'
-        _s += f'else\n'
-        _s += f'    $display("[Error] Simulation Failed.");\n'
-        _s += '$display("=========================================");\n\n'
-
-        _s +=  '`NicotbFinal\n' +  '$finish;'
         _s = _s.replace('\n',f'\n{ind[2]}')
-        _s += f'\n{ind[1]}end\n\n'
-        yield s+_s
-        s = '\n' + ind.b +'endmodule'
-        yield s
+        _s += '\n'
+        _s += self.SimFinStr(ind=ind+2)
+        _s += f'{ind[2]}`NicotbFinal\n'
+        _s += f'{ind[2]}$finish;'
+        _s += f'{ind[1]}end\n\n'
+        return s+_s
+    def SimFinStr (self, ind=None):
+        ind = self.cur_ind.Copy() if not ind else ind
+        _ck = self.clk_domain_lst[0][0]
+        _aff = _ck+"_" if _ck != "" else ""
+        s =  f'{ind.b}$display("{"":=<42}");\n'
+        s += f'{ind.b}$display({{"[Info] Test case:", getenv("TEST_CFG")}});\n'
+        s += f'{ind.b}if ({_aff}clk_cnt >= `{self.endcyclemacro}|| time_out)\n'
+        s += f'{ind[1]}$display("[Error] Simulation Timeout.");\n'
+        s += f'{ind.b}else if (sim_pass)\n'
+        s += f'{ind[1]}$display("[Info] Congrat! Simulation Passed.");\n'
+        s += f'{ind.b}else\n'
+        s += f'{ind[1]}$display("[Error] Simulation Failed.");\n'
+        s +=  f'{ind.b}$display("{"":=<42}");\n\n'
+        return s
     def DeclareBlkBlk(self ):
         pass
     def TopBlkBlk(self , tpname ):
         ind = self.cur_ind.Copy()
         yield ''
         yield 
-    def ModBlkBlk(self):
-        pass
     def LogicBlk(self , module , **conf):
         ind = self.cur_ind.Copy()
         yield ''
@@ -260,11 +273,12 @@ class TestGen(SVgen):
     def ModuleTestSV(self , module=None , **conf):
         module = self.dut if not module else module
         ins = self.InsBlk(module)
+        mod = self.ModBlk()
         pm = self.ParamBlk(module)
         lg = self.LogicBlk(module)
-        tb = self.TbSVBasicBlk()
+        defb = self.SVDefineBlk()
         ind = self.IndBlk()
-        s = self.Genlist( [ (tb,) , tb , [ind,pm] , [ind,lg] , [ind,ins] , tb , tb]) 
+        s = self.Genlist( [ (defb,) , (mod,) , [ind,pm] , [ind,lg] , [ind,ins] , mod]) 
         if (conf.get('copy')==True):
             ToClip(s)
         return s

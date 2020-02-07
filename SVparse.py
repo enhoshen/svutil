@@ -494,7 +494,11 @@ class SVparse(SVutil):
         
     def ImportParse(self, s , lines):
         s = s.split(';')[0]
-        _pkg , _param = s.rstrip().split('::')
+        if '::' in s:
+            _pkg , _param = s.rstrip().split('::')
+        else:
+            self.print('only support importing packages')
+            return 
         self.cur_hier.imported[_pkg] = _param
         if _param == '*':
             for k,v in self.package[_pkg].params.items():
