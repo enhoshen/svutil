@@ -118,6 +118,8 @@ class SVgen(SVutil):
             lst is a list of tuple or string, return a tuple of
             integer or a single integer of the width. 
         '''
+        if len(lst) == 0:
+            return 0
         if type(lst[0]) == str:
             w = 0
             for i in lst:

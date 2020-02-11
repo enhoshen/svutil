@@ -250,7 +250,7 @@ class RegbkGen(SrcGen):
         # array registers
         for i, (reg, width, rw, arr) in enumerate(arr_reg):
             if i == 0:
-                s += self.RdataArrStr( reg.name, 'if', w, rw, ind+2)
+                s += self.RdataArrStr( reg.name, 'unique if', w, rw, ind+2)
             else:
                 s += self.RdataArrStr( reg.name, 'else if', w, rw, ind+2)
 
