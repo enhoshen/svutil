@@ -21,17 +21,26 @@ class Shape():
 class DrawioGen(SVgen):
     unique_id = 300 
     IDlist = []
-    textstyle1 = "text; align=center; rounded=0; verticalAlign=middle; labelPosition=center; verticalLabelPosition=middle; ;verticalAlign=middle; align=right"
-    textstyle2 = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;"
-    textstyle2left = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;"
-    textstyle_rec1 = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=15"
-    textstyle_rec1left = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=15"
-    textstyle_red = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#FF0505;" 
-    textstyle_redleft = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#FF0505;" 
-    arrowstyle1 = "endArrow=block; html=1; endFill=1;fontSize=8;"
-    arrowboldstyle1 = "endArrow=classic;html=1;shape=flexArrow;fillColor=#000000;endWidth=4.938516283050313;endSize=2.5476510067114093;width=1.2080536912751678;"
     def __init__(self, ind= Ind(0), session =None):
         super().__init__(session = session)
+        self.customlst += ['textstyle1' ,
+                    'textstyle2' ,
+                    'textstyle2left' ,
+                    'textstyle_rec1' ,
+                    'textstyle_rec1left' ,
+                    'textstyle_red' ,
+                    'textstyle_redleft' ,
+                    'arrowstyle1' ,
+                    'arrowboldstyle1'] 
+        self.textstyle1 = "text; align=center; rounded=0; verticalAlign=middle; labelPosition=center; verticalLabelPosition=middle; ;verticalAlign=middle; align=right"
+        self.textstyle2 = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;"
+        self.textstyle2left = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;"
+        self.textstyle_rec1 = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=15"
+        self.textstyle_rec1left = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=15"
+        self.textstyle_red = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#FF0505;" 
+        self.textstyle_redleft = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#FF0505;" 
+        self.arrowstyle1 = "endArrow=block; html=1; endFill=1;fontSize=8;"
+        self.arrowboldstyle1 = "endArrow=classic;html=1;shape=flexArrow;fillColor=#000000;endWidth=4.938516283050313;endSize=2.5476510067114093;width=1.2080536912751678;"
         self.arrow_width = 50 
         self.arrow_height = 50 
         self.text_width = 100 

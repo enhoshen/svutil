@@ -105,19 +105,32 @@ class SVRegbk(SVutil):
     Register bank information parsed from a *Regbk package
         regfields: SVEnums
     '''
-    regfield_suf = '_regfield'
-    default_suf  = '_DEFAULT'
-    bw_suf  = '_BW'
-    arr_num_suf = '_NUM'
-    reserved_name = 'RESERVED'
-    regaddr_name = 'regaddr'
-    regaddr_arr_name = 'regaddr_arr'
-    regbw_name = 'REG_BW'
-    regaddrbw_name = 'REG_ADDR_BW'
-    regbsize_name = 'REG_BSIZE'
-    regbsizebw_name = 'REG_BSIZE_BW'
-    regintr_name = 'raw_intr_stat'
     def __init__(self, pkg):
+        self.customlst = [  'regfield_suf',
+                            'default_suf',
+                            'bw_suf',
+                            'arr_num_suf',
+                            'reserved_name',
+                            'regaddr_name',
+                            'regaddr_arr_name',
+                            'regbw_name',
+                            'regaddrbw_name',
+                            'regbsize_name',
+                            'regbsizebw_name',
+                            'regintr_name']
+        self.regfield_suf = '_regfield'
+        self.default_suf  = '_DEFAULT'
+        self.bw_suf  = '_BW'
+        self.arr_num_suf = '_NUM'
+        self.reserved_name = 'RESERVED'
+        self.regaddr_name = 'regaddr'
+        self.regaddr_arr_name = 'regaddr_arr'
+        self.regbw_name = 'REG_BW'
+        self.regaddrbw_name = 'REG_ADDR_BW'
+        self.regbsize_name = 'REG_BSIZE'
+        self.regbsizebw_name = 'REG_BSIZE_BW'
+        self.regintr_name = 'raw_intr_stat'
+
         self.verbose = V_(VERBOSE) 
         self.w = 20
         self.pkg = pkg
@@ -141,7 +154,7 @@ class SVRegbk(SVutil):
         self.regdefaults = {}
         self.regbws = {}
         self.params = {} 
-        self.raw_intr_stat = self.GetType('raw_intr_stat')
+        self.raw_intr_stat = self.GetType(self.regintr_name)
         for i,v in pkg.paramsdetail.items():
             _v = SVParam(v)
             self.params[i]=(_v)

@@ -10,6 +10,7 @@ class LatexGen(SVgen):
     # TODO $clog2 in latex
     def __init__(self):
         super().__init__()
+        self.customlst = ['default_input_delay']
         self.default_input_delay = 30
         self.regbk= SVRegbk(self.regbk) if self.regbk else None
     def Reload(self):

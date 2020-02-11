@@ -10,6 +10,8 @@ import numpy as np
 class SrcGen(SVgen):
     def __init__(self):
         super().__init__()
+        self.customlst += [ 'clk_name',
+                            'rst_name']
         self.clk_name = 'i_clk'
         self.rst_name = 'i_rst_n'
     def RegLogicStr(self, w, reg, bw, tp, ind):

@@ -47,6 +47,20 @@ class SVutil():
             return f'[{fn:<{w}},line:{ins.lineno}, in {ins.function}]'
         if trace == 2:
             return f'[{fn:<{w}}, in {ins.function}]'
+    def Custom(self):
+        self.print('Customizable variable: ', trace=2)
+        w = len(max(self.customlst, key=len))
+        for i in self.customlst:
+            v = self.__dict__[i]
+            v = f'"{v}"' if type(v) == str else v.__str__()
+            self.print(f'    {i:>{w}}: {v}', trace=2)
+class SVcvar():
+    ''' 
+        SVcvar marks customizable variables;
+        as there could be considerable amount of such variable
+        the class is named with a short but ambigous name
+    '''
+    pass
 
 def V_ (verbose):
     try:

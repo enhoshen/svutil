@@ -9,13 +9,28 @@ import numpy as np
 import time
 class BannerGen(SVgen):
     def __init__(self, ind=Ind(0)):
+        self.V_(VERBOSE)
         self.cur_ind = ind 
         self.genpath = './'
+        self.customlst = ['name', 'email', 'genpath', 'yyyy', 'mm', 'dd', 'time']
+        self.name = []
+        self.email = []
         _time = time.localtime()
         self.yyyy, self.mm, self.dd = _time.tm_year, _time.tm_mon, _time.tm_mday
-    def UserReg (self, name, email):
-        self.name = name
-        self.email = f'<{email}>'
+        self.time = lambda : f'{self.yyyy}' 
+    def UserReg (self, nmtuplelst):
+        ''' 
+            customzie your name and email 
+            with a list of (name, email) pairs
+        '''
+        if type(nmtuplelst) == tuple:
+            nmtuplelst = [nmtuplelst]
+        for (n,e) in nmtuplelst:
+            print(n,e)
+            self.name += [n]
+            self.email += [f'<{e}>']
+    def UserEmpty(self):
+        self.name, self.email = [], [] 
     def FileReg (self, f):
         self.filepath = f
         _f = f.split('/')[-1].rsplit('.',1)
@@ -27,6 +42,7 @@ class BannerGen(SVgen):
 class GanzinBanner(BannerGen):
     def __init__(self, ind=Ind(0)):
         super().__init__()
+        self.customlst += ['svcopyrightstr', 'svstatementstr']
         self.svcopyrightstr = f'// Copyright (C) Ganzin Technology - All Rights Reserved\n'
         self.svstatementstr = \
               f'// ---------------------------\n'\
@@ -47,14 +63,18 @@ class GanzinBanner(BannerGen):
             s =  f'{ind.b}' + self.svcopyrightstr 
             s += f'{ind.b}' + self.svstatementstr
             s.replace ('\n', f'{ind.b}')
-            s += f'{ind.b}//'
-            s += f' {self.name} {self.email}, {self.yyyy}\n\n'
+            for n,e in itertools.zip_longest(self.name, self.email):
+                s += f'{ind.b}//'
+                s += f' {n} {e}, {self.time()}\n'
+            s += '\n'
         elif suf == 'py' or suf == 'Makefile':
             s =  f'{ind.b}' + self.pycopyrightstr 
             s += f'{ind.b}' + self.pystatementstr
             s.replace ('\n', f'{ind.b}')
-            s += f'{ind.b}#'
-            s += f' {self.name} {self.email}, {self.yyyy}\n\n'
+            for n,e in itertools.zip_longest(self.name, self.email):
+                s += f'{ind.b}#'
+                s += f' {n} {e}, {self.time()}\n'
+            s += '\n'
         yield s
     def IncGuardBlk(self):
         ind = self.cur_ind.Copy()
@@ -69,7 +89,7 @@ class GanzinBanner(BannerGen):
         try:
             fstr = fr.read()
         except:
-            print('file read not supported')
+            self.print('file read not supported')
             return None
         s = self.Genlist( [(ban,), fstr] )
         return s
@@ -80,7 +100,7 @@ class GanzinBanner(BannerGen):
         try:
             fstr = fr.read()
         except:
-            print('file read not supported')
+            self.print('file read not supported')
             return None
         s = self.Genlist( [(ban,), (incg,), fstr, incg] )
         return s
@@ -93,11 +113,11 @@ class GanzinBanner(BannerGen):
         '''
         fpath = self.Write(self.BannerStr, fr, overwrite)
         if os.path.isfile(fpath) or not os.path.exists(fpath):
-            print ( "Banner attached to ", fpath)
+            self.print ( "Banner attached to ", fpath)
     def BanIncWrite(self, fr=None, overwrite=False):
         fpath = self.Write(self.BannerIncguardStr, fr, overwrite)
         if os.path.isfile(fpath) or not os.path.exists(fpath):
-            print ( "Banner, include guard attached to ", fpath)
+            self.print ( "Banner, include guard attached to ", fpath)
     def Write(self, strcallback=None, fr=None, overwrite=False):
         '''
             Utility to write strings to files
@@ -105,12 +125,12 @@ class GanzinBanner(BannerGen):
         if not strcallback:
             strcallback = self.BannerStr
         if not fr:
-            print('specify a file')
+            self.print('specify a file')
             return
         else:
             self.FileReg(fr)
         if not overwrite and os.path.isfile(self.filepath):
-            print( "file exists, make a copy, rename the file right away")
+            self.print( "file exists, make a copy, rename the file right away")
             fpath = self.genpath + self.filename +'_'+ time.strftime('%m%d%H')
             if self.filesuf:
                 fpath += '.' + self.filesuf
@@ -118,9 +138,10 @@ class GanzinBanner(BannerGen):
             fpath = self.filepath
         _suf = 'Makefile' if self.filename == 'Makefile' else self.filesuf
         if os.path.isfile(fpath) or not os.path.exists(fpath):
+            t = self.TypeCheck(fr)
             s = strcallback(fr, _suf)
-            if not s:
-                print('un-supported files or something went wrong')
+            if s is None or t is None:
+                self.print('un-supported files or something went wrong')
                 return ''
             f = open( fpath, 'w')
             f.write(s)
@@ -143,8 +164,13 @@ class GanzinBanner(BannerGen):
                     overwrite = True to write to the file, False to generate a new one
         '''
         for f in os.listdir(_dir):
-            self.BanIncWrite(_dir+'/'+f, overwrite)
+            if f.endswith('.sv'):
+                self.BanIncWrite(_dir+'/'+f, overwrite)
+            else:
+                self.BanWrite(_dir+'/'+f, overwrite)
+    def TypeCheck(self, fr):
+        return fr.endswith(('.sv', '.py', 'Makefile'))
 if __name__ == '__main__':
     g = GanzinBanner()
-    g.UserReg('En-Ho Shen', 'enhoshen@ganzin.com.tw')
+    g.UserReg([('En-Ho Shen', 'enhoshen@ganzin.com.tw')])
     pass

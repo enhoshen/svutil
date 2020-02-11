@@ -25,10 +25,20 @@ class SVgen(SVutil):
         self.session = SVparseSession(verbose=self.verbose) if not session else session
         self.session.FileParse(paths)
         self.genlist = {}    
+        self.customlst = [  'hclkmacro',
+                            'endcyclemacro',
+                            'clkstr',
+                            'rststr',
+                            'genpath',
+                            'endcycle']
+
         self.hclkmacro = 'HCYCLE'
         self.endcyclemacro = 'TIMEOUTCYCLE'
         self.clkstr = 'clk'
         self.rststr = 'rst'
+        self.genpath = './'
+        self.endcycle = 10000
+
         self.test = TEST
         self.testname = TEST.rsplit('_tb')[0]
         self.fsdbname = self.testname + '_tb' #TODO
@@ -40,8 +50,6 @@ class SVgen(SVutil):
         self.hier = self.session.hiers.get(HIER) 
         self.regbkstr= REGBK 
         self.regbk = self.session.hiers.get(REGBK)
-        self.genpath = './'
-        self.endcycle = 10000
         self.cond = {} # syn 2ns test name etc.
         self.cur_ind = Ind(0)
     def IndBlk(self):

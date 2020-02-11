@@ -10,6 +10,7 @@ from functools import reduce
 class TestGen(SVgen):
     def __init__(self, ind=Ind(0)):
         super().__init__()
+        self.customlst += ['eventlst', 'pyeventlgclst', 'clk_domain_lst']
         self.eventlst = [   ( 'intr_ev', 'intr_any'),
                             ( 'init_ev', 'init_cond'),                         
                             ( 'resp_ev', 'resp_cond'), 
@@ -304,22 +305,22 @@ class TestGen(SVgen):
         ins = self.InsBlk(module)
         s =  self.Genlist( [(ins,)]) 
         ToClip(s)
-        print(s)
+        self.print(s)
     def ShowModPortLogic(self, module=None):
         module = self.dut if not module else module
         ins = self.LogicBlk(module)
         s =  self.Genlist( [(ins,)]) 
         ToClip(s)
-        print(s)
+        self.print(s)
     def SVWrite(self , text, **conf ):
         p = self.TbWrite(text,'sv', **conf) 
-        print ( "SV testbench written to " , p )
+        self.print ( "SV testbench written to " , p )
     def PYWrite(self , text, **conf ):
         p = self.TbWrite(text,'py', **conf)
-        print ( "PY testbench written to " , p )
+        self.print ( "PY testbench written to " , p )
     def TbWrite(self , text , suf, **conf): 
         overwrite = conf.get('overwrite')
-        print(overwrite)
+        self.print('overwriting:',overwrite)
         fpath =  self.test
         return self.FileWrite(fpath,text,suf, overwrite)
 if __name__ == '__main__':
