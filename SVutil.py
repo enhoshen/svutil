@@ -1,5 +1,6 @@
 import os
 import inspect
+import logging
 class SVutil():
     trace_format_width = 0
     def __init__(self, verbose=None):

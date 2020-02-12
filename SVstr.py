@@ -237,28 +237,26 @@ class SVstr(SVutil):
         except:
             self.print(f"S2lst {_s.s} failed, return original string: {self.s}",verbose=2)
             return [self.s]
-    def Slice2num(self,params):
+    def Slice2num(self,params, macros=None):
         if self.s == '':
             return 1
         _temp = self.s.replace('::','  ')
         _idx = _temp.find(':')
         _s,_e = self.s[0:_idx] , self.s[_idx+1:]
         try:
-            return SVstr(_s).S2num(params)-SVstr(_e).S2num(params)+1
+            return SVstr(_s).NumParse(params, macros)-SVstr(_e).NumParse(params, macros)+1
         except(TypeError):
             self.print('Slice2num fail, TypeError')
             self.print (self.s)
-    def Slice2TwoNum(self,params):
+    def Slice2TwoNum(self,params, macros=None):
         if self.s == '':
             return 1
         _temp = self.s.replace('::','  ')
         _idx = _temp.find(':')
-        _s,_e = self.s[0:_idx] , self.s[_idx+1:]
-        try:
-            return (SVstr(_s).S2num(params),SVstr(_e).S2num(params))
-        except(TypeError):
-            self.print('Slice2num fail, TypeError')
-            self.print (self.s)
+        self.print(_idx , verbose='Slice2TwoNum')
+        _s,_e = self.s[0:_idx] if _idx != -1 else '', self.s[_idx+1:]
+        self.print(_s, _e , verbose='Slice2TwoNum')
+        return (SVstr(_s).NumParse(params, macros),SVstr(_e).NumParse(params, macros))
     def SimpleMacroExpand(self, macros):
         '''
             Expand a simple substituion macro

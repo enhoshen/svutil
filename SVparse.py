@@ -392,7 +392,7 @@ class SVparse(SVutil):
         bw = SVstr(''if bw == () else bw[0])
         n, d = s.IDDIMarrParse()
         tp = ('signed ' if sign==True else '') + 'logic'
-        lst = [(_n,bw.Slice2num(self.cur_hier.Params),self.Tuple2num(_d),tp) for _n,_d in zip(n,d)]
+        lst = [(_n,bw.Slice2num(self.cur_hier.Params, self.cur_hier.AllMacro),self.Tuple2num(_d),tp) for _n,_d in zip(n,d)]
         self.print(lst,verbose=3)
         return lst 
     def ArrayParse(self, s , lines):
@@ -445,7 +445,7 @@ class SVparse(SVutil):
                 if 'reged' in i:
                     self.cur_hier.regs[name] = 'N/A'
         bwstr = self.Tuple2str(bw)
-        bw = SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier.Params)
+        bw = SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier.Params, self.cur_hier.AllMacro)
         dim = s.BracketParse()
         dimstrtuple = dim
         dimstr = self.Tuple2str(dim)
@@ -482,7 +482,7 @@ class SVparse(SVutil):
         self.print(enums,cmts, verbose='EnumParse')
         #_s = s.lsplit('}')
         #enums = SVstr(_s).ReplaceSplit(['{',','] )
-        enum_name, enum_num, cmts, idxs, sizes, name_bases= self.Enum2Num( enums, cmts, params=self.cur_hier.Params )
+        enum_name, enum_num, cmts, idxs, sizes, name_bases= self.Enum2Num( enums, cmts, params=self.cur_hier.Params, macros=self.cur_hier.AllMacro)
         for _name, _num in zip( enum_name, enum_num):
             self.cur_hier.params[_name] = _num
             self.cur_hier.paramsdetail[_name] = ( _name , () , '', 1 , _num , '', '', '','enum literal')
@@ -490,7 +490,7 @@ class SVparse(SVutil):
         n = s.IDarrParse()
         for _n in n:
             self.cur_hier.enums[_n] = ( enum_name, enum_num , cmts, idxs, sizes, name_bases )
-        return [( _n,bw.Slice2num(self.cur_hier.Params),() , 'enum' , enums, cmts ) for _n in n]
+        return [( _n,bw.Slice2num(self.cur_hier.Params, self.cur_hier.AllMacro),() , 'enum' , enums, cmts ) for _n in n]
         
     def ImportParse(self, s , lines):
         s = s.split(';')[0]
@@ -745,12 +745,12 @@ class SVparse(SVutil):
         cmt = _s.CommentParse()  
         return ( _s.rstrip() , cmt ) 
     def Tuple2num(self, t ):
-        return tuple(map(lambda x : SVstr(x).S2num(params=self.cur_hier.Params) ,t))
+        return tuple(map(lambda x : SVstr(x).NumParse(params=self.cur_hier.Params, macros=self.cur_hier.AllMacro) ,t))
     def Tuple2str(self, t):
         return reduce(lambda x,y : x+f'[{y}]' , t , '')
     def Bw2num(self, bw):
-        return SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier.Params)
-    def Enum2Num(self, enum, cmt, params={}):
+        return SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier.Params, self.cur_hier.AllMacro)
+    def Enum2Num(self, enum, cmt, params={}, macros=None):
         ofs =0
         cmts = []
         name = []
@@ -765,7 +765,7 @@ class SVparse(SVutil):
             _s = SVstr(e)
             _name = _s.IDParse()
             bw = _s.BracketParse()
-            bw = SVstr(bw[0]).Slice2TwoNum(_params) if bw else SVstr('').Slice2TwoNum(_params)
+            bw = SVstr(bw[0]).Slice2TwoNum(_params, macros) if bw else SVstr('').Slice2TwoNum(_params, macros)
             _num = _s.NumParse(_params,self.cur_hier.AllMacro) 
             if type(bw)==tuple:
                 bw = (0,bw[1]-1) if bw[0]=='' else bw
