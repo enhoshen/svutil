@@ -224,6 +224,9 @@ class SVRegbk(SVutil):
         width = ''
         rw = ''
         arr= ''
+        omit = ''
+        comb = ''
+        _ = None # dummy unpack
         for c in cmt:
             if re.search(r'RW|R/W|RO|WO',c):
                 rw= c.lstrip().rstrip()
@@ -234,7 +237,13 @@ class SVRegbk(SVutil):
             if re.search(r"arr|ARR", c):
                 arr = c.lstrip().rstrip()
                 continue
-        return width, rw, arr
+            if re.search(r"omit|OMIT", c):
+                omit = c.lstrip().rstrip()
+                continue
+            if re.search(r"comb|COMB", c):
+                comb = c.lstrip().rstrip()
+                continue
+        return width, rw, arr , omit, comb, _ 
             
     def GetAddrNField(self, reg):
         '''

@@ -218,7 +218,7 @@ class LatexGen(SVgen):
             reg_bw = regbk.params.get(f'{reg.name}_BW')
             reg_bw = reg_bw.num if reg_bw else None
             reg_bw_str = self.L_(regbk.GetBWStr(reg.name))
-            width, rw, arr= regbk.GetAddrCmt(reg.name) 
+            width, rw, arr, *_= regbk.GetAddrCmt(reg.name) 
             reg_bw = width if not reg_bw else reg_bw
             reg_bw_str = width if not reg_bw_str else reg_bw_str
             desp = None 
@@ -242,7 +242,7 @@ class LatexGen(SVgen):
             ofs = regbk.addrsdict[reg].num*regbk.regbsize
             ofs = hex(ofs).upper().replace('X', 'x')
             reg_bw = self.L_(regbk.GetBWStr(reg))
-            width, rw, arr= regbk.GetAddrCmt(reg) 
+            width, rw, arr, *_= regbk.GetAddrCmt(reg) 
             reg_bw = width if not reg_bw else reg_bw
             regdesp = RegDesp(  ofs, reg_bw+'b', rw, arr, regbk.regbsize,
                                 memblst =  ['ofs', 

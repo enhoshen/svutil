@@ -79,14 +79,16 @@ class RegbkGen(SrcGen):
         yield s
         s = '\n' + ind.b +'endmodule'
         yield s
-    def LogicStr(self, w, reg, bw, tp, arr=None, ind=None):
+    def LogicStr(self, w, reg, bw, tp, arr=None, comb=None, ind=None):
         ind = self.cur_ind.Copy() if not ind else ind
+        dim = ''
         if arr and arr != '':
-            dim = f'[{reg.upper()}{self.regbk.arr_num_suf}]'
-            return self.RegLogicArrStr(w, reg, bw, tp, dim, ind=ind)
+            dim = f' [{reg.upper()}{self.regbk.arr_num_suf}]'
+        if comb:
+            return self.CombLogicStr(w, reg, bw, tp, dim, ind=ind)
         else:
-            return self.RegLogicStr(w, reg, bw, tp, ind=ind)
-    def RdataStr(self, reg, _slice, w, rw, ind=None, const=False):
+            return self.RegLogicStr(w, reg, bw, tp, dim, ind=ind)
+    def RdataStr(self, reg, _slice, w, rw=None, comb=False, const=False, ind=None):
         #TODO slice dependent, now it only pad the MSB and it's usually the case
         ind = self.cur_ind.Copy() if not ind else ind
         if rw and rw=='WO':
@@ -94,10 +96,11 @@ class RegbkGen(SrcGen):
         pad = f'{self.regbk.regbw_name}-{reg}{self.regbk.bw_suf}'
         s =f'{ind.b}{reg:<{w[0]}}: {self.rdata_name}_w = '
         pad = '{{'+f'{pad}'+'{1\'b0}}'
-        logic = '' if const else f'{reg.lower()}_r'
+        logic = f'{reg.lower()}' if comb else f'{reg.lower()}_r'
+        logic = "" if const else logic
         s += f'{pad:<{w[1]}} ,{logic}}};{"//TODO" if const else ""}\n'
         return s 
-    def RdataArrStr(self, reg, ifelse, w, rw=None, ind=None, const=False):
+    def RdataArrStr(self, reg, ifelse, w, rw=None, comb=False, const=False, ind=None):
         if rw and rw=='WO':
             return ''
         pad = f'{self.regbk.regbw_name}-{reg}{self.regbk.bw_suf}'
@@ -105,7 +108,8 @@ class RegbkGen(SrcGen):
         s +=      f'{ind.b}{"":<9}{self.addr_name}{self.addr_slice} < {reg}+{reg}{self.regbk.arr_num_suf}) begin\n'
         s +=f'{ind[1]}{self.rdata_name}_w = '
         pad = '{{'+f'{pad}'+'{1\'b0}}'
-        logic = '' if const else f'{reg.lower()}_r'
+        logic = f'{reg.lower()}' if comb else f'{reg.lower()}_r'
+        logic = "" if const else logic
         s += f'{pad:<{w[1]}} ,{logic}[{self.addr_name}{self.addr_slice}-{reg}]}};{"//TODO" if const else ""}\n'
         s += f'{ind.b}end\n'
         return s 
@@ -129,7 +133,7 @@ class RegbkGen(SrcGen):
         s += f'{reg.lower()}_r{dim} <= {reg.lower()}_w{dim};\n'
         s += f'{ind.b}end\n'
         return s
-    def WdataCombStr(self, reg, _slice, rw=None, dim=None, ind=None):
+    def WdataCombStr(self, reg, _slice, rw=None, dim=None, comb=None, ind=None):
         #TODO slice dependent, now it only pad the MSB and it's usually the case
         ind = self.cur_ind.Copy() if not ind else ind
         dim = '' if not dim else dim
@@ -139,12 +143,19 @@ class RegbkGen(SrcGen):
                 s += f'{ind[1]}if ({self.read_cond} && {self.addr_name}{self.addr_slice} == {reg}) '
                 s += f'{reg.lower()}_w = \'1;\n'
                 s += f'{ind[1]}else {reg.lower()}_w = \'0;//TODO\n'
+                s += f'{ind[1]}//TODO\n{ind.b}end\n'
             else:
-                s += f'{ind[1]}{reg.lower()}_w = {reg.lower()}_r ;\n'
-            s += f'{ind[1]}//TODO\n{ind.b}end\n'
+                if comb:
+                    s+= f'{ind[1]}{reg.lower()} = ;//TODO\n'
+                else:
+                    s += f'{ind[1]}{reg.lower()}_w = {reg.lower()}_r ;\n'
+                    s += f'{ind[1]}//TODO\n{ind.b}end\n'
         else:
             s += f'{ind[1]}if ({self.write_cond} && {self.addr_name}{self.addr_slice} == {reg}) begin\n'
-            s += f'{ind[2]}{reg.lower()}_w = {self.wdata_name}[{reg}{self.regbk.bw_suf}-1:0];\n' #TODO
+            if comb:
+                s += f'{ind[2]}{reg.lower()} = {self.wdata_name}[{reg}{self.regbk.bw_suf}-1:0];\n'
+            else:
+                s += f'{ind[2]}{reg.lower()}_w = {self.wdata_name}[{reg}{self.regbk.bw_suf}-1:0];\n'
             s += f'{ind[1]}end \n'
             s += f'{ind[1]}else begin\n'
             if reg.upper() == self.regbk.regintr_name.upper():
@@ -154,7 +165,7 @@ class RegbkGen(SrcGen):
                 s += f'{ind[2]}//TODO\n'
             s += f'{ind[1]}end\n{ind.b}end\n'
         return s
-    def WdataCombArrStr(self, reg, rw=None, dim=None, ind=None):
+    def WdataCombArrStr(self, reg, rw=None, dim=None, comb=None, ind=None):
         #TODO slice dependent, now it only pad the MSB and it's usually the case
         ind = self.cur_ind.Copy() if not ind else ind
         dim = '' if not dim else dim
@@ -164,12 +175,19 @@ class RegbkGen(SrcGen):
                 s += f'{ind[1]}if ({self.read_cond} && (({self.addr_name}{self.addr_slice} - {reg}) == {dim})) '
                 s += f'{reg.lower()}_w[{dim}] = \'1;\n'
                 s += f'{ind[1]}else {reg.lower()}_w[{dim}] = \'0;//TODO\n'
+                s += f'{ind[1]}//TODO\n{ind.b}end\n'
             else:
-                s += f'{ind[1]}{reg.lower()}_w[{dim}] = {reg.lower()}_r[{dim}] ;\n'
-            s += f'{ind[1]}//TODO\n{ind.b}end\n'
+                if comb:
+                    s += f'{ind[1]}{reg.lower()}[{dim}] = ;//TODO\n'
+                else:
+                    s += f'{ind[1]}{reg.lower()}_w[{dim}] = {reg.lower()}_r[{dim}] ;\n'
+                    s += f'{ind[1]}//TODO\n{ind.b}end\n'
         else:
             s += f'{ind[1]}if ({self.write_cond} && ({self.addr_name}{self.addr_slice} - {reg} == {dim})) begin\n'
-            s += f'{ind[2]}{reg.lower()}_w[{dim}] = {self.wdata_name}[{reg}{self.regbk.bw_suf}-1:0];\n' #TODO
+            if comb:
+                s += f'{ind[2]}{reg.lower()}[{dim}] = {self.wdata_name}[{reg}{self.regbk.bw_suf}-1:0];\n' #TODO
+            else:
+                s += f'{ind[2]}{reg.lower()}_w[{dim}] = {self.wdata_name}[{reg}{self.regbk.bw_suf}-1:0];\n' #TODO
             s += f'{ind[1]}end \n'
             s += f'{ind[1]}else begin\n'
             if reg.upper() == self.regbk.regintr_name.upper():
@@ -205,16 +223,18 @@ class RegbkGen(SrcGen):
         s += f'{ind.b}// control register\n'
         for reg in self.regbk.addrs.enumls:
             bw,tp = gettpbw(reg)
-            width, rw, arr= self.regbk.GetAddrCmt(reg.name)
+            width, rw, arr, *_= self.regbk.GetAddrCmt(reg.name)
             bwstr = '' if bw ==1 else f'[{bw}-1:0] ' 
             w[0] = max(w[0], len(f'{tp+" "+bwstr}'))
             dim = '' if arr=='' else ' ['+reg.name+self.regbk.arr_num_suf+']'
             w[1] = max(w[1], len(reg.name+dim)+2)
         for reg in self.regbk.addrs.enumls:
             bw,tp = gettpbw(reg)
-            width, rw, arr= self.regbk.GetAddrCmt(reg.name)
-            if reg.name not in self.omitlogiclst:
-                s += self.LogicStr( w, reg.name.lower(), bw, tp, arr, ind)
+            width, rw, arr, omit, comb, *_= self.regbk.GetAddrCmt(reg.name)
+            if reg.name in self.omitlogiclst or omit:
+                pass
+            else:
+                s += self.LogicStr( w, reg.name.lower(), bw, tp, arr=arr, comb=comb, ind=ind)
         s += f'{ind.b}logic [{self.regbk.regbw_name}-1:0] {self.rdata_name}_w;\n'
         s += '\n'
 
@@ -259,27 +279,29 @@ class RegbkGen(SrcGen):
         for i in self.regbk.addrs.enumls:
             w[0] = max(w[0], len(i.name))
             w[1] = max(w[1], len(self.regbk.regbw_name+i.name+self.regbk.bw_suf)+10)
-            width, rw, arr= self.regbk.GetAddrCmt(i.name)
+            width, rw, arr, omit, comb, *_= self.regbk.GetAddrCmt(i.name)
             if arr != '':
-                arr_reg.append((i, width, rw, arr))
+                arr_reg.append((i, width, rw, arr, omit, comb))
             else:
-                nonarr_reg.append((i, width, rw, arr))
+                nonarr_reg.append((i, width, rw, arr, omit, comb))
         # array registers
-        for i, (reg, width, rw, arr) in enumerate(arr_reg):
-            const = True if reg.name in self.omitlogiclst else False
+        for i, (reg, width, rw, arr, omit, comb) in enumerate(arr_reg):
+            reg = reg.name
+            const = True if reg in self.omitlogiclst or omit else False 
             if i == 0:
-                s += self.RdataArrStr( reg.name, 'unique if', w, rw, ind=ind+2, const=const)
+                s += self.RdataArrStr( reg, 'unique if', w, rw, comb=comb, const=const, ind=ind+2)
             else:
-                s += self.RdataArrStr( reg.name, 'else if', w, rw, ind=ind+2, const=const)
+                s += self.RdataArrStr( reg, 'else if', w, rw, comb=comb, const=const, ind=ind+2)
 
         # non-array registers
         case_ind = 2 if len(arr_reg)==0 else 3
         s += f'{ind[2]}else begin\n' if len(arr_reg)!= 0 else ''
         s += f'{ind[case_ind]}case ({self.addr_name}{self.addr_slice})\n'
-        for reg, width, rw, arr in nonarr_reg:
+        for reg, width, rw, arr, omit, comb in nonarr_reg:
             _slice = self.regbk.regslices.get(reg.name)
-            const = True if reg.name in self.omitlogiclst else False
-            s += self.RdataStr( reg.name, _slice, w, rw, ind=ind+case_ind+1, const=const)
+            reg = reg.name
+            const = True if reg in self.omitlogiclst or omit else False 
+            s += self.RdataStr( reg, _slice, w, rw, comb=comb, const=const, ind=ind+case_ind+1)
         s += f'{ind[case_ind+1]}default: {self.rdata_name}_w = \'0;\n'
         s += f'{ind[case_ind]}endcase\n'
         s += f'{ind[2]}end\n' if len(arr_reg)!= 0 else ''
@@ -311,24 +333,27 @@ class RegbkGen(SrcGen):
         s += f'{ind.b}//{"Array GenVar":=^{w}}\n'
         s += f'{ind.b}genvar {gen};\n\n'
         for reg in self.regbk.addrs.enumls:
-            if reg.name in self.omitlogiclst:
+            width, rw, arr, omit, comb, *_= self.regbk.GetAddrCmt(reg.name)
+            if reg.name in self.omitlogiclst or omit:
                 continue
             _slice = self.regbk.regslices.get(reg.name)
-            s += f'{ind.b}//{"reg "+reg.name:=^{w}}\n'
+            _s = "reg " if not arr else "reg array "
+            s += f'{ind.b}//{_s+reg.name:=^{w}}\n'
             if reg.name == 'DISABLE':
                 s += f'{ind.b}//TODO Be careful of DISABLE clock enable condition\n'
-            width, rw, arr= self.regbk.GetAddrCmt(reg.name)
             if arr != '':
                 dim = f'{gen}'
                 s += f'{ind.b}generate\n'
                 s += f'{ind[1]}for ({gen} = 0; {gen} < {reg.name}{self.regbk.arr_num_suf}; ++{gen}) begin: arr_{reg.name.lower()}\n'
-                s += self.WdataCombArrStr( reg.name, rw, dim, ind=ind+2)
-                s += self.WdataSeqStr( reg.name, _slice, rw, dim, ind=ind+2)
+                s += self.WdataCombArrStr( reg.name, rw, dim=dim, comb=comb, ind=ind+2)
+                if not comb:
+                    s += self.WdataSeqStr( reg.name, _slice, rw, dim, ind=ind+2)
                 s += f'{ind[1]}end\n'
                 s += f'{ind.b}endgenerate\n\n'
             else:
-                s += self.WdataCombStr( reg.name, _slice, rw, ind=ind)
-                s += self.WdataSeqStr( reg.name, _slice, rw, ind=ind) + '\n'
+                s += self.WdataCombStr( reg.name, _slice, rw, comb=comb, ind=ind)
+                if not comb:
+                    s += self.WdataSeqStr( reg.name, _slice, rw, ind=ind) + '\n'
         if toclip:
             ToClip(s)
         self.regbk = regbktemp
