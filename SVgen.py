@@ -22,8 +22,11 @@ class Ind():
 class SVgen(SVutil):
     def __init__(self , paths=None, session=None, verbose=None ):
         self.V_(VERBOSE)
-        self.session = SVparseSession(verbose=self.verbose) if not session else session
-        self.session.FileParse(paths)
+        if session is None:
+            self.session = SVparseSession(verbose=self.verbose)
+            self.session.FileParse(paths)
+        else:
+            self.session = session
         self.genlist = {}    
         self.customlst = [  'hclkmacro',
                             'endcyclemacro',
@@ -140,7 +143,6 @@ class SVgen(SVutil):
                     w[idx] = max(w[idx], len(j))
             return w
 if __name__ == "__main__":
-    g = SVgen()
     pass
     #dut = hiers.Ahb2ToReqAckWrap
     #ins = g.InsGen(dut, 'u1' )  
@@ -149,3 +151,18 @@ if __name__ == "__main__":
     #ind = g.IndBlk()                                     
     #g.Genlist( [ (tb,), tb , (lg,) , [ins] , tb , tb])
     #print(o)
+    from SVparse import *
+    import sys
+    sys.path.append('./gen')
+    from gen.TestGen import TestGen
+    from gen.RegbkGen import RegbkGen
+    from gen.DrawioGen import DrawioGen
+    from gen.LatexGen import LatexGen
+    from gen.BannerGen import BannerGen
+    session = SVparseSession(V_(VERBOSE))
+    session.FileParse(None)
+    gTest = TestGen(session=session)
+    gRegbk = RegbkGen(session=session)
+    gDrawio = DrawioGen(session=session)
+    gLatex = LatexGen(session=session)
+    gBanner = BannerGen()

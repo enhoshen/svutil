@@ -89,7 +89,7 @@ class SVstr(SVutil):
         n= []
         name = self.IDParse()
         n.append(name)
-        while self.s[0] == ',': 
+        while self.s !='' and self.s[0] == ',': 
             self.s = self.s[1:]
             name = self.IDParse()
             n.append(name)

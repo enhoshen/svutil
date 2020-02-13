@@ -8,8 +8,8 @@ import itertools
 import numpy as np
 
 class SrcGen(SVgen):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, session=None):
+        super().__init__(session=session)
         self.customlst += [ 'clk_name',
                             'rst_name']
         self.clk_name = 'i_clk'

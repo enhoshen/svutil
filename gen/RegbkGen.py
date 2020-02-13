@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append(os.environ.get('SVutil'))
 from SVparse import *
-from SrcGen import * 
+from gen.SrcGen import * 
 from SVclass import *
 import itertools
 import numpy as np
@@ -18,8 +18,8 @@ class RegbkGen(SrcGen):
         Str(self, *arg, ind): return a str of a code block. ind is the text base indentation of type Ind.
         ToClip(self, *arg, ind): try copying text result to xclip and return the text as string.
     """
-    def __init__(self, ind=Ind(0)):
-        super().__init__()
+    def __init__(self, ind=Ind(0), session=None):
+        super().__init__(session=session)
         self.V_(VERBOSE) 
         self.regbkhier = self.regbk
         self.regbk= SVRegbk(self.regbkhier) if self.regbkhier else None
@@ -33,7 +33,8 @@ class RegbkGen(SrcGen):
                             'read_cond',
                             'cg_cond',
                             'wo_cg_cond',
-                            'ro_cg_cond']
+                            'ro_cg_cond',
+                            'omitlogiclst']
         self.addr_name = 'i_addr'
         self.write_name = 'i_write'
         self.wdata_name = 'i_wdata'
@@ -45,6 +46,7 @@ class RegbkGen(SrcGen):
         self.cg_cond = 'ce'
         self.wo_cg_cond = 'wo_ce'
         self.ro_cg_cond = 'ro_ce'
+        self.omitlogiclst = ['VERSION']
         self.flag_logic_lst = [   self.write_cond,\
                                         self.read_cond,\
                                         self.cg_cond,\
@@ -71,7 +73,8 @@ class RegbkGen(SrcGen):
         s += f'{ind[1]}{",input ["+self.regbk.regaddrbw_name+"-1:0]":<{w}} {self.addr_name}\n'
         s += f'{ind[1]}{",input ["+self.regbk.regbw_name+"-1:0]":<{w}} {self.wdata_name}\n'
         s += f'{ind[1]}{",output logic ["+self.regbk.regbw_name+"-1:0]":<{w}} o_{self.rdata_name}\n'
-        s += f'{ind[1]}{",output "+self.regbk.regintr_name:<{w}} {self.ointr_name}\n'
+        if self.regbk.raw_intr_stat:
+            s += f'{ind[1]}{",output "+self.regbk.regintr_name:<{w}} {self.ointr_name}\n'
         s += f'{ind.b});\n'
         yield s
         s = '\n' + ind.b +'endmodule'
@@ -83,7 +86,7 @@ class RegbkGen(SrcGen):
             return self.RegLogicArrStr(w, reg, bw, tp, dim, ind=ind)
         else:
             return self.RegLogicStr(w, reg, bw, tp, ind=ind)
-    def RdataStr(self, reg, _slice, w, rw, ind=None):
+    def RdataStr(self, reg, _slice, w, rw, ind=None, const=False):
         #TODO slice dependent, now it only pad the MSB and it's usually the case
         ind = self.cur_ind.Copy() if not ind else ind
         if rw and rw=='WO':
@@ -91,9 +94,10 @@ class RegbkGen(SrcGen):
         pad = f'{self.regbk.regbw_name}-{reg}{self.regbk.bw_suf}'
         s =f'{ind.b}{reg:<{w[0]}}: {self.rdata_name}_w = '
         pad = '{{'+f'{pad}'+'{1\'b0}}'
-        s += f'{pad:<{w[1]}} ,{reg.lower()}_r}};\n'
+        logic = '' if const else f'{reg.lower()}_r'
+        s += f'{pad:<{w[1]}} ,{logic}}};{"//TODO" if const else ""}\n'
         return s 
-    def RdataArrStr(self, reg, ifelse, w, rw=None, ind=None):
+    def RdataArrStr(self, reg, ifelse, w, rw=None, ind=None, const=False):
         if rw and rw=='WO':
             return ''
         pad = f'{self.regbk.regbw_name}-{reg}{self.regbk.bw_suf}'
@@ -101,7 +105,8 @@ class RegbkGen(SrcGen):
         s +=      f'{ind.b}{"":<9}{self.addr_name}{self.addr_slice} < {reg}+{reg}{self.regbk.arr_num_suf}) begin\n'
         s +=f'{ind[1]}{self.rdata_name}_w = '
         pad = '{{'+f'{pad}'+'{1\'b0}}'
-        s += f'{pad:<{w[1]}} ,{reg.lower()}_r[{self.addr_name}{self.addr_slice}-{reg}]}};\n'
+        logic = '' if const else f'{reg.lower()}_r'
+        s += f'{pad:<{w[1]}} ,{logic}[{self.addr_name}{self.addr_slice}-{reg}]}};{"//TODO" if const else ""}\n'
         s += f'{ind.b}end\n'
         return s 
     def WdataSeqStr(self, reg, _slice, rw=None, dim=None, ind=None):
@@ -208,7 +213,8 @@ class RegbkGen(SrcGen):
         for reg in self.regbk.addrs.enumls:
             bw,tp = gettpbw(reg)
             width, rw, arr= self.regbk.GetAddrCmt(reg.name)
-            s += self.LogicStr( w, reg.name.lower(), bw, tp, arr, ind)
+            if reg.name not in self.omitlogiclst:
+                s += self.LogicStr( w, reg.name.lower(), bw, tp, arr, ind)
         s += f'{ind.b}logic [{self.regbk.regbw_name}-1:0] {self.rdata_name}_w;\n'
         s += '\n'
 
@@ -260,10 +266,11 @@ class RegbkGen(SrcGen):
                 nonarr_reg.append((i, width, rw, arr))
         # array registers
         for i, (reg, width, rw, arr) in enumerate(arr_reg):
+            const = True if reg.name in self.omitlogiclst else False
             if i == 0:
-                s += self.RdataArrStr( reg.name, 'unique if', w, rw, ind+2)
+                s += self.RdataArrStr( reg.name, 'unique if', w, rw, ind=ind+2, const=const)
             else:
-                s += self.RdataArrStr( reg.name, 'else if', w, rw, ind+2)
+                s += self.RdataArrStr( reg.name, 'else if', w, rw, ind=ind+2, const=const)
 
         # non-array registers
         case_ind = 2 if len(arr_reg)==0 else 3
@@ -271,7 +278,8 @@ class RegbkGen(SrcGen):
         s += f'{ind[case_ind]}case ({self.addr_name}{self.addr_slice})\n'
         for reg, width, rw, arr in nonarr_reg:
             _slice = self.regbk.regslices.get(reg.name)
-            s += self.RdataStr( reg.name, _slice, w, rw, ind+case_ind+1)
+            const = True if reg.name in self.omitlogiclst else False
+            s += self.RdataStr( reg.name, _slice, w, rw, ind=ind+case_ind+1, const=const)
         s += f'{ind[case_ind+1]}default: {self.rdata_name}_w = \'0;\n'
         s += f'{ind[case_ind]}endcase\n'
         s += f'{ind[2]}end\n' if len(arr_reg)!= 0 else ''
@@ -282,7 +290,7 @@ class RegbkGen(SrcGen):
         s += f'{ind.b}end\n\n'
         s1 = f'{ind[2]}o_{self.rdata_name} <= \'0;\n' #TODO 
         s2 = f'{ind[2]}o_{self.rdata_name} <= {self.rdata_name}_w;\n' #TODO 
-        s += self.SeqCeStr(s1, s2, ind=ind)
+        s += self.SeqCeStr(s1, s2, ce=self.read_cond, ind=ind)
         if toclip:
             ToClip(s)
         self.regbk = regbktemp
@@ -303,6 +311,8 @@ class RegbkGen(SrcGen):
         s += f'{ind.b}//{"Array GenVar":=^{w}}\n'
         s += f'{ind.b}genvar {gen};\n\n'
         for reg in self.regbk.addrs.enumls:
+            if reg.name in self.omitlogiclst:
+                continue
             _slice = self.regbk.regslices.get(reg.name)
             s += f'{ind.b}//{"reg "+reg.name:=^{w}}\n'
             if reg.name == 'DISABLE':

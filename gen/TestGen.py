@@ -8,8 +8,8 @@ import itertools
 import numpy as np
 from functools import reduce
 class TestGen(SVgen):
-    def __init__(self, ind=Ind(0)):
-        super().__init__()
+    def __init__(self, ind=Ind(0), session=None):
+        super().__init__(session=session)
         self.customlst += ['eventlst', 'pyeventlgclst', 'clk_domain_lst']
         self.eventlst = [   ( 'intr_ev', 'intr_any'),
                             ( 'init_ev', 'init_cond'),                         
