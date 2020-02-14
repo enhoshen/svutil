@@ -68,8 +68,9 @@ class RegbkGen(SrcGen):
         s += f'{ind[1]} input {self.clk_name}\n'
         s += f'{ind[1]},input {self.rst_name}\n'
         s += f'{ind[1]}//TODO protocol\n'
+        yield s
         w = len(self.regbk.regbw_name)+5+7+8
-        s += f'{ind[1]}{",input":<{w}} {self.write_name}\n'
+        s = f'{ind[1]}{",input":<{w}} {self.write_name}\n'
         s += f'{ind[1]}{",input ["+self.regbk.regaddrbw_name+"-1:0]":<{w}} {self.addr_name}\n'
         s += f'{ind[1]}{",input ["+self.regbk.regbw_name+"-1:0]":<{w}} {self.wdata_name}\n'
         s += f'{ind[1]}{",output logic ["+self.regbk.regbw_name+"-1:0]":<{w}} o_{self.rdata_name}\n'
@@ -146,7 +147,8 @@ class RegbkGen(SrcGen):
                 s += f'{ind[1]}//TODO\n{ind.b}end\n'
             else:
                 if comb:
-                    s+= f'{ind[1]}{reg.lower()} = ;//TODO\n'
+                    s += f'{ind[1]}{reg.lower()} = ;//TODO\n'
+                    s += f'{ind.b}end\n'
                 else:
                     s += f'{ind[1]}{reg.lower()}_w = {reg.lower()}_r ;\n'
                     s += f'{ind[1]}//TODO\n{ind.b}end\n'
@@ -162,7 +164,11 @@ class RegbkGen(SrcGen):
                 s += f'{ind[2]}\n'
                 s += self.IntrCombToClip(self.regbk, toclip=False, ind=ind+2)
             else:
-                s += f'{ind[2]}//TODO\n'
+                if comb:
+                    s += f'{ind[2]}{reg.lower()} = ;//TODO\n'
+                else:
+                    s += f'{ind[2]}{reg.lower()}_w = {reg.lower()}_r ;\n'
+                    s += f'{ind[2]}//TODO\n'
             s += f'{ind[1]}end\n{ind.b}end\n'
         return s
     def WdataCombArrStr(self, reg, rw=None, dim=None, comb=None, ind=None):
@@ -179,6 +185,7 @@ class RegbkGen(SrcGen):
             else:
                 if comb:
                     s += f'{ind[1]}{reg.lower()}[{dim}] = ;//TODO\n'
+                    s += f'{ind.b}end\n'
                 else:
                     s += f'{ind[1]}{reg.lower()}_w[{dim}] = {reg.lower()}_r[{dim}] ;\n'
                     s += f'{ind[1]}//TODO\n{ind.b}end\n'
@@ -194,7 +201,11 @@ class RegbkGen(SrcGen):
                 s += f'{ind[2]}\n'
                 s += self.IntrCombToClip(self.regbk, toclip=False, ind=ind+2)
             else:
-                s += f'{ind[2]}//TODO\n'
+                if comb:
+                    s += f'{ind[2]}{reg.lower()}[{dim}] = ;//TODO\n'
+                else:
+                    s += f'{ind[2]}{reg.lower()}_w[{dim}] = {reg.lower()}_r[{dim}] ;\n'
+                    s += f'{ind[2]}//TODO\n'
             s += f'{ind[1]}end\n{ind.b}end\n'
         return s
     def IntrCombStr(self, intr_logic, intr_field, ind=None):
@@ -414,7 +425,7 @@ class RegbkGen(SrcGen):
         regbkban = self.Line3BannerBlk( banw, '//', 'Reg bank') 
         rdata = self.Str2Blk(self.RdataToClip, pkg, False)
         wdata = self.Str2Blk(self.WdataToClip, pkg, False)
-        s = self.Genlist ( [(mod,), [Ind,logicban], [Ind,logic], [Ind,seqban], [Ind,seq], [Ind,regbkban], [Ind,rdata], [Ind,wdata],  mod] )
+        s = self.Genlist ( [(mod,), mod, [Ind,logicban], [Ind,logic], [Ind,seqban], [Ind,seq], [Ind,regbkban], [Ind,rdata], [Ind,wdata],  mod] )
         ToClip(s)
         p = self.FileWrite( self.regbkstr, s, 'sv', overwrite=overwrite)
         self.print ('Regbk file write to', p) 
