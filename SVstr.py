@@ -122,6 +122,7 @@ class SVstr(SVutil):
         self.s = self.s.lstrip()
         num = []
         while(1):
+            self.print(self.s, verbose='BracketParse')
             if self.End() or self.s[0] != bracket[0]:
                 break
             rbrack = self.s.find(bracket[1])

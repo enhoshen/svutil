@@ -384,6 +384,7 @@ class NicoUtil(PYUtil):
         self.dut = self.session.hiers.get(self.dutname)
         self.top = self.session.hiers.get(TOPMODULE)
         self.dutfile = self.session.hiers.get(self.dutname+'_sv')
+        self.ev = EventTrigger()
     def TopTypes(self):
         self.session = self.SBC.TopTypes()
     def AllTypes(self):

@@ -161,6 +161,7 @@ if __name__ == "__main__":
     from gen.BannerGen import BannerGen
     session = SVparseSession(V_(VERBOSE))
     session.FileParse(None)
+    hiers = EAdict(session.hiers)
     gTest = TestGen(session=session)
     gRegbk = RegbkGen(session=session)
     gDrawio = DrawioGen(session=session)
