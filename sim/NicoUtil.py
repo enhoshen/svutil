@@ -114,28 +114,28 @@ class StructBusCreator():
                 StructBusCreator(k,v)
         return S
     @classmethod
-    def Get(cls,t,name,hier='',dim=()):
+    def Get(cls,t,name,hier='',dim=(),dtype=np.int32):
         if dim == ():
-            return cls.structlist[t].CreateStructBus(name,hier,dim)
+            return cls.structlist[t].CreateStructBus(name,hier,dim, dtype=dtype)
         else:
-            return cls.structlist[t].MDACreateStructBus(name,hier,dim)
+            return cls.structlist[t].MDACreateStructBus(name,hier,dim, dtype=dtype)
     @classmethod
     def Reset(cls):
         cls.structlist = {}
-    def CreateStructBus (self, signalName , hier='',DIM=() ):
+    def CreateStructBus (self, signalName , hier='',DIM=(), dtype=None ):
         #buses = {'logic' :  CreateBus( self.createTuple(signalName) )}
         buses = []
         attrs = self.structlist[self.structName].attrs
         if not attrs:
-            return  CreateBus( ((hier, signalName, DIM),) ) 
+            return  CreateBus( ((hier, signalName, DIM, dtype),) ) 
         else:
             for  n , bw, dim ,t ,*_ in attrs :
                 if t=='logic':
-                    buses.append ( CreateBus( ((hier, signalName+'.'+n ,DIM+dim),) ) )
+                    buses.append ( CreateBus( ((hier, signalName+'.'+n ,DIM+dim, dtype),) ) )
                 elif t == 'enum':
-                    buses.append ( CreateBus( ((hier, signalName , DIM+dim ),) ) )
+                    buses.append ( CreateBus( ((hier, signalName , DIM+dim, dtype),) ) )
                 else:
-                    buses.append ( self.structlist[t].CreateStructBus( signalName+'.'+n , hier, DIM+dim ) )
+                    buses.append ( self.structlist[t].CreateStructBus( signalName+'.'+n , hier, DIM+dim, dtype) )
         return StructBus(self.structName,signalName,attrs,buses)
     def MDACreateStructBus ( self, signalName, hier='', DIM=()):
         buses = []

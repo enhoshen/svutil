@@ -38,6 +38,7 @@ class EAdict():  #easy access
         elif type(items) == list:
             self.dic = { v:i for i,v in enumerate(items) }
         else:
+            print("un-supported type for EAdict")
             raise TypeError
     def __getattr__(self, n):
         return self.dic[n]

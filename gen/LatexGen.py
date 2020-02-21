@@ -91,7 +91,7 @@ class LatexGen(SVgen):
         reg_bw_str=regdesp.reg_bw_str
         rw=regdesp.rw
         arr=regdesp.arr
-        desp = regdesp
+        desp = regdesp.desp
 
         ind = Ind(1)
         name = self.L_(reg.name)
@@ -102,7 +102,7 @@ class LatexGen(SVgen):
         s += f'{{{hex(ofs).upper().replace("X","x")}}}{{{reg_bw}}}{{{rw}}}{{\n'
         s += f'{ind[1]}\\memDES{{\n'
         if desp is None:
-            s += f'{ind[2]}\\TODO\n' if arr == '' else f'{ind[2]}Array register of size {name}{arr_suf}\n'
+            s += f'{ind[2]}\\TODO\n' if arr == '' else f'{ind[2]}Array register of size {name}{arr_suf}.\n'
         else:
             s += desp + '\n'
         s += f'{ind[1]}}}{{\n'
@@ -222,7 +222,7 @@ class LatexGen(SVgen):
             reg_bw = width if not reg_bw else reg_bw
             reg_bw_str = width if not reg_bw_str else reg_bw_str
             desp = None 
-            regdesp = RegDesp( regbk.regbsize, reg_slices, defaults, reg_bw, reg_bw_str, rw, arr,
+            regdesp = RegDesp( regbk.regbsize, reg_slices, defaults, reg_bw, reg_bw_str, rw, arr, desp,
                                 memblst=[   'reg_bsize', 
                                             'reg_slices',
                                             'reg_defaults',

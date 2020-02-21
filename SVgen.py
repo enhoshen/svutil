@@ -162,8 +162,11 @@ if __name__ == "__main__":
     session = SVparseSession(V_(VERBOSE))
     session.FileParse(None)
     hiers = EAdict(session.hiers)
-    gTest = TestGen(session=session)
-    gRegbk = RegbkGen(session=session)
-    gDrawio = DrawioGen(session=session)
-    gLatex = LatexGen(session=session)
+    try:
+        gTest = TestGen(session=session)
+        gRegbk = RegbkGen(session=session)
+        gDrawio = DrawioGen(session=session)
+        gLatex = LatexGen(session=session)
+    except:
+        pass
     gBanner = BannerGen()
