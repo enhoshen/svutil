@@ -2,6 +2,7 @@ from nicotb import *
 from SVparse import *
 from SVclass import *
 from SVsim   import *
+import colorama
 import os
 import itertools
 import numpy as np
@@ -191,17 +192,22 @@ class RegbkMaster(SVutil):
                 OneWire.Master: self.RegWriteAddrIt,\
                 Apb.Master: self.RegWriteIt
             }
-        self.regfieldfmt = lambda f, endl=f'\n{"":>8}': f'{endl+"Reg fields:"+f.__str__()+endl if f else ""}'
-        self.addrfmt = lambda addr: f'Address: {addr.__str__():<5}'
-        self.wdatafmt = lambda wdata: f'{"written: "+hex(wdata):<10}'
-        self.regfmt  = lambda reg, offset, rw, w: f'Register bank {"write" if rw else "read":>5}:{reg.__str__()+offset.__str__():<{w}}'
-        self.rdatafmt = lambda x : x.__str__()
+        self.ac= f'{colorama.Fore.YELLOW}' # attribute color
+        self.cr= f'{colorama.Style.RESET_ALL}' # color reset
+        self.regfieldfmt = lambda f, endl=f'\n{"":>8}': f'{endl}{self.ac}Reg fields: {self.cr}{f.__str__()}{endl}' if f else '' 
+        self.addrfmt = lambda addr: f'{self.ac}Address:{self.cr} {addr.__str__():<5}'
+        self.regfmt  = lambda reg, offset, rw, w: f'{self.ac}Register bank {"write" if rw else "read":>5}:{self.cr}{reg.__str__()+offset.__str__():<{w}}'
+        self.rdfmt  = f'{self.ac}Read data: {self.cr}'
+        self.rdatafmt = lambda rdata : rdata.__str__()
         self.readfmt = lambda reg, offset, addr, dlst, regfields, w:\
-                            f'{self.regfmt(reg, offset, False, w)} {self.addrfmt(addr)} {"read data: "+self.rdatafmt(dlst):<5} {self.regfieldfmt(regfields)}'
-        self.wdataorigfmt = lambda x: x.__str__()
+                            f'{self.regfmt(reg, offset, False, w)} {self.addrfmt(addr)}{self.rdfmt+self.rdatafmt(dlst):<5} {self.regfieldfmt(regfields)}'
+        self.wrfmt = f'{self.ac}Written: {self.cr}'
+        self.wdatafmt = lambda wdata: hex(wdata)
+        self.wrorigfmt = f'{self.ac}Original: {self.cr}'
+        self.wdataorigfmt = lambda data: data.__str__()
         self.writefmt = lambda reg, rw,  offset, addr, wdata, regfields, data, w:\
-                            f'{self.regfmt(reg, offset, rw, w)} {self.addrfmt(addr)}{self.wdatafmt(wdata)} '\
-                            + f'{self.regfieldfmt(regfields)} {" original:"+self.wdataorigfmt(data)}' 
+                            f'{self.regfmt(reg, offset, rw, w)} {self.addrfmt(addr)}{self.wrfmt}{self.wdatafmt(wdata):>10} '\
+                            + f'{self.regfieldfmt(regfields)}{self.wrorigfmt}{self.wdataorigfmt(data)}' 
     def Write(self):
         self.addr.Write()
         self.rw.Write()
