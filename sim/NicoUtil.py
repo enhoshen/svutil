@@ -195,11 +195,13 @@ class RegbkMaster(SVutil):
         self.addrfmt = lambda addr: f'Address: {addr.__str__():<5}'
         self.wdatafmt = lambda wdata: f'{"written: "+hex(wdata):<10}'
         self.regfmt  = lambda reg, offset, rw, w: f'Register bank {"write" if rw else "read":>5}:{reg.__str__()+offset.__str__():<{w}}'
+        self.rdatafmt = lambda x : x.__str__()
         self.readfmt = lambda reg, offset, addr, dlst, regfields, w:\
-                            f'{self.regfmt(reg, offset, False, w)} {self.addrfmt(addr)} {"read data: "+dlst.__str__():<5} {self.regfieldfmt(regfields)}'
+                            f'{self.regfmt(reg, offset, False, w)} {self.addrfmt(addr)} {"read data: "+self.rdatafmt(dlst):<5} {self.regfieldfmt(regfields)}'
+        self.wdataorigfmt = lambda x: x.__str__()
         self.writefmt = lambda reg, rw,  offset, addr, wdata, regfields, data, w:\
                             f'{self.regfmt(reg, offset, rw, w)} {self.addrfmt(addr)}{self.wdatafmt(wdata)} '\
-                            + f'{self.regfieldfmt(regfields)} {" original:"+data.__str__()}' 
+                            + f'{self.regfieldfmt(regfields)} {" original:"+self.wdataorigfmt(data)}' 
     def Write(self):
         self.addr.Write()
         self.rw.Write()
@@ -254,7 +256,8 @@ class RegbkMaster(SVutil):
                     self.print( self.readfmt(reg, offset, addr,  dlst, rf, w), verbose=1, trace=2)
                 else:
                     self.print(self.writefmt(reg, rw,  offset, addr, wdata, regfields, data, w), verbose=1, trace=2)
-            self.master.callbacks = [MsgCb] + orig_cb
+            if self.verbose == 1:
+                self.master.callbacks = [MsgCb] + orig_cb
             yield (addr, wdata, rw)
             self.master.callbacks = orig_cb
     def RegWriteAddrIt (self, regseq, rwseq, dataseq):
@@ -272,7 +275,7 @@ class RegbkMaster(SVutil):
             self.wdata.value = wdata
             self.write.Write()
             self.wdata.Write()
-            yield addr.value
+            yield self.addr.value
 class ThreadCreator(SVutil):
     ''' Helper class for creating simulation threads. '''
     def __init__(self, ck_ev):

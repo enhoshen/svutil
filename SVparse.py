@@ -343,7 +343,8 @@ class SVparse(SVutil):
         return paths
     #TODO Testbench sv file parse
     def Readfile(self , path):
-        self.print(f'{"":>{SVparse.path_level*4}}',path, verbose=1)
+        path = os.path.normpath(path)
+        self.print(f'{"":>{SVparse.path_level*4}}{path}', trace=2, verbose=1)
         self.f = open(path , 'r')
         self.cur_path = path
         self.lines = iter(self.f.readlines())

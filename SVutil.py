@@ -1,6 +1,7 @@
 import os
 import inspect
 import logging
+import colorama
 class SVutil():
     trace_format_width = 0
     def __init__(self, verbose=None):
@@ -14,7 +15,7 @@ class SVutil():
     def Verbose(self, v):
         ''' set verbose level '''
         self.verbose = v if v else 0
-    def print(self,*arg,verbose=None, trace=1, level=None,**kwarg):
+    def print(self,*arg,verbose=None, trace=1, level=None, color=None,**kwarg):
         '''
             Customized message print controlled with verbose level for each messages seperately
             and trace setting for code tracing configuration 
@@ -27,15 +28,17 @@ class SVutil():
         '''
         level = level if level else 0
         ins = inspect.getframeinfo(inspect.currentframe().f_back)
-        ins = self.Trace(ins, trace)
-        if not verbose:
-            print(ins,*arg,**kwarg)
+        if color and color[0] == '\033':
+            pass
+        else:
+            color = colorama.Fore.__dict__.get(color); color = '' if not color else color
+        ins = f'{colorama.Fore.CYAN}'+ self.Trace(ins, trace) + f'{colorama.Style.RESET_ALL}' + color
         try:
             if self.level >= level and verbose == self.verbose:
-                print(ins, *arg,**kwarg)
+                print(ins, *arg, f'{colorama.Style.RESET_ALL}', **kwarg)
         except:
-            if verbose == self.verbose:
-                print(ins, *arg,**kwarg)
+            if verbose == self.verbose or verbose is None:
+                print(ins, *arg, f'{colorama.Style.RESET_ALL}', **kwarg)
     def Trace(self, ins, trace):
         ''' code tracing using inspect module '''
         home = os.environ.get('HOME','')
@@ -47,6 +50,8 @@ class SVutil():
         if trace == 1:
             return f'[{fn:<{w}},line:{ins.lineno}, in {ins.function}]'
         if trace == 2:
+            return f'[{fn:<{w}}, in {ins.function}]'
+        if trace == 3:
             return f'[{fn:<{w}}, in {ins.function}]'
     def Custom(self):
         self.print('Customizable variable: ', trace=2)
