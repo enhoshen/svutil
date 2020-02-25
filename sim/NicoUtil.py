@@ -46,6 +46,13 @@ class StructBus():
     #def Write(self, imm=False):
     #    [ x.Write(imm) for x in self.buses ]
     def Write(self, *lst, imm=False ):
+        '''
+            Apply Write() on the elements
+            if lst is not provided, write every elements
+            lst could be a list of bus names,
+            or it could be seperated arguments of bus names.
+            Ex: Write('a','b') equals Write(['a','b'])
+        '''
         if not lst:
             [ x.Write(imm=imm) for x in self.buses ]
         else:
@@ -149,10 +156,18 @@ class StructBusCreator():
 class Busdict (EAdict):
     def Flatten(self, lst):
         return self.Flatten(lst[0]) + (self.Flatten(lst[1:]) if len(lst) > 1 else []) if type(lst) == list else [lst]
-    def Read(self):
-        [ [i.Read() for i in self.Flatten(x)] if type(x) == list\
-         else x.Read() for x in self.dic.values() ]
-    def Write(self, *lst, imm=False, ):
+    def Read(self, *lst):
+        if not lst:
+            [ [i.Read() for i in self.Flatten(x)] if type(x) == list\
+             else x.Read() for x in self.dic.values() ]
+        else:
+            if len(lst)==1 and type(lst[0])==list:
+                [ [i.Read() for i in self.Flatten(x)] if type(x) == list\
+                 else self.dic[x].Read() for x in lst[0]]
+            else:
+                [ [i.Read() for i in self.Flatten(x)] if type(x) == list\
+                 else self.dic[x].Read() for x in lst ]
+    def Write(self, *lst, imm=False ):
         if not lst:
             [ [i.Write(imm=imm) for i in self.Flatten(x)] if type(x) == list\
                 else x.Write(imm=imm) for x in self.dic.values() ]
@@ -294,7 +309,7 @@ class ThreadCreator(SVutil):
         yield from INITS[cfg]()
         yield from RESPS[cfg]()
         yield from FINS [cfg]()
-        self.print('Sim done')
+        self.print('Sim done', trace=3)
 class EventTrigger(SVutil):
     ''' Helper class for triggering a python event at the same time write to a nicotb bus '''
     # TODO
@@ -333,13 +348,13 @@ class EventTrigger(SVutil):
         ev_bus.value[0] = 1 if high else 0
         ev_bus.Write()
         yield self.clk
-        self.print( f'Event bus {name} level triggered')
+        self.print( f'Event bus {name} level triggered', trace=3)
     def SVSigTriggerEdge(self, name, high=True):
         ev_bus = CreateBus((name,))
         ev_bus.value[0] = 1 if high else 0
         ev_bus.Write()
         yield self.clk
-        self.print( f'Event bus {name} edge triggered')
+        self.print( f'Event bus {name} edge triggered', trace=3)
         ev_bus.value[0] = 0
         ev_bus.Write()
     def SVSigTriggerPulse(self, name, high=True): 
@@ -347,7 +362,7 @@ class EventTrigger(SVutil):
         ev_bus.value[0] = 1 if high else 0
         ev_bus.Write()
         yield self.clk
-        self.print( f'Event bus {name} pulse triggered')
+        self.print( f'Event bus {name} pulse triggered', trace=3)
         yield from itertools.repeat(self.clk, self.width-1)
         ev_bus.value[0] = 0 if high else 1
     @property

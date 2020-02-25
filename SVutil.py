@@ -28,10 +28,13 @@ class SVutil():
         '''
         level = level if level else 0
         ins = inspect.getframeinfo(inspect.currentframe().f_back)
-        if color and color[0] == '\033':
-            pass
-        else:
-            color = colorama.Fore.__dict__.get(color); color = '' if not color else color
+        if color is None:
+            color = ''
+        else: 
+            if color[0] == '\033':
+                pass
+            else:
+                color = colorama.Fore.__dict__.get(color); color = '' if not color else color
         ins = f'{colorama.Fore.CYAN}'+ self.Trace(ins, trace) + f'{colorama.Style.RESET_ALL}' + color
         try:
             if self.level >= level and verbose == self.verbose:
@@ -45,14 +48,12 @@ class SVutil():
         fn = ins.filename.replace(home,"")
         self.trace_format_width = max(self.trace_format_width, len(fn))
         w = self.trace_format_width
-        if not trace:
-            return '' 
-        if trace == 1:
-            return f'[{fn:<{w}},line:{ins.lineno}, in {ins.function}]'
-        if trace == 2:
-            return f'[{fn:<{w}}, in {ins.function}]'
-        if trace == 3:
-            return f'[{fn:<{w}}, in {ins.function}]'
+        Trace = { None:''
+                    ,0:f'[SVutil]'
+                    ,1:f'[{fn:<{w}},line:{ins.lineno}, in {ins.function}]'
+                    ,2:f'[{fn:<{w}}, in {ins.function}]'
+                    ,3:f'[{os.path.basename(fn)}, in {ins.function}]'}
+        return Trace[trace]
     def Custom(self):
         self.print('Customizable variable: ', trace=2)
         w = len(max(self.customlst, key=len))

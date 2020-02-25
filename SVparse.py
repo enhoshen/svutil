@@ -312,13 +312,13 @@ class SVparse(SVutil):
         pass
     @classmethod
     def ParseFiles(cls , paths=[(True,INC)] ):
-        print ('[SVparse]:project path:', PROJECT_PATH,', include path:', INC)
-        print("[SVparse]:assumed base path of the project:", cls.base_path)
+        SVutil().print ('project path:', PROJECT_PATH,', include path:', INC, trace=0)
+        SVutil().print("assumed base path of the project:", cls.base_path, trace=0)
         cls.ARGSParse()
         for p in paths:
             if not p[1] == '':
                 cls.paths.append(f'{cls.include_path}{p[1]}.sv' if p[0] else p[1] )
-        print('[SVparse]:parsing list:',cls.paths)
+        SVutil().print('parsing list:',cls.paths, trace=0)
         for p in cls.paths:
             n = (p.rsplit('/',maxsplit=1)[1] if '/' in p else p ).replace('.','_')
             cur_parse = SVparse( n , cls.gb_hier)
