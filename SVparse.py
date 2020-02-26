@@ -519,8 +519,8 @@ class SVparse(SVutil):
                 f = SVhier.typefield
                 if len(tp)==1:
                     _tp = self.package[_pkg].types.get(tp[0][f.tp])
-                    if tp:
-                        self.cur_hier.types[tp[0][f.tp]] = tp 
+                    if _tp:
+                        self.cur_hier.types[tp[0][f.tp]] = _tp 
                 else:
                     for t in tp:
                         _tp = self.package[_pkg].types.get(t[f.tp])

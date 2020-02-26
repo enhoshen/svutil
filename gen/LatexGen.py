@@ -9,11 +9,15 @@ import numpy as np
 import re
 class LatexGen(SVgen):
     # TODO $clog2 in latex
-    def __init__(self, session=None):
+    def __init__(self, session=None, regbk=None, dut=None):
         super().__init__(session=session)
         self.customlst = ['default_input_delay']
         self.default_input_delay = 30
-        self.regbk= SVRegbk(self.regbk) if self.regbk else None
+        if regbk and type(regbk)==str:
+            self.regbk= SVRegbk(self.session.hiers.get(regbk))
+        else:
+            self.regbk= SVRegbk(self.regbk) if self.regbk else None
+        self.dut = dut if dut else self.dut
     def Reload(self):
         self.session.Reload()
         self.regbk= SVRegbk(self.regbk) if self.regbk else None
@@ -143,7 +147,7 @@ class LatexGen(SVgen):
         if reg_slices[0][0] == self.cur_regbk.reserved_name:
             s += f'{ind[1]}\\regfield{{{reg_slices[0][1]}}}{{RESERVED}}{{N/A}}{{reserved}}\n'
             reg_slices.pop(0)
-        self.print( reg_types)
+        self.print( reg_types, verbose='RegFieldStr')
         for _slice, _type, _membtype, _default, _desp in zip(reg_slices, reg_types, reg_membtypes, reg_defaults, desp):
             _slice_name = _slice[0].replace('_', '\_')
             s += f'{ind[1]}\\regfield{{{_slice[1]}}}{{{_slice_name}}}{{{rw}}}{{\n'

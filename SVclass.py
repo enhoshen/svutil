@@ -183,8 +183,9 @@ class SVRegbk(SVutil):
         for i,v in pkg.types.items():
             while True:
                 _v = v[0]
-                if len(v)==1 and pkg.types.get(SVType(_v).tp):
-                    v = pkg.types.get(SVType(_v).tp)
+                subt = pkg.types.get(SVType(_v).tp)
+                if len(v)==1 and subt:
+                    v = subt 
                 else:
                     break
             _v = [ SVType(vv) for vv in v]
