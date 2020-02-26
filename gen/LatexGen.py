@@ -178,6 +178,7 @@ class LatexGen(SVgen):
         s += f'{ind[1]}\\end{{paragitemize}}\n'
         return s
     def DespStr ( self, enuml, ind ):
+        self.print(enuml)
         desp = f'{ind[2]}\\\\\n'
         for e in enuml:
             _s = e.replace('_','\_')

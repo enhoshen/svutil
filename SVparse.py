@@ -492,7 +492,7 @@ class SVparse(SVutil):
         n = s.IDarrParse()
         for _n in n:
             self.cur_hier.enums[_n] = ( enum_name, enum_num , cmts, idxs, sizes, name_bases )
-        return [( _n,bw.Slice2num(self.cur_hier.Params, self.cur_hier.AllMacro),() , 'enum' , enums, cmts ) for _n in n]
+        return [( _n,bw.Slice2num(self.cur_hier.Params, self.cur_hier.AllMacro),() , 'enum' , enum_name, cmts ) for _n in n]
         
     def ImportParse(self, s , lines):
         s = s.split(';')[0]
