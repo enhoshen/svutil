@@ -300,8 +300,7 @@ class SVRegbk(SVutil):
         else:
             pass
         for f, d in zip( regfieldlst, datalst):
-            msk = (1 << f) -1
-            data = (data & msk) + (d << f )
+            data = data  + (d << f )
         msk = ( 1 << self.regbw) -1 
         data = data & msk
         return data
@@ -314,8 +313,18 @@ class SVRegbk(SVutil):
         '''
         datalst = []
         for s, e in zip(regfieldlst, regfieldlst[1:]+[self.regbw]):
-            self.print( s, e, e-s, verbose=3)
-            msk = ((1 << s) -1) ^ ((1 << e) -1) if s!=e else (1 << s)
-            self.print ( bin(msk), verbose=3)
+            msk = (1 << e) -1 
             datalst.append((data & msk) >> s)
         return datalst[0] if len(datalst)==1 else datalst
+    def RegfieldUnitTest(self):
+        field = [    [0,5,17,30,31]
+                    ,[0,8,15]]
+        datalst = [  [31, 1033, 2033, 0, 1]
+                    ,[56, 22,55]]
+        err = []
+        for f,d in zip(field, datalst):
+            _d = self.RegfieldExtract(f, self.RegfieldPack(f, d))
+            self.print(_d)
+            err += [_d==d]
+        return err 
+    
