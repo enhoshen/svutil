@@ -31,7 +31,7 @@ class LatexGen(SVgen):
         s = ''
         desp='\n'
         memblist = []
-        tp = self.cur_module.AllType.get(param_tp)  
+        tp = self.session.TypeGet(param_tp, self.cur_module)
         if tp: 
             desp += self.DespStr(tp[0][tpfield.enumliteral], ind)
         name = self.L_(param[pfield.name])
@@ -46,12 +46,13 @@ class LatexGen(SVgen):
         sig_tp = sig.tp
         s = ''
         memblist = []
-        if self.cur_module.AllType.get(sig_tp):
-            tp = [SVType(i) for i in self.cur_module.AllType.get(sig_tp)]
+        #if self.cur_module.AllType.get(sig_tp):
+        if self.session.TypeGet(sig_tp, self.cur_module):
+            tp = [SVType(i) for i in self.session.TypeGet(sig_tp, self.cur_module)]
         else:
-            tp = None
+            tp = [None]
         if sig_tp != 'logic' and sig_tp != 'logic signed' and len(tp) != 1: 
-            for memb in self.cur_module.AllType[sig_tp]:
+            for memb in self.session.TypeGet(sig_tp, self.cur_module):
                 memb = SVType(memb)
                 name = self.L_(sig.name+'.'+memb.name +' '+sig.dimstr)
                 width = str(memb.bw)
@@ -60,7 +61,8 @@ class LatexGen(SVgen):
                     width = width.split('-')[0][1:]
                 io = sig.direction
                 io = 'Input' if io =='input' else 'Output'
-                memb_tp = self.cur_module.AllType.get(memb.tp)
+                #memb_tp = self.cur_module.AllType.get(memb.tp)
+                memb_tp = self.session.TypeGet(sig_tp, self.cur_module)
                 desp='\\TODO\n'
                 if memb_tp :
                     memb_tp = [SVType(i) for i in memb_tp]
@@ -72,7 +74,10 @@ class LatexGen(SVgen):
             if sig_tp =='enum' :
                 desp += self.DespStr(sig.enumliteral, ind)
             if (sig_tp!='logic' and sig_tp!='logic signed' and len(tp)==1 ):
-                desp += self.DespStr(tp[0].enumliteral, ind)
+                try:
+                    desp += self.DespStr(tp[0].enumliteral, ind)
+                except:
+                    self.print(tp, sig_tp)
             name = self.L_(sig.name+' '+sig.dimstr)
             width = '1' if sig.bwstr == '' else sig.bwstr.replace('_','\_')
             active = 'LOW' if name[-2:] == '_n' else  ( 'HIGH' if width =='1' and not 'clk' in sig.name else 'N/A' )
@@ -178,7 +183,6 @@ class LatexGen(SVgen):
         s += f'{ind[1]}\\end{{paragitemize}}\n'
         return s
     def DespStr ( self, enuml, ind ):
-        self.print(enuml)
         desp = f'{ind[2]}\\\\\n'
         for e in enuml:
             _s = e.replace('_','\_')
@@ -193,10 +197,10 @@ class LatexGen(SVgen):
         clk = None
         for p in module.ports:
             name = p[pfield.name]
-            if not 'rst' in name:
-                s += self.SignalStr(p, clk)
+            if 'rst' in name or 'clk' in name:
+                s += self.SignalStr(p, '\\TODO')
             else:
-                s += self.SignalStr(p, None)
+                s += self.SignalStr(p, clk)
             if 'clk' in name:
                 clk = name.replace('_','\_')
         ToClip(s)

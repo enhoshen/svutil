@@ -291,6 +291,8 @@ class SVRegbk(SVutil):
             regfieldlst consists of a list
             Ex: [0,6,31]; the first data will be packed to data[5:0], then data[30:6] and data[31]
             this list corresponds to self.regfield['reg name'].nums
+            If the last field reaches the MSB of the register, don't specify the end.
+            Ex: [0,16] indicates two 16bit field on a 32b register
         '''
         data = 0
         try:

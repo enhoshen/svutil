@@ -154,7 +154,7 @@ class SVstr(SVutil):
             return func,args
         else:
             return func, []
-    def NumParse(self,params,macros=None):
+    def NumParse(self,params,macros=None, package=None):
         '''
             split the equal sign at the start of the string
             return left string as num, meaning that it converts
@@ -165,12 +165,12 @@ class SVstr(SVutil):
         _s = self.lstrip('=') 
         if macros:
             _s = SVstr(_s.MultiMacroExpand(macros))
-        num = _s.S2num(params)
+        num = _s.S2num(params, package)
         self.s = ''
         return num 
     def Arit2num(self, s):
         pass
-    def S2num(self,params):
+    def S2num(self,params, package=None):
         _s = self.s.lstrip()
         if '$clog2' in _s:
             _temp = self.s.split('(')[1].split(')')[0] 
@@ -180,7 +180,7 @@ class SVstr(SVutil):
         for w in _s_no_op:
             if '::' in w:
                 _pkg , _param = w.split('::')
-                _s = _s.replace(_pkg+'::'+_param,str(SVparse.package[_pkg].params[_param]) )
+                _s = _s.replace(_pkg+'::'+_param,str(package[_pkg].params[_param]) )
             for p in params:    
                 if w in p:
                     _s = re.sub(rf'\b{w}\b', str(p[w]), _s)

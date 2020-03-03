@@ -417,7 +417,7 @@ class SVparse(SVutil):
         numstr = s.rstrip().rstrip(';').rstrip(',').s.lstrip('=').lstrip()
         numstrlst = SVstr(numstr).S2lst()
         #num =self.cur_hier.params[name]=s.lstrip('=').S2num(self.cur_hier.Params)
-        num = self.cur_hier.params[name] = s.NumParse(self.cur_hier.Params, self.cur_hier.AllMacro)
+        num = self.cur_hier.params[name] = s.NumParse(self.cur_hier.Params, self.cur_hier.AllMacro, self.package)
         self.cur_hier.paramsdetail[name] = ( name ,\
                                              self.Tuple2num(dim) ,\
                                              tp,\
@@ -747,7 +747,7 @@ class SVparse(SVutil):
         cmt = _s.CommentParse()  
         return ( _s.rstrip() , cmt ) 
     def Tuple2num(self, t ):
-        return tuple(map(lambda x : SVstr(x).NumParse(params=self.cur_hier.Params, macros=self.cur_hier.AllMacro) ,t))
+        return tuple(map(lambda x : SVstr(x).NumParse(params=self.cur_hier.Params, macros=self.cur_hier.AllMacro, package=self.package) ,t))
     def Tuple2str(self, t):
         return reduce(lambda x,y : x+f'[{y}]' , t , '')
     def Bw2num(self, bw):
@@ -768,7 +768,7 @@ class SVparse(SVutil):
             _name = _s.IDParse()
             bw = _s.BracketParse()
             bw = SVstr(bw[0]).Slice2TwoNum(_params, macros) if bw else SVstr('').Slice2TwoNum(_params, macros)
-            _num = _s.NumParse(_params,self.cur_hier.AllMacro) 
+            _num = _s.NumParse(_params,self.cur_hier.AllMacro, self.package) 
             if type(bw)==tuple:
                 bw = (0,bw[1]-1) if bw[0]=='' else bw
                 for i in range (bw[1]-bw[0]+1):
@@ -898,8 +898,20 @@ class SVparseSession(SVutil):
     def Reload(self, paths=None):
         self.Reset()
         self.FileParse(paths)
-    def TopAllParamEAdict():
+    def TopAllParamEAdict(self):
         return EAdict(self.gb_hier[TOPMODULE].AllParams)
+    def ParamGet(self, s, svhier):
+        if '::' in s:
+            _pkg , _param = s.split('::')
+            return self.package[_pkg].params[_param] 
+        else:
+            return svhier.AllParams.get(s) 
+    def TypeGet(self, s, svhier):
+        if '::' in s:
+            _pkg , _type= s.split('::')
+            return self.package[_pkg].types[_type] 
+        else:
+            return svhier.AllType.get(s) 
 
 if __name__ == '__main__':
 
