@@ -68,7 +68,7 @@ class SVstr(SVutil):
             self.s = _s.split('//')[0] 
             return _s.split('//')[1:]
         else:
-            return ''
+            return '' 
     def IDParse (self):
         '''
             find one identifier at the start of the string

@@ -20,7 +20,6 @@ class RegbkGen(SrcGen):
     """
     def __init__(self, ind=Ind(0), session=None):
         super().__init__(session=session)
-        self.V_(VERBOSE) 
         self.regbkhier = self.regbk
         self.regbk= SVRegbk(self.regbkhier) if self.regbkhier else None
         self.customlst += [ 'addr_name',

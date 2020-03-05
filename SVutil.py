@@ -16,15 +16,6 @@ except:
 
     def code_to_chars(code):
         return CSI + str(code) + 'm'
-
-    def set_title(title):
-        return OSC + '2;' + title + BEL
-
-    def clear_screen(mode=2):
-        return CSI + str(mode) + 'J'
-
-    def clear_line(mode=2):
-        return CSI + str(mode) + 'K'
     class AnsiCodes(object):
         def __init__(self):
             # the subclasses declare class attributes which are numbers.
@@ -34,7 +25,6 @@ except:
                 if not name.startswith('_'):
                     value = getattr(self, name)
                     setattr(self, name, code_to_chars(value))
-
     class AnsiFore(AnsiCodes):
         BLACK           = 30
         RED             = 31
@@ -55,7 +45,6 @@ except:
         LIGHTMAGENTA_EX = 95
         LIGHTCYAN_EX    = 96
         LIGHTWHITE_EX   = 97
-
 
     class AnsiStyle(AnsiCodes):
         BRIGHT    = 1

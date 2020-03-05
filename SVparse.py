@@ -8,20 +8,21 @@ from subprocess import Popen, PIPE
 from functools import reduce
 from SVutil import SVutil, V_
 from SVstr import *
-#Nico makefile specified
-ARGS = os.environ.get('ARGS','')
-TOPMODULE = os.environ.get('TOPMODULE','')
-TEST = os.environ.get('TEST','')
-#SVutil optional specified
-SVutilenv = os.environ.get('SVutil','')
-TESTMODULE = os.environ.get('TESTMODULE','')
-SV = os.environ.get('SV','')
-TOPSV = os.environ.get('TOPSV','')
-INC = os.environ.get('INC','')
-HIER= os.environ.get('HIER','')
-REGBK= os.environ.get('REGBK','')
-PROJECT_PATH = os.environ.get('PROJECT_PATH','')
-VERBOSE = os.environ.get('VERBOSE',0)
+class GBV(SVutil):
+    #Nico makefile specified
+    ARGS = os.environ.get('ARGS','')
+    TOPMODULE = os.environ.get('TOPMODULE','')
+    TEST = os.environ.get('TEST','')
+    #SVutil optional specified
+    SVutilenv = os.environ.get('SVutil','')
+    TESTMODULE = os.environ.get('TESTMODULE','')
+    SV = os.environ.get('SV','')
+    TOPSV = os.environ.get('TOPSV','')
+    INC = os.environ.get('INC','')
+    HIER= os.environ.get('HIER','')
+    REGBK= os.environ.get('REGBK','')
+    PROJECT_PATH = os.environ.get('PROJECT_PATH','')
+    VERBOSE = os.environ.get('VERBOSE',0)
 def ToClip(s):
     clip = os.environ.get('XCLIP')
     clip = 'xclip' if not clip else clip 
@@ -45,10 +46,10 @@ class EAdict():  #easy access
 class SVhier ():
     paramfield = EAdict([ 'name' , 'dim' , 'tp', 'bw' , 'num' , 'bwstr' , 'dimstr', 'numstr' , 'paramtype', 'numstrlst'] )
     typefield  = EAdict([ 'name' , 'bw' , 'dim' , 'tp' , 'enumliteral', 'cmts' ] )
-    portfield =  EAdict( [ 'direction' , 'name' , 'dim' , 'tp' , 'bw' , 'bwstr', 'dimstr', 'dimstrtuple' ] )
-    enumfield  = EAdict( [ 'name', 'bw', 'dim', 'tp', 'enumliterals', 'cmts' ] )
-    enumsfield = EAdict( [ 'names' , 'nums' , 'cmts', 'idxs', 'sizes', 'name_bases' ] )
-    enumlfield = EAdict( [ 'name' , 'num' , 'cmt', 'idx', 'size', 'name_base' ] )
+    portfield =  EAdict( [ 'direction' , 'name' , 'dim' , 'tp' , 'bw' , 'bwstr', 'dimstr', 'dimstrtuple', 'cmts', 'group' ] )
+    enumfield  = EAdict( [ 'name', 'bw', 'dim', 'tp', 'enumliterals', 'cmts'] )
+    enumsfield = EAdict( [ 'names' , 'nums' , 'cmts', 'idxs', 'sizes', 'name_bases', 'groups'] )
+    enumlfield = EAdict( [ 'name' , 'num' , 'cmt', 'idx', 'size', 'name_base', 'group'  ] )
     macrofield = EAdict( [ 'args', 'macrostr', 'lambda'] )
     def __init__(self,name,scope):
         self.hier= name # this is fucking ambiguous, but str method use it so it remains 
@@ -250,10 +251,10 @@ class SVparse(SVutil):
     paths = []
     gb_hier = SVhier('files',None)
     gb_hier.types =  {'integer':None,'int':None,'logic':None}
-    _top =  TOPMODULE
+    _top =  GBV.TOPMODULE
     top = _top if _top != None else ''
-    if PROJECT_PATH:
-        base_path = os.environ.get("PWD")+'/'+PROJECT_PATH
+    if GBV.PROJECT_PATH:
+        base_path = os.environ.get("PWD")+'/'+GBV.PROJECT_PATH
     else:
         match = re.search( r'/sim\b|/include\b|/src\b', os.environ.get("PWD"))
         if match:
@@ -296,9 +297,13 @@ class SVparse(SVutil):
         self.cur_macrodef = None
         self.flag_elsif_parsed = False
         self.flag_parse = True
+        self.cur_cmt = ''
+        self.cur_s = SVstr('')
+        self.last_pure_cmt = ''
+        self.last_end = False 
     @classmethod
     def ARGSParse(cls):
-        s = SVARGstr(ARGS)
+        s = SVARGstr(GBV.ARGS)
         l = s.PlusSplit()
         for _l in l:
             func = _l[0]
@@ -311,8 +316,8 @@ class SVparse(SVutil):
                     SVutil(cls.verbose).print(k,v[2](), verbose='ARGSParse')
         pass
     @classmethod
-    def ParseFiles(cls , paths=[(True,INC)] ):
-        SVutil().print ('project path:', PROJECT_PATH,', include path:', INC, trace=0)
+    def ParseFiles(cls , paths=[(True,GBV.INC)] ):
+        SVutil().print ('project path:', GBV.PROJECT_PATH,', include path:', GBV.INC, trace=0)
         SVutil().print("assumed base path of the project:", cls.base_path, trace=0)
         cls.ARGSParse()
         for p in paths:
@@ -328,13 +333,6 @@ class SVparse(SVutil):
     def IncludeFileParse(cls , path):
         f = open(cls.include_path+path ,'r')
         paths = []
-        '''
-        while 1:
-            line = f.readline()
-            if '`else' in line:
-                break
-            #TODO this part is very unpolished
-        '''
         for line in f.readlines():
             line = line.split('//')[0]
             if '`include' in line:
@@ -432,7 +430,6 @@ class SVparse(SVutil):
             self.cur_hier.paramports[name] = num 
         return name , num
     def PortParse(self, s , lines):
-        cmt = self.cur_cmt
         #bw = s.BracketParse()
         tp = s.TypeParse(self.cur_hier.AllTypeKeys.union(self.gb_hier.SelfTypeKeys) ) 
         tp = 'logic' if tp == '' else tp
@@ -442,8 +439,8 @@ class SVparse(SVutil):
         bw = s.BracketParse()
         name = s.IDParse()
         self.print(name, verbose=4)
-        if cmt != '':
-            for i in cmt:
+        if self.cur_cmt != '':
+            for i in self.cur_cmt:
                 if 'reged' in i:
                     self.cur_hier.regs[name] = 'N/A'
         bwstr = self.Tuple2str(bw)
@@ -453,7 +450,16 @@ class SVparse(SVutil):
         dimstr = self.Tuple2str(dim)
         #dim = self.Tuple2num(s.BracketParse())
         dim = self.Tuple2num(dim)
-        self.cur_hier.ports.append( (self.cur_key,name,dim,tp,bw,bwstr,dimstr, dimstrtuple) )
+        group = [ s.lstrip() for s in self.last_pure_cmt ] 
+        self.cur_hier.ports.append((self.cur_key
+                                        ,name
+                                        ,dim
+                                        ,tp
+                                        ,bw,bwstr
+                                        ,dimstr
+                                        ,dimstrtuple
+                                        ,self.cur_cmt
+                                        ,group) )
     def RdyackParse(self, s , lines):
         _ , args = s.FunctionParse()
         self.cur_hier.protoPorts.append(('rdyack',args[0]))
@@ -465,6 +471,7 @@ class SVparse(SVutil):
         bw = SVstr('' if bw==() else bw[0] )
         cmt = self.cur_cmt
         cmts = []
+        groups = [] if self.last_pure_cmt == '' else [list(self.last_pure_cmt)]
         _s = SVstr(s.s).lsplit('}') if '}' in s else s.s
         enums = [ i for i in re.split( r'{ *| *, *', _s) ]
         cmt = [''] if cmt =='' else cmt
@@ -473,11 +480,13 @@ class SVparse(SVutil):
             #TODO ifdef ifndef blabla
             _s, cmt = self.Rdline(lines)
             cmt = [''] if cmt =='' else cmt
+            group = [''] if self.last_pure_cmt == '' else self.last_pure_cmt 
             s += _s
             _s = _s.lsplit('}') if '}' in _s else _s.s
             _enum = [ i for i in re.split( r'{ *| *, *', _s) ]
             enums += _enum
             cmts += [ [''] for i in range(len(_enum)-1) ] + [cmt]
+            groups += [ list(group) for i in range(len(_enum)) ]  
         _pair = [ (e,c)  for e,c in zip(enums, cmts) if e !='']
         enums = [ p[0] for p in _pair ]
         cmts  = [ p[1] for p in _pair ]
@@ -491,8 +500,15 @@ class SVparse(SVutil):
         s.lsplit('}')
         n = s.IDarrParse()
         for _n in n:
-            self.cur_hier.enums[_n] = ( enum_name, enum_num , cmts, idxs, sizes, name_bases )
-        return [( _n,bw.Slice2num(self.cur_hier.Params, self.cur_hier.AllMacro),() , 'enum' , enum_name, cmts ) for _n in n]
+            self.cur_hier.enums[_n] = ( enum_name, enum_num , cmts, idxs, sizes, name_bases, groups)
+        return [(    _n
+                    ,bw.Slice2num(self.cur_hier.Params
+                    , self.cur_hier.AllMacro)
+                    ,() 
+                    , 'enum' 
+                    , enum_name
+                    , cmts
+                    , groups  ) for _n in n]
         
     def ImportParse(self, s , lines):
         s = s.split(';')[0]
@@ -745,6 +761,15 @@ class SVparse(SVutil):
             return ( None, None)
         _s = SVstr(s.lstrip())
         cmt = _s.CommentParse()  
+        self.cur_s = _s
+        self.cur_cmt = cmt
+        if _s.End():
+            if not self.last_end or self.last_pure_cmt == '': 
+                if self.cur_cmt != '':
+                    self.last_pure_cmt = self.cur_cmt 
+            else: 
+                self.last_pure_cmt += self.cur_cmt
+        self.last_end = _s.End()
         return ( _s.rstrip() , cmt ) 
     def Tuple2num(self, t ):
         return tuple(map(lambda x : SVstr(x).NumParse(params=self.cur_hier.Params, macros=self.cur_hier.AllMacro, package=self.package) ,t))
@@ -806,10 +831,10 @@ class SVparseSession(SVutil):
         self.paths = []
         self.gb_hier = SVhier('files',None)
         self.gb_hier.types =  {'integer':None,'int':None,'logic':None}
-        _top =  TOPMODULE
+        _top =  GBV.TOPMODULE
         self.top = _top if _top != None else ''
-        if PROJECT_PATH:
-            self.base_path = os.environ.get("PWD")+'/'+PROJECT_PATH
+        if GBV.PROJECT_PATH:
+            self.base_path = os.environ.get("PWD")+'/'+GBV.PROJECT_PATH
         else:
             match = re.search( r'/sim\b|/include\b|/src\b', os.environ.get("PWD"))
             if match:
@@ -840,7 +865,7 @@ class SVparseSession(SVutil):
     def HiersUpdate(self):
         global hiers
         hiers = EAdict(self.hiers) #TODO
-    def ParseFiles(self , paths=[(True,INC)] ):
+    def ParseFiles(self , paths=[(True,GBV.INC)] ):
         ''' Deprecated '''
         for p in paths:
             self.paths.append(f'{cls.include_path}{p[1]}.sv' if p[0] else p[1] )
@@ -887,7 +912,7 @@ class SVparseSession(SVutil):
             print (i ,':  ',v)
     def FileParse(self, paths = None):
         if not paths:
-            paths = [(True,INC)]
+            paths = [(True,GBV.INC)]
         self.SwapTo()
         if SVparse.parsed == True:
             return

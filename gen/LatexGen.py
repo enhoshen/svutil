@@ -20,6 +20,7 @@ class LatexGen(SVgen):
         self.dut = dut if dut else self.dut
     def Reload(self):
         self.session.Reload()
+        self.Refresh()
         self.regbk= SVRegbk(self.regbk) if self.regbk else None
     def L_(self, s):
         return s.replace('_','\_')
@@ -39,8 +40,8 @@ class LatexGen(SVgen):
         s = f'{ind.b}\\parameter{{ {name} }} {{ \n'
         s += f'{ind[1]}\\parameterDES{{  }} {{ {num} }} {{ None }} {{ {desp}{ind[1]} }} }}\n'
         return s
-    def SignalStr(self , sig, clk=None):
-        ind=Ind(1)
+    def SignalStr(self , sig, clk=None, ind=None):
+        ind=Ind(1) if ind is None else ind
         tpfield = SVhier.typefield
         sig = SVPort(sig)
         sig_tp = sig.tp
@@ -189,14 +190,22 @@ class LatexGen(SVgen):
             desp += f'{ind[2]}{_s}:\\\\\n'
         desp = desp[:-3]+'\n'
         return desp
-    def SignalDesp( self, module=None):
+    def SignalDesp( self, module=None, sel=None):
         module = self.dut if not module else module
         self.cur_module = module
         pfield = SVhier.portfield
         s = ''
         clk = None
+        last_gp = None 
         for p in module.ports:
-            name = p[pfield.name]
+            _p = SVPort(p)
+            if sel and _p.name not in sel:
+                continue
+            name = _p.name
+            if _p.group != [] and  _p.group[0] != last_gp:
+                last_gp = _p.group[0]
+                s += f'\n\\emptyrowbold{{3}}\n'
+                s += f'\\ganzinmergerowbold{{1.2}}{{3}}{{\\centering \\textbf{{{last_gp}}}}}\n' 
             if 'rst' in name or 'clk' in name:
                 s += self.SignalStr(p, '\\TODO')
             else:

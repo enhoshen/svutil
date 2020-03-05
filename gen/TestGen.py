@@ -36,7 +36,7 @@ class TestGen(SVgen):
     def ModBlk(self):
         ind = self.cur_ind.Copy() 
         yield ''
-        s = f'{ind.b}module ' + TOPMODULE + ';\n'
+        s = f'{ind.b}module ' + GBV.TOPMODULE + ';\n'
         yield s+self.InitialStr(ind=ind)
         s = '\n' + ind.b +'endmodule'
         yield s
@@ -67,7 +67,7 @@ class TestGen(SVgen):
         s += f'\ninitial begin'
         s = s.replace('\n',f'\n{ind[1]}')
         _s =  f'\n$fsdbDumpfile({{"{self.fsdbname}_", getenv("TEST_CFG"), ".fsdb"}});\n' 
-        _s +=  f'$fsdbDumpvars(0,{TEST},"+all");\n'
+        _s +=  f'$fsdbDumpvars(0,{GBV.TEST},"+all");\n'
 
         for pyev in self.pyeventlgclst:
             _s += f'{pyev} = 0;\n'
@@ -128,12 +128,13 @@ class TestGen(SVgen):
         s = self.CommentBlkStr ( 'Logics' , ind)
         pfield = SVhier.portfield 
         for p in module.ports:
-            if p[pfield.tp] == 'logic' or p[pfield.tp] == 'signed logic':
-                s += f'{ind.b}{p[pfield.tp]} {p[pfield.bwstr]} {p[pfield.name]}'
+            p = SVPort(p)
+            if p.tp == 'logic' or p.tp == 'signed logic':
+                s += f'{ind.b}{p.tp} {p.bwstr} {p.name}'
             else:
-                s += f'{ind.b}{p[pfield.tp]} {p[pfield.name]}'
-            if  not p[pfield.dimstr] == '':
-                s += f' {p[pfield.dimstr]};\n'
+                s += f'{ind.b}{p.tp} {p.name}'
+            if  not p.dimstr == '':
+                s += f' {p.dimstr};\n'
             else:
                 s += ';\n'
             
@@ -235,9 +236,12 @@ class TestGen(SVgen):
             p = SVPort(p)
             w[0] = max(w[0], len(p.name))
             w[1] = max(w[1], len(p.tp))
+        last_gp = None 
         for p in module.ports:
-            #portfield =  EAdict( [ 'direction' , 'name' , 'dim' , 'tp' , 'bw' , 'bwstr', 'dimstr' ] )
             p = SVPort(p)
+            if p.group != [] and  p.group[0] != last_gp:
+                last_gp = p.group[0]
+                s += f'{ind[1]}#{" "+last_gp+" ":=^{20}}#\n'
             tp = p.tp
             _q = '\''
             dimf = f'Nico.DutPortDim(\'{p.name+_q:<{w[0]+1}})'

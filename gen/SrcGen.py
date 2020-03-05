@@ -10,6 +10,7 @@ import numpy as np
 class SrcGen(SVgen):
     def __init__(self, session=None):
         super().__init__(session=session)
+        self.V_(GBV.VERBOSE) 
         self.customlst += [ 'clk_name',
                             'rst_name']
         self.clk_name = 'i_clk'

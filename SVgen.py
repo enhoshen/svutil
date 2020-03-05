@@ -21,7 +21,7 @@ class Ind():
         return Ind(self.n)
 class SVgen(SVutil):
     def __init__(self , paths=None, session=None, verbose=None ):
-        self.V_(VERBOSE)
+        self.V_(GBV.VERBOSE)
         if session is None:
             self.session = SVparseSession(verbose=self.verbose)
             self.session.FileParse(paths)
@@ -34,25 +34,26 @@ class SVgen(SVutil):
                             'rststr',
                             'genpath',
                             'endcycle']
-
+        
         self.hclkmacro = 'HCYCLE'
         self.endcyclemacro = 'TIMEOUTCYCLE'
         self.clkstr = 'clk'
         self.rststr = 'rst'
         self.genpath = './'
         self.endcycle = 10000
-
-        self.test = TEST
-        self.testname = TEST.rsplit('_tb')[0]
+        self.Refresh()
+    def Refresh(self):
+        self.test = GBV.TEST
+        self.testname = GBV.TEST.rsplit('_tb')[0]
         self.fsdbname = self.testname + '_tb' #TODO
-        self.topfile  = SV.rstrip('.sv')
-        self.incfile  = INC
-        self.dutname = TESTMODULE 
+        self.topfile  = GBV.SV.rstrip('.sv')
+        self.incfile  = GBV.INC
+        self.dutname = GBV.TESTMODULE 
         self.dut = self.session.hiers.get(self.dutname)
         self.dutfile = self.session.hiers.get(self.dutname+'_sv')
-        self.hier = self.session.hiers.get(HIER) 
-        self.regbkstr= REGBK 
-        self.regbk = self.session.hiers.get(REGBK)
+        self.hier = self.session.hiers.get(GBV.HIER) 
+        self.regbkstr= GBV.REGBK 
+        self.regbk = self.session.hiers.get(GBV.REGBK)
         self.cond = {} # syn 2ns test name etc.
         self.cur_ind = Ind(0)
     def IndBlk(self):

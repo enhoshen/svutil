@@ -116,13 +116,17 @@ class StructBusCreator():
     def TopTypes(cls):
         cls.Reset()
         cls.BasicTypes()
-        S = cls.FileParse( (False,TOPSV) )
-        for T in SVparse.hiers[TOPMODULE].Types: # TOPMODULE defined in SVparse
+        S = cls.FileParse( (False,GBV.TOPSV) )
+        for T in SVparse.hiers[GBV.TOPMODULE].Types: # TOPMODULE defined in SVparse
             for k,v in T.items():
                 StructBusCreator(k,v)
         return S
     @classmethod
     def Get(cls,t,name,hier='',dim=(),dtype=np.int32):
+        if '::' in t:
+            _pkg , _type= t.split('::')
+            tp = SVparse.package[_pkg].types[_type] 
+            StructBusCreator(t,tp)
         if dim == ():
             return cls.structlist[t].CreateStructBus(name,hier,dim, dtype=dtype)
         else:
@@ -399,14 +403,14 @@ class NicoUtil(PYUtil):
         s = self.SBC.TopTypes()
         self.session = s
         super().__init__()
-        self.test = TEST
-        self.testname = TEST.rsplit('_tb')[0]
+        self.test = GBV.TEST
+        self.testname = GBV.TEST.rsplit('_tb')[0]
         self.fsdbname = self.testname + '_tb' #TODO
-        self.topfile  = SV.rstrip('.sv')
-        self.incfile  = INC
-        self.dutname = TESTMODULE 
+        self.topfile  = GBV.SV.rstrip('.sv')
+        self.incfile  = GBV.INC
+        self.dutname  = GBV.TESTMODULE 
         self.dut = self.session.hiers.get(self.dutname)
-        self.top = self.session.hiers.get(TOPMODULE)
+        self.top = self.session.hiers.get(GBV.TOPMODULE)
         self.dutfile = self.session.hiers.get(self.dutname+'_sv')
         self.ev = EventTrigger()
     def TopTypes(self):
