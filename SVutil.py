@@ -57,6 +57,12 @@ except:
         Style  = AnsiStyle()
 class SVutil():
     trace_format_width = 0
+    creset = f'{colorama.Style.RESET_ALL}'
+    ccyan  = f'{colorama.Fore.CYAN}'
+    cred   = f'{colorama.Fore.RED}'
+    cgreen   = f'{colorama.Fore.GREEN}'
+    cblue    = f'{colorama.Fore.BLUE}'
+    cyellow   = f'{colorama.Fore.YELLOW}'
     def __init__(self, verbose=None):
         self.verbose = verbose
         pass
@@ -108,12 +114,12 @@ class SVutil():
                     ,3:f'[{os.path.basename(fn)}, in {ins.function}]'}
         return Trace[trace]
     def Custom(self):
-        self.print('Customizable variable: ', trace=2)
+        self.print(f'{self.cyellow}Customizable variable: {self.creset}', trace=2)
         w = len(max(self.customlst, key=len))
         for i in self.customlst:
             v = self.__dict__[i]
             v = f'"{v}"' if type(v) == str else v.__str__()
-            self.print(f'    {i:>{w}}: {v}', trace=2)
+            self.print(f'    {self.cgreen}{i:>{w}}:{self.creset} {v}', trace=2)
 class SVcvar():
     ''' 
         SVcvar marks customizable variables;

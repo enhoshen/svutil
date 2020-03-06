@@ -641,6 +641,7 @@ class SVparse(SVutil):
         _end = {'package':'endpackage' , 'module':'endmodule'}[self.cur_key]
         if self.cur_key == 'package':
             self.package[name] = new_hier
+        self.last_pure_cmt = ''
         self.flag_port = ''
         while(1):
             _w=''
@@ -764,12 +765,16 @@ class SVparse(SVutil):
         self.cur_s = _s
         self.cur_cmt = cmt
         if _s.End():
+            self.print(self.last_end, self.last_pure_cmt, verbose='Rdline')
             if not self.last_end or self.last_pure_cmt == '': 
                 if self.cur_cmt != '':
                     self.last_pure_cmt = self.cur_cmt 
+                    self.last_end = _s.End()
             else: 
                 self.last_pure_cmt += self.cur_cmt
-        self.last_end = _s.End()
+                self.last_end = _s.End()
+        else:
+            self.last_end = _s.End()
         return ( _s.rstrip() , cmt ) 
     def Tuple2num(self, t ):
         return tuple(map(lambda x : SVstr(x).NumParse(params=self.cur_hier.Params, macros=self.cur_hier.AllMacro, package=self.package) ,t))

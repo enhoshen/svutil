@@ -165,9 +165,18 @@ if __name__ == "__main__":
     hiers = EAdict(session.hiers)
     try:
         gTest = TestGen(session=session)
+    except:
+        SVutil().print('TestGen initialization failed') 
+    try:
         gRegbk = RegbkGen(session=session)
+    except:
+        SVutil().print('RegbkGen initialization failed') 
+    try:
         gDrawio = DrawioGen(session=session)
+    except:
+        SVutil().print('DrawioGen initialization failed') 
+    try:
         gLatex = LatexGen(session=session)
     except:
-        pass
+        SVutil().print('LatexGen initialization failed') 
     gBanner = BannerGen()
