@@ -43,6 +43,34 @@ class EAdict():  #easy access
             raise TypeError
     def __getattr__(self, n):
         return self.dic[n]
+class SVTypeDic(dict):
+    def __init__(self, arg):
+        super().__init__(arg)
+    def get(self,k,d=None):
+        if '::' in k:
+            _pkg , _type= k.split('::')
+            return SVparse.package[_pkg].types[_type] 
+        else:
+            return super().get(k, d) 
+class SVParamDic(dict):
+    def __init__(self, arg):
+        super().__init__(arg)
+    def get(self,k,d=None):
+        if '::' in k:
+            _pkg , _param = k.split('::')
+            return SVparse.package[_pkg].params[_param] 
+        else:
+            return super().get(k, d) 
+class SVParamDetailDic(dict):
+    def __init__(self, arg):
+        super().__init__(arg)
+    def get(self,k,d=None):
+        if '::' in k:
+            _pkg , _param = k.split('::')
+            return SVparse.package[_pkg].paramsdetail[_param] 
+        else:
+            return super().get(k, d) 
+    
 class SVhier ():
     paramfield = EAdict([ 'name' , 'dim' , 'tp', 'bw' , 'num' , 'bwstr' , 'dimstr', 'numstr' , 'paramtype', 'numstrlst'] )
     typefield  = EAdict([ 'name' , 'bw' , 'dim' , 'tp' , 'enumliteral', 'cmts' ] )
@@ -121,10 +149,10 @@ class SVhier ():
         return { x for x in self.types.keys()} 
     @property
     def AllTypeKeys(self):
-        return { x for i in self.Types for x in i.keys() }  
+        return { x for i in self.Types for x in i.keys() }
     @property
     def AllType(self):
-        return { k:v for i in self.Types for k,v in i.items() }
+        return SVTypeDic({ k:v for i in self.Types for k,v in i.items() })
     @property
     def ShowTypes(self):
         for k,v in self.types.items():
@@ -141,10 +169,10 @@ class SVhier ():
         return { x for i in self.Params for x in i.keys() }  
     @property
     def AllParams(self):
-        return { k:v for i in self.Params for k,v in i.items() }
+        return SVParamDic({ k:v for i in self.Params for k,v in i.items() })
     @property
     def AllParamDetails(self):
-        return { k:v for i in self.ParamsDetail for k,v in i.items() }
+        return SVParamDetailDic({ k:v for i in self.ParamsDetail for k,v in i.items() })
     @property
     def ShowParams(self):
         w= 30
@@ -634,6 +662,8 @@ class SVparse(SVutil):
                 self.cur_hier.regs[pre_w] = _w
     def HierParse(self,  s , lines):
         self.cur_s = s
+        self.flag_port = ''
+        self.PortFlag(self.cur_key, self.cur_s.s)
         name = self.cur_s.IDParse()
         new_hier = SVhier(name, self.cur_hier)
         SVparse.hiers[name] = new_hier        
@@ -642,7 +672,6 @@ class SVparse(SVutil):
         if self.cur_key == 'package':
             self.package[name] = new_hier
         self.last_pure_cmt = ''
-        self.flag_port = ''
         while(1):
             _w=''
             if self.cur_s == None:
@@ -651,7 +680,7 @@ class SVparse(SVutil):
                 self.cur_s, self.cur_cmt = self.Rdline(lines)
                 continue
             _w = self.cur_s.lsplit()
-            self.PortFlag(_w)
+            self.PortFlag(_w, self.cur_s.s)
             if _w == _end:
                 break 
             if _w in self.keyword:
@@ -744,14 +773,18 @@ class SVparse(SVutil):
         self.cur_macrodef = None 
         self.flag_parse = True
         self.flag_elsif_parsed = False
-    def PortFlag(self , w ):
-        if ';' in w and self.flag_port =='':
+    def PortFlag(self , w , s=None):
+        ''' w+' '+s is the whole string being processed '''
+        _s = w+' '+s
+        if re.match( r'module[\w\W]*;',_s) and self.flag_port =='':
             self.flag_port = 'end' 
         if '#' in w and self.flag_port == '':
             self.flag_port = 'pport' 
-        if ('input' in w or 'output' in w) and self.flag_port =='pport':
+        if 'input' in w or 'output' in w and self.flag_port =='pport':
             self.flag_port = 'port' 
-        if ')' in w and self.flag_port == 'port':
+        if re.match(r'^ *[)] *[(]',_s) and self.flag_port =='pport':
+            self.flag_port = 'port' 
+        if re.match(r'^ *[)];',_s) and self.flag_port == 'port':
             self.flag_port = 'end'
     def Rdline(self, lines):
         s = next(lines,None) 
@@ -822,6 +855,7 @@ class SVparse(SVutil):
  
     
 def ParseFirstArgument():
+    ''' deprecated '''
     import sys
     SVparse.ParseFiles([(True,sys.argv[1])])
 hiers = EAdict(SVparse.hiers)
@@ -931,12 +965,14 @@ class SVparseSession(SVutil):
     def TopAllParamEAdict(self):
         return EAdict(self.gb_hier[TOPMODULE].AllParams)
     def ParamGet(self, s, svhier):
+        ''' deprecated '''
         if '::' in s:
             _pkg , _param = s.split('::')
             return self.package[_pkg].params[_param] 
         else:
             return svhier.AllParams.get(s) 
     def TypeGet(self, s, svhier):
+        ''' deprecated '''
         if '::' in s:
             _pkg , _type= s.split('::')
             return self.package[_pkg].types[_type] 

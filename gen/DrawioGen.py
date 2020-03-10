@@ -31,7 +31,8 @@ class DrawioGen(SVgen):
                     'textstyle_red' ,
                     'textstyle_redleft' ,
                     'arrowstyle1' ,
-                    'arrowboldstyle1'] 
+                    'arrowboldstyle1',
+                    'struct_lvl'] 
         self.textstyle1 = "text; align=center; rounded=0; verticalAlign=middle; labelPosition=center; verticalLabelPosition=middle; ;verticalAlign=middle; align=right"
         self.textstyle2 = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;"
         self.textstyle2left = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;"
@@ -55,6 +56,7 @@ class DrawioGen(SVgen):
         self.rec_txt_width = 145
         self.rec_txt_ofs = Shape( 25, 20, 145, 20)
         self.cur_ind = ind
+        self.struct_lvl = 2
      
     def Config(self, *arg, **kwargs):
         pass
@@ -141,7 +143,8 @@ class DrawioGen(SVgen):
         x = self.center_x if not flip else self.center_x-self.port_ofs/1.625
         shape = Shape( x , self.center_y, self.port_ofs/1.625, self.port_ofs)
         return self.RectangleStr( module.name, shape, parent, flip, ind)
-    def PortArrowStr(self, module, port, parent, reged , flip, ind):
+    def PortArrowStr(self, module, port, parent, reged , flip, ind=None):
+        ind = self.cur_ind if ind is None else ind 
         pfield = SVhier.portfield
         tpfield = SVhier.typefield
         s = ''
@@ -150,13 +153,15 @@ class DrawioGen(SVgen):
         portsparent = parent #TODO
         total_w = self.text_width + self.arr_text_dist + self.arrow_width
         total_h = self.text_height
-        tp = module.AllType.get(port[pfield.tp])  
+        port = SVPort(port)
+        tp = module.AllType.get(port.tp)  
         struct_flag = False
-        if port[pfield.tp] != 'logic' and port[pfield.tp]!= 'logic signed' and len(tp) != 1: 
+        if port.tp != 'logic' and port.tp!= 'logic signed' and len(tp) != 1: 
+            memlist = self.MemlistAppend(module, tp, self.struct_lvl)
             struct_flag = True
             top_grp_id = DrawioGen.unique_id
             portsparent =  f'SVgen-mxCell--{top_grp_id}'
-            curly_height = len(tp)*self.arrow_ofs-self.arrow_ofs+self.text_height
+            curly_height = len(memlist)*self.arrow_ofs-self.arrow_ofs+self.text_height
             if flip == False:
                 curly_sh   = Shape(self.text_width, 0, self.curly_width, curly_height) 
                 curly_txt_sh = Shape(0, (curly_height-self.text_height)/2, self.text_width, self.text_height)
@@ -177,8 +182,7 @@ class DrawioGen(SVgen):
             top_grp_sh = Shape(top_grp_x, top_grp_y, total_w+self.text_width+self.curly_width, len(tp)*self.arrow_ofs)
             s += self.GroupStr( top_grp_sh, parent, ind)
             s += self.CurlyStr( curly_sh, portsparent, flip, ind+1) 
-            s += self.TextStr( port[pfield.name], curly_txt_sh, curly_txt_style, portsparent, ind+1)
-            memlist = [ (mem[tpfield.name],mem[tpfield.dim] != () or mem[tpfield.bw]!=1 ) for mem in tp ]
+            s += self.TextStr( port.name, curly_txt_sh, curly_txt_style, portsparent, ind+1)
         else:
             if flip == False:
                 x_ofs = self.center_x-self.text_width-self.arr_text_dist-self.arrow_width
@@ -186,8 +190,8 @@ class DrawioGen(SVgen):
             else:
                 x_ofs = self.center_x
                 y_ofs = self.port_ofs+self.center_y
-            boldarrow = port[pfield.dim] != () or port[pfield.bw] != 1
-            memlist = [ (port[pfield.name]+port[pfield.dimstr], boldarrow) ] 
+            boldarrow = port.dim != () or port.bw != 1
+            memlist = [ (port.name+port.dimstr, boldarrow) ] 
             top_grp_y = 0
             #memlist = [ port[pfield.name]+port[pfield.bwstr]+port[pfield.dimstr] ]
         for txt,boldarrow in memlist:
@@ -195,11 +199,11 @@ class DrawioGen(SVgen):
             if flip == False:
                 txt_sh = Shape(0, 0, self.text_width, self.text_height) 
                 arr_sh = Shape(self.text_width + self.arr_text_dist, self.text_height/2, self.arrow_width, self.arrow_height)
-                face = 'right' if port[pfield.direction]=='input' else 'left'
+                face = 'right' if port.direction=='input' else 'left'
             else:
                 arr_sh = Shape(0, self.text_height/2 , self.arrow_width, self.arrow_height) 
                 txt_sh = Shape(self.arrow_width + self.arr_text_dist, 0, self.text_width, self.text_height)
-                face = 'right' if port[pfield.direction]=='output' else 'left'
+                face = 'right' if port.direction=='output' else 'left'
             grp_id = DrawioGen.unique_id
             s += self.GroupStr( grp_sh, portsparent, ind+1) 
             _p = f'SVgen-mxCell--{grp_id}'
@@ -219,13 +223,25 @@ class DrawioGen(SVgen):
             y_ofs += self.arrow_ofs 
         self.prev_y_ofs = y_ofs + top_grp_y
         return s
+    def MemlistAppend(self, module, struct, lvl=1):
+        memlist = []
+        for mem in struct:
+            tp = SVType(mem) 
+            sub_tp = module.AllType.get(tp.tp)
+            if tp.tp != 'logic' and tp.tp!= 'logic signed' and len(sub_tp) != 1 and lvl != 1: 
+                sub_memlist = [(tp.name+'.'+n,bold) for n,bold in self.MemlistAppend(module, sub_tp, lvl-1)]
+            else:
+                sub_memlist = [(tp.name, tp.dim != () or tp.bw !=1)]
+            memlist += sub_memlist
+        return memlist
     
-    def ModulePortArrowStr ( self, module, parent, flip, ind):
+    def ModulePortArrowStr ( self, module, parent, flip, ind=None):
+        ind = self.cur_ind if ind is None else ind
         self.port_ofs = 0
         s = ''
         for p in module.ports:
             reged = True if SVPort(p).name in module.regs else False
-            s += self.PortArrowStr(module, p, parent, reged, flip, ind) 
+            s += self.PortArrowStr(module, p, parent, reged, flip, ind=ind) 
         return s
     def InterfaceDiagramGen (self, module, flip):
         indblk = self.IndBlk()

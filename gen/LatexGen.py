@@ -11,8 +11,10 @@ class LatexGen(SVgen):
     # TODO $clog2 in latex
     def __init__(self, session=None, regbk=None, dut=None):
         super().__init__(session=session)
-        self.customlst = ['default_input_delay']
+        self.customlst = [   'default_input_delay'
+                            ,'struct_lvl']
         self.default_input_delay = 30
+        self.struct_lvl = 2
         if regbk and type(regbk)==str:
             self.regbk= SVRegbk(self.session.hiers.get(regbk))
         else:
@@ -32,7 +34,7 @@ class LatexGen(SVgen):
         s = ''
         desp='\n'
         memblist = []
-        tp = self.session.TypeGet(param_tp, self.cur_module)
+        tp = self.cur_module.AllType.get(param_tp)
         if tp: 
             desp += self.DespStr(tp[0][tpfield.enumliteral], ind)
         name = self.L_(param[pfield.name])
@@ -47,29 +49,30 @@ class LatexGen(SVgen):
         sig_tp = sig.tp
         s = ''
         memblist = []
-        #if self.cur_module.AllType.get(sig_tp):
-        if self.session.TypeGet(sig_tp, self.cur_module):
-            tp = [SVType(i) for i in self.session.TypeGet(sig_tp, self.cur_module)]
+        if self.cur_module.AllType.get(sig_tp):
+            tp = [SVType(i) for i in self.cur_module.AllType.get(sig_tp)]
         else:
             tp = [None]
         if sig_tp != 'logic' and sig_tp != 'logic signed' and len(tp) != 1: 
-            for memb in self.session.TypeGet(sig_tp, self.cur_module):
-                memb = SVType(memb)
-                name = self.L_(sig.name+'.'+memb.name +' '+sig.dimstr)
-                width = str(memb.bw)
-                active = 'LOW' if name[-2:] == '_n' else  ( 'HIGH' if width =='1' else 'N/A' )
-                if '-1:0' in width:
-                    width = width.split('-')[0][1:]
-                io = sig.direction
-                io = 'Input' if io =='input' else 'Output'
-                #memb_tp = self.cur_module.AllType.get(memb.tp)
-                memb_tp = self.session.TypeGet(sig_tp, self.cur_module)
-                desp='\\TODO\n'
-                if memb_tp :
-                    memb_tp = [SVType(i) for i in memb_tp]
-                    if memb_tp[0].tp =='enum':
-                        desp += self.DespStr(memb_tp[0].enumliteral, ind )
-                memblist.append( (name, io, desp, width, active, clk)  )
+            #for memb in self.cur_module.AllType.get(sig_tp):
+            #    memb = SVType(memb)
+            #    name = self.L_(sig.name+'.'+memb.name +' '+sig.dimstr)
+            #    width = str(memb.bw)
+            #    active = 'LOW' if name[-2:] == '_n' else  ( 'HIGH' if width =='1' else 'N/A' )
+            #    if '-1:0' in width:
+            #        width = width.split('-')[0][1:]
+            #    io = sig.direction
+            #    io = 'Input' if io =='input' else 'Output'
+            #    memb_tp = self.cur_module.AllType.get(memb.tp)
+            #    desp='\\TODO\n'
+            #    if memb_tp :
+            #        memb_tp = [SVType(i) for i in memb_tp]
+            #        if memb_tp[0].tp =='enum':
+            #            desp += self.DespStr(memb_tp[0].enumliteral, ind )
+            #    memblist.append( (name, io, desp, width, active, clk)  )
+            sig_struct = self.cur_module.AllType.get(sig_tp)
+            memblist = self.MemlistAppend(self.cur_module, sig, sig_struct,  ind, clk, self.struct_lvl)
+            memblist = [ (self.L_(sig.name+'.')+name, *_) for name, *_ in memblist]
         else:
             desp='\\TODO\n'
             if sig_tp =='enum' :
@@ -93,6 +96,31 @@ class LatexGen(SVgen):
             s += f'{ind.b}\\signal{{ {name} }} {{{io}}} {{\n'
             s += f'{ind[1]}\\signalDES{{ {desp} {ind[1]}}} {{ {width} }} {{ {active} }} {{ {clk} }} {{ No }} {{ {delay}\\%}}  }}\n'
         return s
+    def MemlistAppend(self, module, sig, struct, ind, clk, lvl=1):
+        memlist = []
+        for memb in struct:
+            memb = SVType(memb)
+            sub_tp = module.AllType.get(memb.tp)
+            if memb.tp != 'logic' and memb.tp != 'logic signed' and len(sub_tp) != 1: 
+                sub_memlist = [(  self.L_(memb.name+'.')+name, *_ ) for  name, *_ in self.MemlistAppend(module, sig, sub_tp, ind, clk, lvl-1)] 
+                self.print(sub_memlist)
+            else:
+                name = self.L_(memb.name +' '+sig.dimstr)
+                width = str(memb.bw)
+                active = 'LOW' if name[-2:] == '_n' else  ( 'HIGH' if width =='1' else 'N/A' )
+                if '-1:0' in width:
+                    width = width.split('-')[0][1:]
+                io = sig.direction
+                io = 'Input' if io =='input' else 'Output'
+                memb_tp = self.cur_module.AllType.get(memb.tp)
+                desp='\\TODO\n'
+                if memb_tp :
+                    memb_tp = [SVType(i) for i in memb_tp]
+                    if memb_tp[0].tp =='enum':
+                        desp += self.DespStr(memb_tp[0].enumliteral, ind )
+                sub_memlist = [(name, io, desp, width, active, clk)] 
+            memlist += sub_memlist
+        return memlist
     def RegMemMapStr(self, reg, regdesp): #reg is a SVEnuml object
         reg_bsize=regdesp.reg_bsize
         reg_slices=regdesp.reg_slices
