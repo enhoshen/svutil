@@ -64,6 +64,13 @@ class SVgen(SVutil):
     def Genlist(self , structure):
         o = ''
         for strt in structure:
+            prev_ind = self.cur_ind.Copy()
+            try:
+                if type(strt[0]) == int:
+                    self.cur_ind += strt[0]
+                    strt = strt[1:]
+            except:
+                pass
             if type(strt) == list:
                 for v in strt:
                     next(v) # initialize
@@ -81,11 +88,12 @@ class SVgen(SVutil):
                 o += strt
             else :
                 o += self.Nextblk(strt)
+            self.cur_ind = prev_ind
         return o
-    def Str2Blk(self, strcallback, *arg):
+    def Str2Blk(self, strcallback, *arg, **kwargs):
         ind = self.cur_ind.Copy()
         yield ''
-        yield strcallback( *arg , ind=ind)
+        yield strcallback( *arg , **kwargs, ind=ind)
     def BlkGroup (self, *arg):
         ind = self.cur_ind.Copy()
         yield ''
@@ -143,6 +151,28 @@ class SVgen(SVutil):
                 for idx, j in enumerate(i):
                     w[idx] = max(w[idx], len(j))
             return w
+    # decorators
+    def Str(orig):
+        def new_func(*arg, **kwargs):
+            ind = self.cur_ind.Copy() if not kwargs['ind'] else kwargs['ind']
+            kwargs['ind'] = ind
+            s = ''
+            x = orig(*arg, **kwargs) 
+            return x
+        return new_func
+    def Clip(orig):
+        def new_func(*arg, **kwargs):
+            ind = kwargs.get('ind')
+            ind = arg[0].cur_ind.Copy() if ind is None else ind # orig must be a member function
+            toclip = kwargs.get('toclip')
+            toclip = True if toclip is None else toclip
+            kwargs['ind'] = ind
+            s = ''
+            x = orig(*arg, **kwargs) 
+            if toclip:
+                ToClip(x)
+            return x
+        return new_func
 if __name__ == "__main__":
     pass
     #dut = hiers.Ahb2ToReqAckWrap
@@ -156,7 +186,7 @@ if __name__ == "__main__":
     import sys
     sys.path.append('./gen')
     from gen.TestGen import TestGen
-    from gen.RegbkGen import RegbkGen
+    from gen.RegbkGen import RegbkGen, PRESET
     from gen.DrawioGen import DrawioGen
     from gen.LatexGen import LatexGen
     from gen.BannerGen import BannerGen

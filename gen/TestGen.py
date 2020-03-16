@@ -60,10 +60,11 @@ class TestGen(SVgen):
             s += f'`PosIf({ev[0]+", "+ev[1]+",":<{w}} {self.rststr})//TODO modify reset logic\n' 
 
         s += f'`WithFinish\n\n' 
-        for ck in self.clk_domain_lst:
+        for i,ck in enumerate(self.clk_domain_lst):
             _aff = ck[0]+"_" if ck[0] != "" else ""
             s += f'always #`{self.hclkmacro} {_aff}clk= ~{_aff}clk;\n'
-            s += f'always #(2*`{self.hclkmacro}) {_aff}clk_cnt = {_aff}clk_cnt+1;\n'
+            _cmt = '//' if i==0 else ''
+            s += f'{_cmt}always #(2*`{self.hclkmacro}) {_aff}clk_cnt = {_aff}clk_cnt+1;\n'
         s += f'\ninitial begin'
         s = s.replace('\n',f'\n{ind[1]}')
         _s =  f'\n$fsdbDumpfile({{"{self.fsdbname}_", getenv("TEST_CFG"), ".fsdb"}});\n' 
