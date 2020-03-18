@@ -7,6 +7,8 @@ from SVclass import *
 import itertools
 import numpy as np
 class PRESET():
+    '''
+    '''
     REQACK_INSTANT = 0
     REQACK_RD_AFTER_ACK = 1 
     REQACK_WR_AFTER_ACK = 2
@@ -20,16 +22,18 @@ class PRCL_PRESET():
     APB3 =3
 class WRDATA_PRESET():
     '''
-        INSTANT: when transaction occurs (valid/ req && ack etc..), the read/write data is valid
+        INSTANT: when transaction occurs (valid,  req && ack etc..), the read/write data is valid
         RD NEXT cycle: write data valid when transaction occurs, and read data valid on the next cycle
+                       for reqack protocol, this is the generally the case
         NEXT_CYCLE: write data and read data are valid the next cycle after a transaction occurs
     '''
     INSTANT = 0 
     RD_NEXT_CYCLE = 1
     NEXT_CYCLE = 2
 class DISABLE_PRESET():
-    DISABLE_STATE = 0
-    EN_WIRE = 1
+    DISABLE_REG = 0
+    DISABLE_STATE = 1
+    EN_WIRE = 2
 class SrcGen(SVgen):
     def __init__(self, session=None):
         super().__init__(session=session)
@@ -90,9 +94,10 @@ class SrcGen(SVgen):
     @SVgen.Str
     def ProtocolDataPortStr(self, addrbw, bw, ind=None):
         ''' addrbw, bw are name to the parameters '''
+        s = f'{ind.b}// data and address\n'
         if self.protocol is None or self.protocol == PRCL_PRESET.REQACK or self.protocol == PRCL_PRESET.VALID:
             w = len(bw)+5+7+8
-            s =  f'{ind.b}{",input":<{w}} {self.write_name}\n'
+            s +=  f'{ind.b}{",input":<{w}} {self.write_name}\n'
             s += f'{ind.b}{",input ["+addrbw+"-1:0]":<{w}} {self.addr_port_name}\n'
             s += f'{ind.b}{",input ["+bw+"-1:0]":<{w}} {self.wdata_name}\n'
             s += f'{ind.b}{",output logic ["+bw+"-1:0]":<{w}} o_{self.rdata_name}\n'
@@ -109,26 +114,31 @@ class SrcGen(SVgen):
         w = len(bw)+5+8
         if self.protocol is None:
             s = f'{ind.b}//TODO protocol\n'
-        if self.protocol == PRCL_PRESET.REQACK:
+        elif self.protocol == PRCL_PRESET.REQACK:
             w = len(bw)+5+7+8
             s =  f'{ind.b}{",input":<{w}} i_req\n'
             s += f'{ind.b}{",output logic":<{w}} o_ack\n'
-        if self.protocol == PRCL_PRESET.VALID:
+        elif self.protocol == PRCL_PRESET.VALID:
             w = len(bw)+5+7+8
             s = f'{ind.b},input  i_val\n'
-        if self.protocol == PRCL_PRESET.AHB:
+        elif self.protocol == PRCL_PRESET.AHB:
             s =  f'{ind.b},input  {"ahb_wrap_ctrl":<{w+6}} i_hctl\n'
             s += f'{ind.b},output {"ahb_resp":<{w+6}} o_resp\n'
-        if self.protocol == PRCL_PRESET.APB3:
+        elif self.protocol == PRCL_PRESET.APB3:
             s =  f'{ind.b},input  {"apb3_wrap_ctrl":<{w+6}} i_pctl\n'
             s +=  f'{ind.b},input  {"apb3_resp":<{w+6}} o_resp\n'
+        #
+        if self.disable_style == DISABLE_PRESET.EN_WIRE:
+            w = len(bw)+5+7+8
+            s += f'{ind.b}// enable\n'
+            s += f'{ind.b}{",input":<{w}} i_en\n'
         return s
     # Logic list
     @SVgen.Str
     def ProtocolLogicStr(self, w=20, ind=None):
         # state
         s = ''
-        if self.disable_style == DISABLE_PRESET.DISABLE_STATE:
+        if self.disable_style == DISABLE_PRESET.DISABLE_REG:
             s  = f'{ind.b}// state\n'
             s += f'{ind.b}enum logic [1:0] {{MAIN_IDLE, WORK, DISABLED}} state_main_r, state_main_w;\n'
         s += '\n'

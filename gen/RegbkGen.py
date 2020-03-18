@@ -93,18 +93,19 @@ class RegbkGen(SrcGen):
         if p == PRESET.REQACK_INSTANT:
             self.protocol = PRCL_PRESET.REQACK
             self.wrdata_style = WRDATA_PRESET.INSTANT
-            self.disable_style = DISABLE_PRESET.DISABLE_STATE
+            self.disable_style = DISABLE_PRESET.DISABLE_REG
         if p == PRESET.REQACK_RD_AFTER_ACK:
             self.protocol = PRCL_PRESET.REQACK
             self.wrdata_style = WRDATA_PRESET.RD_NEXT_CYCLE
-            self.disable_style = DISABLE_PRESET.DISABLE_STATE
+            self.disable_style = DISABLE_PRESET.DISABLE_REG
         if p == PRESET.REQACK_WR_AFTER_ACK:
             self.protocol = PRCL_PRESET.REQACK
             self.wrdata_style = WRDATA_PRESET.NEXT_CYCLE
-            self.disable_style = DISABLE_PRESET.DISABLE_STATE
+            self.disable_style = DISABLE_PRESET.DISABLE_REG
         if p == PRESET.VALID:
             self.protocol = PRCL_PRESET.VALID
             self.wrdata_style = WRDATA_PRESET.INSTANT
+            self.disable_style = DISABLE_PRESET.EN_WIRE
     def Reload(self):
         self.session.Reload()
         self.regbkhier = self.session.hiers.get(self.regbkstr)
@@ -184,14 +185,13 @@ class RegbkGen(SrcGen):
         s += f'{reg.lower()}_r{dim} <= {reg}{self.regbk.default_suf};'
         s += '\n' if dim =='' else '//TODO do indexing if the default parameter is an array\n'
         #s += f'{ind[1]}end\n'
-        addr_r = '_r' if self.wrdata_style == WRDATA_PRESET.NEXT_CYCLE else ''
-
+        addr = self.addr_port_name if self.wrdata_style != WRDATA_PRESET.NEXT_CYCLE else self.addr_name+'_r'
         if rw and rw == 'RO':
             s += f'{ind[1]}else if ({self.ro_cg_cond} && ({reg.lower()}_r{dim} != {reg.lower()}_w{dim})) '
         elif rw and rw == 'WO':
             s += f'{ind[1]}else if ({self.wo_cg_cond} && ({reg.lower()}_r{dim} != {reg.lower()}_w{dim})) '
         else:
-            s += f'{ind[1]}//else if ({self.cg_cond} && {self.addr_name}{addr_r}{self.addr_slice} == {reg}) \n'
+            s += f'{ind[1]}//else if ({self.cg_cond} && {addr}{self.addr_slice} == {reg}) \n'
             s += f'{ind[1]}else if ({self.cg_cond} && ({reg.lower()}_r{dim} != {reg.lower()}_w{dim})) '
         s += f'{reg.lower()}_r{dim} <= {reg.lower()}_w{dim};\n'
         s += f'{ind.b}end\n'
@@ -201,10 +201,10 @@ class RegbkGen(SrcGen):
         #TODO slice dependent, now it only pad the MSB and it's usually the case
         dim = '' if not dim else dim
         s = f'{ind.b}always_comb begin\n'
-        addr_r = '_r' if self.wrdata_style == WRDATA_PRESET.NEXT_CYCLE else ''
+        addr = self.addr_port_name if self.wrdata_style != WRDATA_PRESET.NEXT_CYCLE else self.addr_name+'_r'
         if rw and rw == 'RO':
             if self.clr_affix.upper() in reg:
-                s += f'{ind[1]}if ({self.read_cond} && {self.addr_name}{addr_r}{self.addr_slice} == {reg}) '
+                s += f'{ind[1]}if ({self.read_cond} && {addr}{self.addr_slice} == {reg}) '
                 s += f'{reg.lower()}_w = \'1;\n'
                 s += f'{ind[1]}else {reg.lower()}_w = \'0;//TODO\n'
                 s += f'{ind[1]}//TODO\n{ind.b}end\n'
@@ -213,10 +213,10 @@ class RegbkGen(SrcGen):
                     s += f'{ind[1]}{reg.lower()} = ;//TODO\n'
                     s += f'{ind.b}end\n'
                 else:
-                    s += f'{ind[1]}{reg.lower()}_w = {reg.lower()}_r ;\n'
+                    s += f'{ind[1]}{reg.lower()}_w = {reg.lower()}_r;\n'
                     s += f'{ind[1]}//TODO\n{ind.b}end\n'
         else:
-            s += f'{ind[1]}if ({self.write_cond} && {self.addr_name}{addr_r}{self.addr_slice} == {reg}) begin\n'
+            s += f'{ind[1]}if ({self.write_cond} && {addr}{self.addr_slice} == {reg}) begin\n'
             if comb:
                 s += f'{ind[2]}{reg.lower()} = {self.wdata_name}[{reg}{self.regbk.bw_suf}-1:0];\n'
             else:
@@ -230,7 +230,7 @@ class RegbkGen(SrcGen):
                 if comb:
                     s += f'{ind[2]}{reg.lower()} = ;//TODO\n'
                 else:
-                    s += f'{ind[2]}{reg.lower()}_w = {reg.lower()}_r ;\n'
+                    s += f'{ind[2]}{reg.lower()}_w = {reg.lower()}_r;\n'
                     s += f'{ind[2]}//TODO\n'
             s += f'{ind[1]}end\n{ind.b}end\n'
         return s
@@ -239,10 +239,10 @@ class RegbkGen(SrcGen):
         #TODO slice dependent, now it only pad the MSB and it's usually the case
         dim = '' if not dim else dim
         s = f'{ind.b}always_comb begin\n'
-        addr_r = '_r' if self.wrdata_style == WRDATA_PRESET.NEXT_CYCLE else ''
+        addr = self.addr_port_name if self.wrdata_style != WRDATA_PRESET.NEXT_CYCLE else self.addr_name+'_r'
         if rw and rw == 'RO':
             if self.clr_affix.upper() in reg:
-                s += f'{ind[1]}if ({self.read_cond} && (({self.addr_name}{addr_r}{self.addr_slice} - {reg}) == {dim})) '
+                s += f'{ind[1]}if ({self.read_cond} && (({addr}{self.addr_slice} - {reg}) == {dim})) '
                 s += f'{reg.lower()}_w[{dim}] = \'1;\n'
                 s += f'{ind[1]}else {reg.lower()}_w[{dim}] = \'0;//TODO\n'
                 s += f'{ind[1]}//TODO\n{ind.b}end\n'
@@ -251,10 +251,10 @@ class RegbkGen(SrcGen):
                     s += f'{ind[1]}{reg.lower()}[{dim}] = ;//TODO\n'
                     s += f'{ind.b}end\n'
                 else:
-                    s += f'{ind[1]}{reg.lower()}_w[{dim}] = {reg.lower()}_r[{dim}] ;\n'
+                    s += f'{ind[1]}{reg.lower()}_w[{dim}] = {reg.lower()}_r[{dim}];\n'
                     s += f'{ind[1]}//TODO\n{ind.b}end\n'
         else:
-            s += f'{ind[1]}if ({self.write_cond} && ({self.addr_name}{addr_r}{self.addr_slice} - {reg} == {dim})) begin\n'
+            s += f'{ind[1]}if ({self.write_cond} && ({addr}{self.addr_slice} - {reg} == {dim})) begin\n'
             if comb:
                 s += f'{ind[2]}{reg.lower()}[{dim}] = {self.wdata_name}[{reg}{self.regbk.bw_suf}-1:0];\n' #TODO
             else:
@@ -268,7 +268,7 @@ class RegbkGen(SrcGen):
                 if comb:
                     s += f'{ind[2]}{reg.lower()}[{dim}] = ;//TODO\n'
                 else:
-                    s += f'{ind[2]}{reg.lower()}_w[{dim}] = {reg.lower()}_r[{dim}] ;\n'
+                    s += f'{ind[2]}{reg.lower()}_w[{dim}] = {reg.lower()}_r[{dim}];\n'
                     s += f'{ind[2]}//TODO\n'
             s += f'{ind[1]}end\n{ind.b}end\n'
         return s
@@ -360,15 +360,18 @@ class RegbkGen(SrcGen):
         logics based on the regaddr enum list.
         """
         w = [0,0]
-        self.print ( f'read condition: {self.read_cond}')
         s = f'{ind.b}always_comb begin\n'
-        if self.disable_style == DISABLE_PRESET.DISABLE_STATE: 
+        rdata_dst = f'o_{self.rdata_name}' if self.wrdata_style == WRDATA_PRESET.INSTANT else f'{self.rdata_name}_w' 
+        if self.disable_style == DISABLE_PRESET.DISABLE_REG: 
             s += f'{ind[1]}if (state_main_r == DISABLED) begin\n'
+            s += f'{ind[2]}{rdata_dst} = ({self.read_cond} && {self.addr_port_name}{self.addr_slice} == CLR_DISABLED)? 1 : \'0;\n'
+        elif self.disable_style == DISABLE_PRESET.EN_WIRE: 
+            s += f'{ind[1]}if (!i_en) begin\n'
+            s += f'{ind[2]}{rdata_dst} = \'0;\n'
         else:
             s += f'{ind[1]}if () begin //TODO Disabled default read value\n'
+            s += f'{ind[2]}{rdata_dst} = \'0;\n'
         
-        rdata_dst = f'o_{self.rdata_name}' if self.wrdata_style == WRDATA_PRESET.INSTANT else f'{self.rdata_name}_w' 
-        s += f'{ind[2]}{rdata_dst} = ({self.read_cond} && {self.addr_port_name}{self.addr_slice} == CLR_DISABLED)? 1 : \'0;\n'
         s += f'{ind[1]}end\n'
         s += f'{ind[1]}else if ({self.read_cond}) begin\n'
         arr_reg = []
@@ -421,8 +424,6 @@ class RegbkGen(SrcGen):
         """
         s = ''
         w = 30
-        self.print ( f'write condition: {self.write_cond}')
-        self.print ( f'clock gating condition: {self.cg_cond}')
         gen = 'arrgen'
         s += f'{ind.b}//{"Array GenVar":=^{w}}\n'
         s += f'{ind.b}genvar {gen};\n\n'
@@ -502,7 +503,7 @@ class RegbkGen(SrcGen):
         s += f'{ind.b}assign {self.ro_cg_cond} = 1\'b1;\n'
         if self.disable_style is None: 
             s += f'{ind.b}assign {self.cg_cond} = 1\'b1;\n'
-        elif self.disable_style == DISABLE_PRESET.DISABLE_STATE: 
+        elif self.disable_style == DISABLE_PRESET.DISABLE_REG: 
             s += f'{ind.b}assign {self.cg_cond} = (state_main_r != DISABLED);\n'
             s += f'{ind.b}\n'
             s += f'{ind.b}always_comb begin\n'
@@ -560,7 +561,7 @@ class RegbkGen(SrcGen):
         ##
         if self.disable_style is None: 
             pass
-        elif self.disable_style == DISABLE_PRESET.DISABLE_STATE: 
+        elif self.disable_style == DISABLE_PRESET.DISABLE_REG: 
             s += self.SeqCeStr(  [f'state_main_r <= MAIN_IDLE;']
                                 ,[f'state_main_r <= state_main_w;']
                                 ,ce='state_main_r != state_main_w'
@@ -569,6 +570,7 @@ class RegbkGen(SrcGen):
             pass
         return s
     def ToFile(self, pkg=None, ind=None, overwrite=False):
+        self.Custom()
         regbktemp = self.Swap(pkg)
         ind = self.cur_ind if not ind else ind
         Ind   = self.IndBlk()

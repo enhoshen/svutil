@@ -156,7 +156,6 @@ class SVgen(SVutil):
         def new_func(*arg, **kwargs):
             ind = self.cur_ind.Copy() if not kwargs['ind'] else kwargs['ind']
             kwargs['ind'] = ind
-            s = ''
             x = orig(*arg, **kwargs) 
             return x
         return new_func
@@ -167,11 +166,19 @@ class SVgen(SVutil):
             toclip = kwargs.get('toclip')
             toclip = True if toclip is None else toclip
             kwargs['ind'] = ind
-            s = ''
             x = orig(*arg, **kwargs) 
             if toclip:
                 ToClip(x)
             return x
+        return new_func
+    def Blk(orig):
+        def new_func(*arg, **kwargs):
+            ind = kwargs.get('ind')
+            ind = arg[0].cur_ind.Copy() if ind is None else ind # orig must be a member function
+            kwargs['ind'] = ind
+            yield ''
+            x = orig(*arg, **kwargs) 
+            yield from x
         return new_func
 if __name__ == "__main__":
     pass
@@ -185,8 +192,10 @@ if __name__ == "__main__":
     from SVparse import *
     import sys
     sys.path.append('./gen')
+    from gen.SrcGen import *
     from gen.TestGen import TestGen
-    from gen.RegbkGen import RegbkGen, PRESET
+    from gen.RegbkGen import RegbkGen 
+    from gen.ConnectGen import ConnectGen
     from gen.DrawioGen import DrawioGen
     from gen.LatexGen import LatexGen
     from gen.BannerGen import BannerGen
@@ -201,6 +210,10 @@ if __name__ == "__main__":
         gRegbk = RegbkGen(session=session)
     except:
         SVutil().print('RegbkGen initialization failed') 
+    try:
+        gConnect= ConnectGen(session=session)
+    except:
+        SVutil().print('ConnectGen initialization failed') 
     try:
         gDrawio = DrawioGen(session=session)
     except:
