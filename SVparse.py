@@ -186,20 +186,20 @@ class SVhier ():
     @property
     def ShowAllParams(self):
         w =30 
-        s  = f'{self.hier+" All Parameters":-^{2*w}}'
+        s  = f'{self.hier+" All Parameters":-^{2*w}}\n'
         s += self.ParamStr(self.AllParams, w)
         return s
     @property
     def ShowParamsDetail(self):
         w = 20 
-        s  = f'{self.hier+" All Parameters detail":-^{2*w}}'
+        s  = f'{self.hier+" All Parameters detail":-^{2*w}}\n'
         s += self.FieldStr(self.paramfield,w)
         s += self.DictStr(self.paramsdetail,w)
         return s
     @property
     def ShowAllParamDetails(self):
         w = 20 
-        s  = f'{self.hier+" All Parameters detail":-^{2*w}}'
+        s  = f'{self.hier+" All Parameters detail":-^{2*w}}\n'
         s += self.FieldStr(self.paramfield,w)
         s += self.DictStr(self.AllParamDetails,w)
         return s
@@ -224,6 +224,7 @@ class SVhier ():
         return s
     @property
     def ShowConnect(self,**conf):
+        ''' deprecated '''
         s = '.*\n' if conf.get('explicit')==True else ''
         for t , n in self.protoPorts:
             if t == 'rdyack':
@@ -240,13 +241,14 @@ class SVhier ():
         s += f'{self.hier+"."+n:-^{4*w}}\n'
         for i in ['name','BW','dimension' , 'type']:
             s += f'{i:^{w}} '
-        s +=( f' \n{"":=<{4*w}}')
+        s += f' \n{"":=<{4*w}}\n'
         for i in l:
             for idx,x in enumerate(i):
                 if idx < 4:
                     s += f'{x.__str__():^{w}} '
                 else:
                     s +=f'\n{x.__str__():^{4*w}} '
+            s += '\n'
         return s
     def ParamStr(self,dic,w=13):
         s = ''
@@ -267,7 +269,8 @@ class SVhier ():
         s = ''
         for t in dic.values():
             for v in t:
-                s += f'{self.valuecb(v).__repr__() if type(v)==int else v.__repr__():^{w}}\n'
+                s += f'{self.valuecb(v).__repr__() if type(v)==int else v.__repr__():^{w}}'
+            s += '\n'
         return s
     def __str__(self):
         sc = self._scope.hier if self._scope!=None else None
@@ -507,9 +510,10 @@ class SVparse(SVutil):
         bw = SVstr('' if bw==() else bw[0] )
         cmt = self.cur_cmt
         cmts = []
-        groups = [] if self.last_pure_cmt == '' else [list(self.last_pure_cmt)]
         _s = SVstr(s.s).lsplit('}') if '}' in s else s.s
         enums = [ i for i in re.split( r'{ *| *, *', _s) ]
+        groups = [  list(['']) if self.last_pure_cmt == '' else [list(self.last_pure_cmt)] 
+                    for i in range(len(enums))]
         cmt = [''] if cmt =='' else cmt
         cmts = [ [''] for i in range(len(enums)-1) ] + [cmt]
         while '}' not in s:

@@ -161,7 +161,9 @@ class SrcGen(SVgen):
         elif self.protocol == PRCL_PRESET.APB3:
             pass
         ##
-        if self.wrdata_style == WRDATA_PRESET.INSTANT :
+        if self.wrdata_style == WRDATA_PRESET.INSTANT:
+            if self.protocol == PRCL_PRESET.REQACK:
+                s += f'{ind.b}logic [{bw}-1:0] {self.rdata_name}_w;\n'
             pass
         elif self.wrdata_style == WRDATA_PRESET.RD_NEXT_CYCLE:
             s += f'{ind.b}logic [{bw}-1:0] {self.rdata_name}_w;\n'

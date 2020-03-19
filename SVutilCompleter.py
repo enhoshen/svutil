@@ -179,6 +179,8 @@ class SVutilCompleter(rlcompleter.Completer):
 
 
 def get_class_members(klass):
+    if klass in {EAdict}:
+        return {'dic'}
     ret = dir(klass)
     if hasattr(klass,'__bases__'):
         for base in klass.__bases__:

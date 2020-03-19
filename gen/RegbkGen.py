@@ -127,6 +127,7 @@ class RegbkGen(SrcGen):
         s += self.ProtocolDataPortStr(self.regbk.regaddrbw_name, self.regbk.regbw_name,ind=ind+1)
         w = len(self.regbk.regbw_name)+5+8
         if self.regbk.raw_intr_stat:
+            s += f'{ind[1]}// interrupt\n'
             s += f'{ind[1]}{",output "+self.regbk.regintr_name:<{w}} {self.ointr_name}\n'
         s += f'{ind.b});\n'
         yield s 
@@ -148,7 +149,7 @@ class RegbkGen(SrcGen):
         if rw and rw=='WO':
             return ''
         pad = f'{self.regbk.regbw_name}-{reg}{self.regbk.bw_suf}'
-        if self.wrdata_style == WRDATA_PRESET.INSTANT:
+        if self.wrdata_style == WRDATA_PRESET.INSTANT and self.protocol == PRCL_PRESET.VALID:
             s =f'{ind.b}{reg:<{w[0]}}: o_{self.rdata_name} = '
         else:
             s =f'{ind.b}{reg:<{w[0]}}: {self.rdata_name}_w = '
@@ -165,7 +166,7 @@ class RegbkGen(SrcGen):
         pad = f'{self.regbk.regbw_name}-{reg}{self.regbk.bw_suf}'
         s = f'{ind.b}{ifelse+" (":<9}{self.addr_port_name}{self.addr_slice} >= {reg} &&\n'
         s +=      f'{ind.b}{"":<9}{self.addr_port_name}{self.addr_slice} < {reg}+{reg}{self.regbk.arr_num_suf}) begin\n'
-        if self.wrdata_style == WRDATA_PRESET.INSTANT:
+        if self.wrdata_style == WRDATA_PRESET.INSTANT and self.protocol == PRCL_PRESET.VALID:
             s +=f'{ind[1]}o_{self.rdata_name} = '
         else:
             s +=f'{ind[1]}{self.rdata_name}_w = '
@@ -178,6 +179,10 @@ class RegbkGen(SrcGen):
     @SVgen.Str
     def WdataSeqStr(self, reg, _slice, rw=None, dim=None, ind=None):
         #TODO slice dependent, now it only pad the MSB and it's usually the case
+        disable_reg = False
+        if self.disable_style == DISABLE_PRESET.DISABLE_REG and reg == 'DISABLE': 
+            disable_reg = True 
+
         dim = '' if not dim else f'[{dim}]'
         rstedge = 'negedge' if self.rst_name[-2:] == '_n' else 'posedge'
         s = f'{ind.b}always_ff @(posedge {self.clk_name} or {rstedge} {self.rst_name}) begin\n'
@@ -186,19 +191,25 @@ class RegbkGen(SrcGen):
         s += '\n' if dim =='' else '//TODO do indexing if the default parameter is an array\n'
         #s += f'{ind[1]}end\n'
         addr = self.addr_port_name if self.wrdata_style != WRDATA_PRESET.NEXT_CYCLE else self.addr_name+'_r'
+
+        cg_cond = f'{self.cg_cond} && ' if not disable_reg else ''
         if rw and rw == 'RO':
             s += f'{ind[1]}else if ({self.ro_cg_cond} && ({reg.lower()}_r{dim} != {reg.lower()}_w{dim})) '
         elif rw and rw == 'WO':
             s += f'{ind[1]}else if ({self.wo_cg_cond} && ({reg.lower()}_r{dim} != {reg.lower()}_w{dim})) '
         else:
-            s += f'{ind[1]}//else if ({self.cg_cond} && {addr}{self.addr_slice} == {reg}) \n'
-            s += f'{ind[1]}else if ({self.cg_cond} && ({reg.lower()}_r{dim} != {reg.lower()}_w{dim})) '
+            s += f'{ind[1]}//else if ({cg_cond}{addr}{self.addr_slice} == {reg}) \n'
+            s += f'{ind[1]}else if ({cg_cond}({reg.lower()}_r{dim} != {reg.lower()}_w{dim})) '
         s += f'{reg.lower()}_r{dim} <= {reg.lower()}_w{dim};\n'
         s += f'{ind.b}end\n'
         return s
     @SVgen.Str
     def WdataCombStr(self, reg, _slice, rw=None, dim=None, comb=None, ind=None):
         #TODO slice dependent, now it only pad the MSB and it's usually the case
+        disable_reg = False
+        if self.disable_style == DISABLE_PRESET.DISABLE_REG and reg == 'DISABLE': 
+            disable_reg = True 
+
         dim = '' if not dim else dim
         s = f'{ind.b}always_comb begin\n'
         addr = self.addr_port_name if self.wrdata_style != WRDATA_PRESET.NEXT_CYCLE else self.addr_name+'_r'
@@ -230,8 +241,12 @@ class RegbkGen(SrcGen):
                 if comb:
                     s += f'{ind[2]}{reg.lower()} = ;//TODO\n'
                 else:
-                    s += f'{ind[2]}{reg.lower()}_w = {reg.lower()}_r;\n'
-                    s += f'{ind[2]}//TODO\n'
+                    if disable_reg:
+                        s += f'{ind[2]}if (clr_disabled_r && state_main_r == DISABLED) disable_w = \'0;\n'
+                        s += f'{ind[2]}else disable_w = disable_r;\n'
+                    else:
+                        s += f'{ind[2]}{reg.lower()}_w = {reg.lower()}_r;\n'
+                        s += f'{ind[2]}//TODO\n'
             s += f'{ind[1]}end\n{ind.b}end\n'
         return s
     @SVgen.Str
@@ -361,7 +376,9 @@ class RegbkGen(SrcGen):
         """
         w = [0,0]
         s = f'{ind.b}always_comb begin\n'
-        rdata_dst = f'o_{self.rdata_name}' if self.wrdata_style == WRDATA_PRESET.INSTANT else f'{self.rdata_name}_w' 
+        rdata_dst = f'o_{self.rdata_name}'  if self.wrdata_style == WRDATA_PRESET.INSTANT\
+                                            and self.protocol != PRCL_PRESET.REQACK\
+                                            else f'{self.rdata_name}_w' 
         if self.disable_style == DISABLE_PRESET.DISABLE_REG: 
             s += f'{ind[1]}if (state_main_r == DISABLED) begin\n'
             s += f'{ind[2]}{rdata_dst} = ({self.read_cond} && {self.addr_port_name}{self.addr_slice} == CLR_DISABLED)? 1 : \'0;\n'
@@ -407,7 +424,11 @@ class RegbkGen(SrcGen):
         s += f'{ind[2]}end\n' if len(arr_reg)!= 0 else ''
 
         # default
-        if self.wrdata_style != WRDATA_PRESET.INSTANT:
+        if self.wrdata_style == WRDATA_PRESET.INSTANT and self.protocol == PRCL_PRESET.VALID:
+            s += f'{ind[1]}end\n'
+            s += f'{ind[1]}else o_{self.rdata_name} = \'0;\n'
+            s += f'{ind.b}end\n\n'
+        else:
             s += f'{ind[1]}end\n'
             s += f'{ind[1]}else {self.rdata_name}_w = o_{self.rdata_name};\n'
             s += f'{ind.b}end\n\n'
