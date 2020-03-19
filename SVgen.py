@@ -192,6 +192,7 @@ if __name__ == "__main__":
     from SVparse import *
     import sys
     sys.path.append('./gen')
+    import SVutilCompleter
     from gen.SrcGen import *
     from gen.TestGen import TestGen
     from gen.RegbkGen import RegbkGen 

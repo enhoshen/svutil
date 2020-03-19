@@ -155,12 +155,16 @@ class SVhier ():
         return SVTypeDic({ k:v for i in self.Types for k,v in i.items() })
     @property
     def ShowTypes(self):
+        s = ''
         for k,v in self.types.items():
-            self.TypeStr(k,v)
+            s += self.TypeStr(k,v)
+        return s
     @property
     def ShowAllTypes(self):
+        s = ''
         for k,v in self.AllType.items():
-            self.TypeStr(k,v)
+            s += self.TypeStr(k,v)
+        return s
     #########################
     # parameters
     #########################
@@ -176,29 +180,29 @@ class SVhier ():
     @property
     def ShowParams(self):
         w= 30
-        print(f'{self.hier+" Parameters":-^{2*w}}' )
-        self.ParamStr(self.params, w)
-        return
+        s  = f'{self.hier+" Parameters":-^{2*w}}'
+        s += self.ParamStr(self.params, w)
+        return s
     @property
     def ShowAllParams(self):
         w =30 
-        print(f'{self.hier+" All Parameters":-^{2*w}}')
-        self.ParamStr(self.AllParams, w)
-        return None
+        s  = f'{self.hier+" All Parameters":-^{2*w}}'
+        s += self.ParamStr(self.AllParams, w)
+        return s
     @property
     def ShowParamsDetail(self):
         w = 20 
-        print(f'{self.hier+" All Parameters detail":-^{2*w}}')
-        self.FieldStr(self.paramfield,w)
-        self.DictStr(self.paramsdetail,w)
-        return None
+        s  = f'{self.hier+" All Parameters detail":-^{2*w}}'
+        s += self.FieldStr(self.paramfield,w)
+        s += self.DictStr(self.paramsdetail,w)
+        return s
     @property
     def ShowAllParamDetails(self):
         w = 20 
-        print(f'{self.hier+" All Parameters detail":-^{2*w}}')
-        self.FieldStr(self.paramfield,w)
-        self.DictStr(self.AllParamDetails,w)
-        return None
+        s  = f'{self.hier+" All Parameters detail":-^{2*w}}'
+        s += self.FieldStr(self.paramfield,w)
+        s += self.DictStr(self.AllParamDetails,w)
+        return s
     #########################
     # macros 
     #########################
@@ -209,14 +213,15 @@ class SVhier ():
     @property
     def ShowPorts(self):
         w=15
+        s = ''
         for i in ['io' , 'name' , 'dim' , 'type']:
-            print(f'{i:{w}}' , end=' ')
-        print(f'\n{"":=<{4*w}}')
+            s += f'{i:{w}} '
+        s += f'\n{"":=<{4*w}}\n'
         for io , n in self.protoPorts:
-            print(f'{io:<{w}}'f'{n:<{w}}'f'{"()":<{w}}')
+            s += f'{io:<{w}}{n:<{w}}{"()":<{w}}\n'
         for io , n ,dim,tp , *_ in self.ports:
-            print(f'{io:<{w}}'f'{n:<{w}}'f'{dim.__str__():<{w}}'f'{tp:<{w}}')
-        return
+            s += f'{io:<{w}}{n:<{w}}{dim.__str__():<{w}}{tp:<{w}}\n'
+        return s
     @property
     def ShowConnect(self,**conf):
         s = '.*\n' if conf.get('explicit')==True else ''
@@ -228,39 +233,42 @@ class SVhier ():
         for io , n , *_ in self.ports:
             s += ',.'+n+'()\n'
         s = s[:-1].replace(',',' ',1)
-        ToClip(s)
-        print(s)
-        return
+        return s
     
     def TypeStr(self,n,l,w=13):
-        print(f'{self.hier+"."+n:-^{4*w}}' )
+        s = ''
+        s += f'{self.hier+"."+n:-^{4*w}}\n'
         for i in ['name','BW','dimension' , 'type']:
-            print(f'{i:^{w}}', end=' ')
-        print( f' \n{"":=<{4*w}}')
+            s += f'{i:^{w}} '
+        s +=( f' \n{"":=<{4*w}}')
         for i in l:
             for idx,x in enumerate(i):
                 if idx < 4:
-                    print (f'{x.__str__():^{w}}' , end=' ')
+                    s += f'{x.__str__():^{w}} '
                 else:
-                    print(f'\n{x.__str__():^{4*w}}',end=' ')
-            print()
+                    s +=f'\n{x.__str__():^{4*w}} '
+        return s
     def ParamStr(self,dic,w=13):
+        s = ''
         for i in ['name','value']:
-            print(f'{i:^{w}}' , end=' ')
-        print(f'\n{"":=<{2*w}}')
+            s += f'{i:^{w}} '
+        s += f'\n{"":=<{2*w}}\n'
         #l = self.params
         for k,v in dic.items():
-            print (f'{k:^{w}}'f'{self.valuecb(v).__str__() if type(v)==int else v.__str__():^{w}}', end=' ')
-            print()
+            s += f'{k:^{w}}{self.valuecb(v).__str__() if type(v)==int else v.__str__():^{w}}\n'
+        return s
     def FieldStr(self,field,w=13):
+        s = ''
         for i in field.dic:
-            print ( f'{i:^{w}}', end=' ')
-        print(f'\n{"":=<{len(field.dic)*w}}')
+            s += f'{i:^{w}} '
+        s += f'\n{"":=<{len(field.dic)*w}}\n'
+        return s
     def DictStr(self, dic, w=13):
+        s = ''
         for t in dic.values():
             for v in t:
-                print (f'{self.valuecb(v).__repr__() if type(v)==int else v.__repr__():^{w}}', end=' ')
-            print()
+                s += f'{self.valuecb(v).__repr__() if type(v)==int else v.__repr__():^{w}}\n'
+        return s
     def __str__(self):
         sc = self._scope.hier if self._scope!=None else None
         return f'\n{self.hier:-^52}\n'+\
