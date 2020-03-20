@@ -115,6 +115,9 @@ class RegbkGen(SrcGen):
         yield ''
         s = '\n'
         s += f'{ind.b}`include ' + f'"{self.regbkstr}Defines.sv" // Please manually modify the path\n\n' 
+        if self.regbk.raw_intr_stat:
+            s += f'{ind.b}// submodules\n'
+            s += f'{ind.b}`include "Peripheral/common/IntrSigGen.sv"\n\n'
         s += f'{ind.b}module {self.regbkstr}\n'
         s += f'{ind[1]}import {self.regbkstr}::*;\n'
         s += self.ProtocolImportStr(ind=ind+1)
@@ -294,6 +297,26 @@ class RegbkGen(SrcGen):
         s += f'{ind[1]}{self.regbk.regintr_name}_w.{intr_logic} = {self.regbk.regintr_name}_r.{intr_logic};//TODO\n'
         s += f'{ind.b}end\n'
         return s
+    @SVgen.Str
+    def IntrSigGenStr(self, ind=None):
+        s = '\n' 
+        s += f'{ind.b}// interrupt\n'
+        s += f'{ind.b}genvar gen;\n'
+        s += f'{ind.b}generate \n'
+        s += f'{ind[1]}for (gen = 0 ; gen < RAW_INTR_STAT_BW ; ++gen) begin: intr_sig\n'
+        s += f'{ind[2]}IntrSigGen #(\n'
+        s += f'{ind[3]}.INTR_PULSE_WIDTH_BW (8) \n'
+        s += f'{ind[2]}) u_intr (\n'
+        s += f'{ind[3]} .i_clk          (i_clk)\n'
+        s += f'{ind[3]},.i_rst_n        (i_rst_n)\n'
+        s += f'{ind[3]},.i_trigger_type (intr_ctrl_r.intr_type)\n'
+        s += f'{ind[3]},.i_pulse_width  (intr_ctrl_r.intr_width)\n'
+        s += f'{ind[3]},.i_intr_stat    (intr_stat_r[gen])\n'
+        s += f'{ind[3]},.o_intr_sig     (o_intr[gen])\n'
+        s += f'{ind[2]});\n'
+        s += f'{ind[1]}end\n'
+        s += f'{ind.b}endgenerate\n'
+        return s + '\n'
     @SVgen.Str
     def WRCondLogicStr(self, ind=None): 
         s = ''
@@ -503,6 +526,8 @@ class RegbkGen(SrcGen):
             s  = f'{ind.b}assign {self.write_cond} = i_pctl.psel && i_pctl.penable && i_pctl.pwrite == WRITE && !o_resp.o_pslverr && o_resp.o_pready;\n'
             s += f'{ind.b}assign {self.read_cond} = i_pctl.psel && !i_pctl.penable && !o_resp.o_pslverr;\n'
         #
+        if self.regbk.raw_intr_stat:
+            s += self.IntrSigGenStr(ind=ind)
         return s 
     @SVgen.Str
     def ReqAckCombStr(self, ind=None):

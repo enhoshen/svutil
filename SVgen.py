@@ -1,5 +1,6 @@
 from SVparse import * 
 import os
+from functools import wraps
 class Ind():
     def __init__(self , n):
         self.n = n
@@ -153,6 +154,7 @@ class SVgen(SVutil):
             return w
     # decorators
     def Str(orig):
+        @wraps(orig)
         def new_func(*arg, **kwargs):
             ind = self.cur_ind.Copy() if not kwargs['ind'] else kwargs['ind']
             kwargs['ind'] = ind
@@ -160,6 +162,7 @@ class SVgen(SVutil):
             return x
         return new_func
     def Clip(orig):
+        @wraps(orig)
         def new_func(*arg, **kwargs):
             ind = kwargs.get('ind')
             ind = arg[0].cur_ind.Copy() if ind is None else ind # orig must be a member function
@@ -172,6 +175,7 @@ class SVgen(SVutil):
             return x
         return new_func
     def Blk(orig):
+        @wraps(orig)
         def new_func(*arg, **kwargs):
             ind = kwargs.get('ind')
             ind = arg[0].cur_ind.Copy() if ind is None else ind # orig must be a member function
