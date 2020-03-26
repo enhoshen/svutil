@@ -37,85 +37,93 @@ class TestGen(SVgen):
         ind = self.cur_ind.Copy() 
         yield ''
         s = f'{ind.b}module ' + GBV.TOPMODULE + ';\n'
-        yield s+self.InitialStr(ind=ind)
+        yield s+self.InitialStr(ind=ind+1)
         s = '\n' + ind.b +'endmodule'
         yield s
+    @SVgen.Str
     def InitialStr(self, ind=None):
-        ind = self.cur_ind.Copy() if not ind else ind
         ck_lst   = reduce( (lambda x,y: x+', '+f'{y[0]+"_" if y[0] != "" else ""}clk'),       self.clk_domain_lst , '')[2:]
         rst_lst  = reduce( (lambda x,y: x+', '+f'{y[0]+"_" if y[0] != "" else ""}rst{y[1]}'), self.clk_domain_lst , '')[2:]
         ccnt_lst = reduce( (lambda x,y: x+', '+f'{y[0]+"_" if y[0] != "" else ""}clk_cnt'),   self.clk_domain_lst, '') [2:]
-        s = f'\nlogic {ck_lst};\n'
-        s += f'logic {rst_lst};\n'
-        s += f'int {ccnt_lst};\n'
+        s = f'{ind.b}nlogic {ck_lst};\n'
+        s += f'{ind.b}logic {rst_lst};\n'
+        s += f'{ind.b}int {ccnt_lst};\n'
         for ck in self.clk_domain_lst:
             _aff = ck[0]+"_" if ck[0] != "" else ""
-            s += f'`Pos({_aff}rst_out, {_aff}rst{ck[1]})\n' 
-            s += f'`PosIf({_aff}ck_ev , {_aff}clk, {_aff}rst{ck[1]})\n' 
+            s += f'{ind.b}`Pos({_aff}rst_out, {_aff}rst{ck[1]})\n' 
+            s += f'{ind.b}`PosIf({_aff}ck_ev , {_aff}clk, {_aff}rst{ck[1]})\n' 
         ev_lst = reduce( (lambda x,y: x+', '+str(y[1])), self.eventlst + [("","")], '')[2:-2]
-        s += f'logic {ev_lst}; //TODO modify event condition\n'
+        s += f'{ind.b}logic {ev_lst}; //TODO modify event condition\n'
             
         w = self.FindFormatWidth([ i[0]+', '+i[1]+',' for i in self.eventlst])
         for ev in self.eventlst:
-            s += f'`PosIf({ev[0]+", "+ev[1]+",":<{w}} {self.rststr})//TODO modify reset logic\n' 
+            s += f'{ind.b}`PosIf({ev[0]+", "+ev[1]+",":<{w}} {self.rststr})//TODO modify reset logic\n' 
 
-        s += f'`WithFinish\n\n' 
+        s += f'{ind.b}`WithFinish\n\n' 
         for i,ck in enumerate(self.clk_domain_lst):
             _aff = ck[0]+"_" if ck[0] != "" else ""
-            s += f'always #`{self.hclkmacro} {_aff}clk= ~{_aff}clk;\n'
+            s += f'{ind.b}always #`{self.hclkmacro} {_aff}clk= ~{_aff}clk;\n'
             _cmt = '//' if i==0 else ''
-            s += f'{_cmt}always #(2*`{self.hclkmacro}) {_aff}clk_cnt = {_aff}clk_cnt+1;\n'
-        s += f'\ninitial begin'
-        s = s.replace('\n',f'\n{ind[1]}')
-        _s =  f'\n$fsdbDumpfile({{"{self.fsdbname}_", getenv("TEST_CFG"), ".fsdb"}});\n' 
-        _s +=  f'$fsdbDumpvars(0,{GBV.TEST},"+all");\n'
+            s += f'{ind.b}{_cmt}always #(2*`{self.hclkmacro}) {_aff}clk_cnt = {_aff}clk_cnt+1;\n'
+        s += self.AnsiColorVarStr(ind=ind)
+        s += f'{ind.b}initial begin\n'
+        _s =  f'{ind[1]}$fsdbDumpfile({{"{self.fsdbname}_", getenv("TEST_CFG"), ".fsdb"}});\n' 
+        _s +=  f'{ind[1]}$fsdbDumpvars(0,{GBV.TEST},"+all");\n'
 
         for pyev in self.pyeventlgclst:
-            _s += f'{pyev} = 0;\n'
+            _s += f'{ind[1]}{pyev} = 0;\n'
         for ck in self.clk_domain_lst:
             _aff = ck[0]+"_" if ck[0] != "" else ""
-            _s +=  f'{_aff}clk = 0;\n' 
-            _s +=  f'{_aff}rst{ck[1]} = {1 if ck[1] =="_n" else 0};\n'
-        _s +=  '#1 `NicotbInit\n' 
-        _s += '#10\n'
-        for ck in self.clk_domain_lst:
-            _aff = ck[0]+"_" if ck[0] != "" else ""
-            rst = _aff+'rst'+ck[1]
-            _s += f'{rst} = 0;\n' 
-        _s += '#10\n'
+            _s +=  f'{ind[1]}{_aff}clk = 0;\n' 
+            _s +=  f'{ind[1]}{_aff}rst{ck[1]} = {1 if ck[1] =="_n" else 0};\n'
+        _s += f'{ind[1]}#1 `NicotbInit\n' 
+        _s += f'{ind[1]}#10\n'
         for ck in self.clk_domain_lst:
             _aff = ck[0]+"_" if ck[0] != "" else ""
             rst = _aff+'rst'+ck[1]
-            _s += f'{rst} = 1;\n'
-            _s += f'{_aff}clk_cnt = 0;\n'
+            _s += f'{ind[1]}{rst} = 0;\n' 
+        _s += f'{ind[1]}#10\n'
+        for ck in self.clk_domain_lst:
+            _aff = ck[0]+"_" if ck[0] != "" else ""
+            rst = _aff+'rst'+ck[1]
+            _s += f'{ind[1]}{rst} = 1;\n'
+            _s += f'{ind[1]}{_aff}clk_cnt = 0;\n'
         _s += '\n'
         _ck = self.clk_domain_lst[0][0]
         _aff = _ck+"_" if _ck != "" else ""
-        _s += f'while ({_aff}clk_cnt < `{self.endcyclemacro} && sim_stop == 0 && time_out ==0) begin\n'
-        _s += f'    @ (posedge {_aff}clk)\n'
-        _s += f'    {_aff}clk_cnt <= {_aff}clk_cnt + 1;\n'
-        _s += f'end\n'
+        _s += f'{ind[1]}while ({_aff}clk_cnt < `{self.endcyclemacro} && sim_stop == 0 && time_out ==0) begin\n'
+        _s += f'{ind[2]}@ (posedge {_aff}clk)\n'
+        _s += f'{ind[2]}{_aff}clk_cnt <= {_aff}clk_cnt + 1;\n'
+        _s += f'{ind[1]}end\n'
         #_s += f'#(2*`{self.hclkmacro+"*`"+self.endcyclemacro}) $display("timeout");\n' #TODO
-        _s = _s.replace('\n',f'\n{ind[2]}')
         _s += '\n'
-        _s += self.SimFinStr(ind=ind+2)
-        _s += f'{ind[2]}`NicotbFinal\n'
-        _s += f'{ind[2]}$finish;'
-        _s += f'{ind[1]}end\n\n'
+        _s += self.SimFinStr(ind=ind+1)
+        _s += f'{ind[1]}`NicotbFinal\n'
+        _s += f'{ind[1]}$finish;\n'
+        _s += f'{ind.b}end\n\n'
         return s+_s
+    @SVgen.Str
+    def AnsiColorVarStr(self, ind=None):
+        s  = f'\n{ind.b}string ansi_blue   = "\\033[34m";\n'
+        s += f'{ind.b}string ansi_cyan   = "\\033[36m";\n'
+        s += f'{ind.b}string ansi_green  = "\\033[32m";\n'
+        s += f'{ind.b}string ansi_yellow = "\\033[33m";\n'
+        s += f'{ind.b}string ansi_red    = "\\033[31m";\n'
+        s += f'{ind.b}string ansi_reset  = "\\033[0m";\n'
+        return s
+    @SVgen.Str
     def SimFinStr (self, ind=None):
-        ind = self.cur_ind.Copy() if not ind else ind
         _ck = self.clk_domain_lst[0][0]
         _aff = _ck+"_" if _ck != "" else ""
-        s =  f'{ind.b}$display("{"":=<42}");\n'
-        s += f'{ind.b}$display({{"[Info] Test case:", getenv("TEST_CFG")}});\n'
+        s =  f'{ind.b}$display({{ansi_blue,"{"":=<42}", ansi_reset}});\n'
+        s += f'{ind.b}$display({{"[Info] Test case:", ansi_yellow, getenv("TEST_CFG"), ansi_reset}});\n'
         s += f'{ind.b}if ({_aff}clk_cnt >= `{self.endcyclemacro}|| time_out)\n'
-        s += f'{ind[1]}$display("[Error] Simulation Timeout.");\n'
+        s += f'{ind[1]}$display({{"[Error]", ansi_yellow, " Simulation Timeout.", ansi_reset}});\n'
         s += f'{ind.b}else if (sim_pass)\n'
-        s += f'{ind[1]}$display("[Info] Congrat! Simulation Passed.");\n'
+        s += f'{ind[1]}$display({{"[Info]", ansi_green, " Congrat! Simulation Passed.", ansi_reset}});\n'
         s += f'{ind.b}else\n'
-        s += f'{ind[1]}$display("[Error] Simulation Failed.");\n'
-        s +=  f'{ind.b}$display("{"":=<42}");\n\n'
+        s += f'{ind[1]}$display({{"[Error]", ansi_red, " Simulation Failed.", ansi_reset}});\n'
+        s +=  f'{ind.b}$display({{ansi_blue,"{"":=<42}", ansi_reset}});\n\n'
         return s
     def DeclareBlkBlk(self ):
         pass

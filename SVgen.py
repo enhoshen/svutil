@@ -203,7 +203,7 @@ if __name__ == "__main__":
     from gen.ConnectGen import ConnectGen
     from gen.DrawioGen import DrawioGen
     from gen.LatexGen import LatexGen
-    from gen.BannerGen import BannerGen
+    from gen.BannerGen import GanzinBanner
     session = SVparseSession(V_(VERBOSE))
     session.FileParse(None)
     hiers = EAdict(session.hiers)
@@ -227,4 +227,4 @@ if __name__ == "__main__":
         gLatex = LatexGen(session=session)
     except:
         SVutil().print('LatexGen initialization failed') 
-    gBanner = BannerGen()
+    gBanner = GanzinBanner()

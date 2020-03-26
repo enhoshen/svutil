@@ -111,27 +111,29 @@ class SrcGen(SVgen):
     @SVgen.Str
     def ProtocolPortStr(self, bw, ind=None):
         ''' bw are name to the parameters '''
-        w = len(bw)+5+8
-        if self.protocol is None:
-            s = f'{ind.b}//TODO protocol\n'
-        elif self.protocol == PRCL_PRESET.REQACK:
-            w = len(bw)+5+7+8
-            s =  f'{ind.b}{",input":<{w}} i_req\n'
-            s += f'{ind.b}{",output logic":<{w}} o_ack\n'
-        elif self.protocol == PRCL_PRESET.VALID:
-            w = len(bw)+5+7+8
-            s = f'{ind.b},input  i_val\n'
-        elif self.protocol == PRCL_PRESET.AHB:
-            s =  f'{ind.b},input  {"ahb_wrap_ctrl":<{w+6}} i_hctl\n'
-            s += f'{ind.b},output {"ahb_resp":<{w+6}} o_resp\n'
-        elif self.protocol == PRCL_PRESET.APB3:
-            s =  f'{ind.b},input  {"apb3_wrap_ctrl":<{w+6}} i_pctl\n'
-            s +=  f'{ind.b},input  {"apb3_resp":<{w+6}} o_resp\n'
-        #
+        # disable
+        s = ''
         if self.disable_style == DISABLE_PRESET.EN_WIRE:
             w = len(bw)+5+7+8
             s += f'{ind.b}// enable\n'
             s += f'{ind.b}{",input":<{w}} i_en\n'
+        # protocol
+        w = len(bw)+5+8
+        if self.protocol is None:
+            s += f'{ind.b}//TODO protocol\n'
+        elif self.protocol == PRCL_PRESET.REQACK:
+            w = len(bw)+5+7+8
+            s +=  f'{ind.b}{",input":<{w}} i_req\n'
+            s += f'{ind.b}{",output logic":<{w}} o_ack\n'
+        elif self.protocol == PRCL_PRESET.VALID:
+            w = len(bw)+5+7+8
+            s += f'{ind.b},input  i_val\n'
+        elif self.protocol == PRCL_PRESET.AHB:
+            s +=  f'{ind.b},input  {"ahb_wrap_ctrl":<{w+6}} i_hctl\n'
+            s += f'{ind.b},output {"ahb_resp":<{w+6}} o_resp\n'
+        elif self.protocol == PRCL_PRESET.APB3:
+            s +=  f'{ind.b},input  {"apb3_wrap_ctrl":<{w+6}} i_pctl\n'
+            s +=  f'{ind.b},input  {"apb3_resp":<{w+6}} o_resp\n'
         return s
     # Logic list
     @SVgen.Str
