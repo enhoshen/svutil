@@ -153,6 +153,7 @@ class GanzinBanner(BannerGen):
                     _dir = folder path
                     overwrite = True to write to the file, False to generate a new one
         '''
+        assert self.name != [] and self.email != [] , "specify name and email"
         for f in os.listdir(_dir):
             self.BanWrite(_dir+'/'+f, overwrite)
     def FolderBanIncWrite(self, _dir='.', overwrite=False):

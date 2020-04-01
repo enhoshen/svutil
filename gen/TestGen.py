@@ -45,7 +45,7 @@ class TestGen(SVgen):
         ck_lst   = reduce( (lambda x,y: x+', '+f'{y[0]+"_" if y[0] != "" else ""}clk'),       self.clk_domain_lst , '')[2:]
         rst_lst  = reduce( (lambda x,y: x+', '+f'{y[0]+"_" if y[0] != "" else ""}rst{y[1]}'), self.clk_domain_lst , '')[2:]
         ccnt_lst = reduce( (lambda x,y: x+', '+f'{y[0]+"_" if y[0] != "" else ""}clk_cnt'),   self.clk_domain_lst, '') [2:]
-        s = f'{ind.b}nlogic {ck_lst};\n'
+        s = f'{ind.b}logic {ck_lst};\n'
         s += f'{ind.b}logic {rst_lst};\n'
         s += f'{ind.b}int {ccnt_lst};\n'
         for ck in self.clk_domain_lst:
@@ -153,6 +153,8 @@ class TestGen(SVgen):
         yield ''
         s = self.CommentBlkStr(  'Parameters' , ind )
         for pkg,param  in module.scope.imported.items():
+            s += f'{ind.b}import {pkg}::{param};\n'
+        for pkg,param  in module.imported.items():
             s += f'{ind.b}import {pkg}::{param};\n'
         pmfield = SVhier.paramfield
         for param,v in module.paramports.items():

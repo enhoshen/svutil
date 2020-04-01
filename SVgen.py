@@ -64,6 +64,7 @@ class SVgen(SVutil):
             yield ind.b + '\n' 
     def Genlist(self , structure):
         o = ''
+        _ind = self.cur_ind.Copy()
         for strt in structure:
             prev_ind = self.cur_ind.Copy()
             try:
@@ -90,6 +91,7 @@ class SVgen(SVutil):
             else :
                 o += self.Nextblk(strt)
             self.cur_ind = prev_ind
+        self.cur_ind = _ind.Copy()
         return o
     def Str2Blk(self, strcallback, *arg, **kwargs):
         ind = self.cur_ind.Copy()
@@ -113,7 +115,7 @@ class SVgen(SVutil):
         return s if s != None else ''
     def FileWrite(self , fpath, text, suf, overwrite=False): 
         if os.path.isfile(self.genpath+fpath+'.'+suf) and not overwrite:
-            print( "file exists, make a copy, rename the file right away")
+            self.print( "file exists, make a copy, rename the file right away")
             import time
             fpath = self.genpath + fpath +'_'+ time.strftime('%m%d%H') +'.'+ suf 
         else:
