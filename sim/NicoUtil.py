@@ -281,8 +281,12 @@ class RegbkMaster(SVutil):
                     self.print( self.readfmt(reg, offset, addr,  dlst, rf, w), verbose=1, trace=2)
                 else:
                     self.print(self.writefmt(reg, rw,  offset, addr, wdata, regfields, data, w), verbose=1, trace=2)
-            if self.verbose == 1:
-                self.master.callbacks = [MsgCb] + orig_cb
+            try:
+                if self.verbose >= 1:
+                    self.master.callbacks = [MsgCb] + orig_cb
+                    self.msgcb = MsgCb
+            except:
+                pass
             yield (addr, wdata, rw)
             self.master.callbacks = orig_cb
     def RegWriteAddrIt (self, regseq, rwseq, dataseq):
@@ -412,6 +416,7 @@ class NicoUtil(PYUtil):
         self.dut = self.session.hiers.get(self.dutname)
         self.top = self.session.hiers.get(GBV.TOPMODULE)
         self.dutfile = self.session.hiers.get(self.dutname+'_sv')
+        self.hiers = EAdict(self.session.hiers)
         self.ev = EventTrigger()
     def TopTypes(self):
         self.session = self.SBC.TopTypes()
@@ -439,11 +444,12 @@ class NicoUtil(PYUtil):
         return self.Tuple2num(d)
     def Tuple2num(self, t):
         return tuple(map(lambda x : self.Macro2num(x),t))
-def clk_cnt(ck_ev):
+    def ne(self, head,x):
+        if head == [[None]]:
+            return False
+        else:
+            return not all ([np.array_equal(a,b) for a,b in zip(head,x)])
+    
 
-    global n_clk
-    while(1):
-        yield ck_ev
-        n_clk+=1    
 if __name__=='__main__':
     n = NicoUtil()

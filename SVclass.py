@@ -260,6 +260,18 @@ class SVRegbk(SVutil):
         nums = regfield.nums if regfield else [0]
         names = regfield.names if regfield else None
         return addr, nums, names 
+    def GetAddr(self, reg):
+        if type(reg) == int:
+            addr = reg
+        elif type(reg) == tuple:
+            addr = self.GetAddrNField(reg[0])[0] 
+            offset = reg[1] * self.regbsize
+            addr += offset 
+        elif type(reg) == str:
+            addr = self.GetAddrNField(reg)[0]
+        else:
+            raise TypeError('un-recognized register sequence type')
+        return addr 
     def RegWrite(self, reg, datalst):
         '''
             Return the address ,packed data and register fields names given register name
