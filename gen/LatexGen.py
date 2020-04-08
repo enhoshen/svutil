@@ -247,9 +247,10 @@ class LatexGen(SVgen):
     def ParameterDesp(self, module=None, local=True):
         module = self.dut if not module else module
         self.cur_module = module
-        param = module.AllParamsDetail if not local else module.paramsdetail
+        param = module.paramsdetail if not local else module.paramports
         s = ''
-        for p in param.values():
+        for p in param.keys():
+            p = module.paramsdetail[p]
             s += self.ParameterStr(p)
         ToClip(s)
         return s
