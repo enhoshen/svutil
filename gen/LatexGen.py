@@ -28,19 +28,21 @@ class LatexGen(SVgen):
         return s.replace('_','\_')
     def ParameterStr(self , param):
         ind = Ind(1)
-        pfield = SVhier.paramfield
-        tpfield = SVhier.typefield
-        param_tp = param[pfield.tp]
+        param = SVParam(param)
+        param_tp = param.tp
         s = ''
         desp='\n'
         memblist = []
         tp = self.cur_module.AllType.get(param_tp)
         if tp: 
-            desp += self.DespStr(tp[0][tpfield.enumliteral], ind)
-        name = self.L_(param[pfield.name])
-        num = self.L_(param[pfield.numstr])
+            memb_tp = [SVType(i) for i in tp]
+            if memb_tp[0].tp =='enum':
+                desp += self.DespStr(memb_tp[0].enumliteral, ind )
+        name = self.L_(param.name)
+        num = self.L_(param.numstr)
         s = f'{ind.b}\\parameter{{ {name} }} {{ \n'
         s += f'{ind[1]}\\parameterDES{{  }} {{ {num} }} {{ None }} {{ {desp}{ind[1]} }} }}\n'
+        s = s.replace('$', '\\$')
         return s
     def SignalStr(self , sig, clk=None, ind=None):
         ind=Ind(1) if ind is None else ind

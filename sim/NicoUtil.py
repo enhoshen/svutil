@@ -195,7 +195,7 @@ class Busdict (EAdict):
             else  x.SetTo(n) if self.IsSB(x) else busfill(x) for x in self.dic.values() ]
 class RegbkMaster(SVutil):
     ''' Wrapper for register bank controller '''
-    def __init__ (self, regbk:SVRegbk, addr:Bus, write:Bus, wdata:Bus, rdata:Bus, master=None):
+    def __init__ (self, regbk:SVRegbk, addr:Bus = None, write:Bus = None, wdata:Bus = None, rdata:Bus = None, master=None):
         self.verbose = V_(VERBOSE) 
         self.master = master 
         self.regbk = regbk
