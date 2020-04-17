@@ -115,7 +115,8 @@ class SVutil():
                     ,0:f'[SVutil]'
                     ,1:f'[{fn:<{w}},line:{ins.lineno}, in {ins.function}]'
                     ,2:f'[{fn:<{w}}, in {ins.function}]'
-                    ,3:f'[{os.path.basename(fn)}, in {ins.function}]'}
+                    ,3:f'[{fn:<{w}},line:{ins.lineno}]'
+                    ,4:f'[{os.path.basename(fn)}, in {ins.function}]'}
         return Trace[trace]
     def Custom(self):
         self.print(f'{self.cyellow}Customizable variable: {self.creset}', trace=2)

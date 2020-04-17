@@ -70,6 +70,8 @@ class SVParamDetailDic(dict):
             return SVparse.package[_pkg].paramsdetail[_param] 
         else:
             return super().get(k, d) 
+class HIERTP():
+    FILE=0; MODULE=1; PACKAGE=2;
     
 class SVhier ():
     paramfield = EAdict([ 'name' , 'dim' , 'tp', 'bw' , 'num' , 'bwstr' , 'dimstr', 'numstr' , 'paramtype', 'numstrlst'] )
@@ -79,7 +81,7 @@ class SVhier ():
     enumsfield = EAdict( [ 'names' , 'nums' , 'cmts', 'idxs', 'sizes', 'name_bases', 'groups'] )
     enumlfield = EAdict( [ 'name' , 'num' , 'cmt', 'idx', 'size', 'name_base', 'group'  ] )
     macrofield = EAdict( [ 'args', 'macrostr', 'lambda'] )
-    def __init__(self,name,scope):
+    def __init__(self,name,scope,tp=None):
         self.hier= name # this is fucking ambiguous, but str method use it so it remains 
         self.name = name
         self.params = {}
@@ -93,6 +95,9 @@ class SVhier ():
         self.enums = {}
         self.imported = {} 
         self.regs = {}
+
+        self.identifiers = {}
+        self.hiertype = tp
         self._scope = scope
         self.valuecb = int
         if scope != None:
@@ -286,9 +291,10 @@ class SVparse(SVutil):
     verbose = V_(VERBOSE) 
     parsed = False
     package = {}
+    module = {}
     hiers = {}
     paths = []
-    gb_hier = SVhier('files',None)
+    gb_hier = SVhier('files',None, HIERTP.FILE)
     gb_hier.types =  {'integer':None,'int':None,'logic':None}
     _top =  GBV.TOPMODULE
     top = _top if _top != None else ''
@@ -313,10 +319,10 @@ class SVparse(SVutil):
         self.parse = parse
         if name:
             if scope != None: 
-                self.cur_hier = SVhier(name,scope) 
+                self.cur_hier = SVhier(name,scope,HIERTP.FILE) 
                 self.gb_hier.child[name] = self.cur_hier
             else: 
-                SVhier(name,self.gb_hier) 
+                SVhier(name,self.gb_hier,HIERTP.FILE) 
             SVparse.hiers[name]= self.cur_hier
         self.cur_key = ''
         self.keyword = { 'logic':self.LogicParse , 'parameter':self.ParamParse, 'localparam':self.ParamParse,\
@@ -365,8 +371,8 @@ class SVparse(SVutil):
         SVutil().print('parsing list:',cls.paths, trace=0)
         for p in cls.paths:
             n = (p.rsplit('/',maxsplit=1)[1] if '/' in p else p ).replace('.','_')
-            cur_parse = SVparse( n , cls.gb_hier)
-            cur_parse.Readfile(p if '/' in p else f'./{p}')
+            cls.cur_parse = SVparse( n , cls.gb_hier)
+            cls.cur_parse.Readfile(p if '/' in p else f'./{p}')
         cls.parsed = True
     @classmethod 
     def IncludeFileParse(cls , path):
@@ -412,8 +418,8 @@ class SVparse(SVutil):
                 #path = self.cur_path.rsplit('/',maxsplit=1)[0] + '/' + _s
                 path = pp
                 n = path.rsplit('/',maxsplit=1)[1].replace('.','_')
-                cur_parse = SVparse( n , self.cur_hier )
-                cur_parse.Readfile(path)
+                SVparse.cur_parse = SVparse( n , self.cur_hier )
+                SVparse.cur_parse.Readfile(path)
                 
         SVparse.path_level -= 1
         return
@@ -679,10 +685,15 @@ class SVparse(SVutil):
         name = self.cur_s.IDParse()
         new_hier = SVhier(name, self.cur_hier)
         SVparse.hiers[name] = new_hier        
+        if self.cur_key == 'module':
+            SVparse.module[name] = new_hier
+            self.cur_hier.scope.identifiers[name] = new_hier
+            new_hier.hiertype = HIERTP.MODULE
+        if self.cur_key == 'package':
+            SVparse.package[name] = new_hier
+            new_hier.hiertype = HIERTP.PACKAGE
         self.cur_hier = new_hier
         _end = {'package':'endpackage' , 'module':'endmodule'}[self.cur_key]
-        if self.cur_key == 'package':
-            self.package[name] = new_hier
         self.last_pure_cmt = ''
         while(1):
             _w=''
@@ -878,6 +889,7 @@ class SVparseSession(SVutil):
         self.verbose = V_(VERBOSE) 
         self.parsed = False
         self.package = {}
+        self.module= {}
         self.hiers = {}
         self.paths = []
         self.gb_hier = SVhier('files',None)
@@ -902,6 +914,7 @@ class SVparseSession(SVutil):
         SVparse.verbose =self.verbose
         SVparse.parsed =self.parsed
         SVparse.package =self.package
+        SVparse.module =self.module
         SVparse.hiers =self.hiers
         SVparse.paths =self.paths
         SVparse.gb_hier =self.gb_hier
@@ -950,7 +963,7 @@ class SVparseSession(SVutil):
         self.package = {}
         self.hiers = {}
         self.paths = []
-        self.gb_hier = SVhier('files',None)
+        self.gb_hier = SVhier('files',None, HIERTP.FILE)
         self.gb_hier.types =  {'integer':None,'int':None,'logic':None}
     def ShowFile(n,start=0,end=None):
         f=open(self.paths[n],'r')

@@ -68,7 +68,8 @@ class StructBus():
         for x in v:
             self.buses[i].value = x
     def __getattr__(self,k):
-        return self.buses[self.namelist[k]]
+        n = self.namelist.get(k)
+        return self.buses[n] if n is not None else None
     def __repr__(self,indent=13,top=True):
         w=13
         s=''
@@ -283,10 +284,12 @@ class RegbkMaster(SVutil):
                     self.print(self.writefmt(reg, rw,  offset, addr, wdata, regfields, data, w), verbose=1, trace=2)
             try:
                 if self.verbose >= 1:
-                    self.master.callbacks = [MsgCb] + orig_cb
                     self.msgcb = MsgCb
+                else:
+                    self.msgcb = lambda _:None 
             except:
-                pass
+                self.msgcb = lambda _:None 
+            self.master.callbacks = [MsgCb] + orig_cb
             yield (addr, wdata, rw)
             self.master.callbacks = orig_cb
     def RegWriteAddrIt (self, regseq, rwseq, dataseq):

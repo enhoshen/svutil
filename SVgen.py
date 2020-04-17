@@ -201,9 +201,10 @@ if __name__ == "__main__":
     import SVutilCompleter
     from gen.SrcGen import *
     from gen.TestGen import TestGen
-    from gen.RegbkGen import RegbkGen 
-    from gen.ConnectGen import ConnectGen
-    from gen.DrawioGen import DrawioGen
+    from gen.srcgen.RegbkGen import RegbkGen 
+    from gen.srcgen.ConnectGen import ConnectGen
+    from gen.drawiogen.InterfaceDiagramGen import InterfaceDiagramGen 
+    from gen.drawiogen.BlockDiagramGen import BlockDiagramGen 
     from gen.LatexGen import LatexGen
     from gen.BannerGen import GanzinBanner
     session = SVparseSession(V_(VERBOSE))
@@ -222,9 +223,13 @@ if __name__ == "__main__":
     except:
         SVutil().print('ConnectGen initialization failed') 
     try:
-        gDrawio = DrawioGen(session=session)
+        gIFgen = InterfaceDiagramGen(session=session)
     except:
-        SVutil().print('DrawioGen initialization failed') 
+        SVutil().print('InterfaceGen initialization failed') 
+    try:
+        gBLgen = BlockDiagramGen(session=session)
+    except:
+        SVutil().print('BlockGen initialization failed') 
     try:
         gLatex = LatexGen(session=session)
     except:

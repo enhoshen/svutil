@@ -251,7 +251,8 @@ class LatexGen(SVgen):
         s = ''
         for p in param.keys():
             p = module.paramsdetail[p]
-            s += self.ParameterStr(p)
+            if SVParam(p).paramtype != 'localparam':
+                s += self.ParameterStr(p)
         ToClip(s)
         return s
     def RegMemMapDesp(self, pkg=None):
