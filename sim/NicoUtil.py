@@ -150,13 +150,13 @@ class StructBusCreator():
                 else:
                     buses.append ( self.structlist[t].CreateStructBus( signalName+'.'+n , hier, DIM+dim, dtype) )
         return StructBus(self.structName,signalName,attrs,buses)
-    def MDACreateStructBus ( self, signalName, hier='', DIM=()):
+    def MDACreateStructBus ( self, signalName, hier='', DIM=(), dtype=None):
         buses = []
         if DIM == ():
-            return self.CreateStructBus(signalName,hier,DIM)
+            return self.CreateStructBus(signalName,hier,DIM, dtype=dtype)
         else:
             for d in range(DIM[0]):
-                buses.append( self.MDACreateStructBus(signalName+f'[{d}]', hier, DIM[1:])  )
+                buses.append( self.MDACreateStructBus(signalName+f'[{d}]', hier, DIM[1:], dtype=dtype)  )
             return buses
 class Busdict (EAdict):
     def Flatten(self, lst):

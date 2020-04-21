@@ -103,8 +103,9 @@ class LatexGen(SVgen):
         for memb in struct:
             memb = SVType(memb)
             sub_tp = module.AllType.get(memb.tp)
-            if memb.tp != 'logic' and memb.tp != 'logic signed' and len(sub_tp) != 1: 
-                sub_memlist = [(  self.L_(memb.name+'.')+name, *_ ) for  name, *_ in self.MemlistAppend(module, sig, sub_tp, ind, clk, lvl-1)] 
+            if memb.tp != 'logic' and memb.tp != 'logic signed' and len(sub_tp) != 1 : 
+                sub_memlist = [(  self.L_(memb.name+'.')+name, *_ ) 
+                    for  name, *_ in self.MemlistAppend(module, sig, sub_tp, ind, clk, lvl-1)] 
                 self.print(sub_memlist)
             else:
                 name = self.L_(memb.name +' '+sig.dimstr)

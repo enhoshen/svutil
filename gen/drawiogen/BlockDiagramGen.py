@@ -13,6 +13,8 @@ class BlockDiagramGen(DrawioGen):
         self.customlst += [ 
              'hier_lvl']
         self.hier_lvl = 3
+        self.top = self.incfile.split('/')[-1]
+        self.top = self.session.hiers[self.top+'_sv']
         self.block_width = 700
         self.block_min_width = 100 
         self.block_ratio = 0.3
@@ -21,23 +23,44 @@ class BlockDiagramGen(DrawioGen):
         pass
     @SVgen.Str
     def RectangleStr(self, value, shape, parent, color, ind=None):
+        '''
+            Draw a rectangle with a text box
+                value: text value
+                shape: rectangle posistion and dimension
+                parent: mkcell parent
+                color: hex RGB string representation of color, prefix with #
+                    Ex: "#FFFFFF"
+        '''
         _p = f'SVgen-mxCell--{DrawioGen.unique_id}'
         s = self.GroupStr(shape, parent, ind)
         txt_sh = self.rec_txt_ofs.Copy() 
         txt_sh.x = (shape.w-self.rec_txt_width)/2 
-        textstyle = self.textstyle_rec1 + 'fontsize=10;' 
-        textstyle +=  'fontColor=#FFFFFF;' if color != self.gray[0] else textstyle
+        textstyle = Style(s=self.textstyle_rec1, fontSize=10) 
+        self.print(textstyle.attr)
+        textstyle.fontStyle = None
+        
+        if color != self.gray[0]:
+            textstyle.fontColor = '#FFFFFF' 
         _d = DrawioGen(ind+1,self.session)
         if 'Regbk' in value or 'Regbank' in value:
             color = self.heavyblue[0]
-            textstyle += 'fontColor=#FFFFFF;'
+            textstyle.fontColor = '#FFFFFF' 
         mcblk = _d.mxCellBlk( "", f'html=1;fillColor={color};strokeColor=None;rounded=0;', _p)
         mxGeo = _d.Str2Blk( _d.mxGeometry, Shape( 0, 0, shape.w, shape.h) )
         s += _d.Genlist( [ [mcblk, mxGeo ] ] )
-        s += self.TextStr( value, txt_sh, textstyle, _p, ind+1) 
+        s += self.TextStr( value, txt_sh, textstyle.Str, _p, ind+1) 
         return s
     @SVgen.Str
     def ModuleBlocklistStr(self, module, shape, parent, lvl=1, ind=None):
+        '''
+            Append sub-module strings until lvl reduces to 1.
+            Modules of same hierarchical level are drawn in the same column.
+            This function is called recursively.
+                module: SVhier object that must be of FILE hier_type
+                shape: position and dimension for the top module
+                parent: parent mkcell for the module, must be string, the parent must exist.
+                lvl: current hierarchical level
+        '''
         s = ''
         width = shape.w * self.block_ratio
         width = self.block_min_width if width <= self.block_min_width else width
@@ -47,19 +70,24 @@ class BlockDiagramGen(DrawioGen):
             ,width
             ,width)
         for i, v in module.identifiers.items():
+            s += self.RectangleStr(v.name, shape, parent, color=self.gray[3-lvl],ind=ind)
             if lvl != 1:
                 _shape = shape.Copy()
                 _shape.x += shape.w + shape.w * self.block_ratio
                 self.print(lvl,i)
                 _parent =  f'SVgen-mxCell--{self.unique_id+1}'
-                s += self.ModuleBlocklistStr(SVparse.hiers[i+'_sv'], _shape, parent, lvl-1, ind=ind+1)
-            s += self.RectangleStr(v.name, shape, parent, color=self.gray[3-lvl],ind=ind)
+                s += self.ModuleBlocklistStr(self.session.hiers[i+'_sv'], _shape, parent, lvl-1, ind=ind+1)
             shape.y += shape.h + self.block_ygap
         self.print(s)
         return s
             
     @SVgen.Clip 
-    def BlockDiagramToClip(self, module, toclip=True, ind=None):
+    def BlockDiagramToClip(self, module=None, toclip=True, ind=None):
+        '''
+            Block diagram generation.
+                module: FILE type SVhier, which are those end with _sv
+        '''
+        module = self.top if module is None else module
         indblk = self.IndBlk()
         mxg = self.mxPageBlk()
         rt  = self.RootBlk()

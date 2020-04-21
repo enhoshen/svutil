@@ -18,6 +18,52 @@ class Shape():
         return self.w, self.h
     def Copy(self):
         return Shape( self.x, self.y, self.w, self.h)
+class Style(SVutil):
+    def __init__(self, s=None,**kwargs):
+        self.__dict__['verbose'] = None
+        self.__dict__['attr'] = {}
+        self.StrToStyle(s)
+        for k,v in kwargs.items():
+            self.attr[k] = v
+        pass
+    def StrToStyle(self, s):
+        if not s:
+            return None
+        split = s.split(';')
+        for s in split:
+            if s is not '':
+                s = s.rstrip().lstrip().split('=')
+                if len(s) == 1:
+                    self.attr[s[0]] = ''
+                else:
+                    self.attr[s[0]] = s[1]
+        return s
+    def StyleStr( self, deft=None, tp=None, **kwargs):
+        s = ''
+        if deft is not None:
+            s += deft 
+            self.StrToStyle(deft)
+        s += f'{tp}; ' if tp else ''
+        for k,v in kwargs.items(): 
+            self.attr[k] = v
+        return self.Str
+    @property
+    def Str(self):
+        s = ''
+        for k,v in self.attr.items(): 
+            s += f'{k}={v};' if v is not '' else f'{k};'
+        return s
+
+    def __getattr__(self , n):
+        return self.attr[n]
+    def __setattr__(self , a, v):
+        if v is None and a in self.attr:
+            self.attr.pop(a)
+        else:
+            self.attr[a] = v
+    def __add__(self, y):
+        pass
+        
 class DrawioGen(SVgen):
     unique_id = 300 
     IDlist = []
@@ -42,7 +88,7 @@ class DrawioGen(SVgen):
         self.textstyle_red = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#FF0505;" 
         self.textstyle_redleft = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#FF0505;" 
         self.arrowstyle1 = "endArrow=block; html=1; endFill=1;fontSize=8;"
-        self.arrowboldstyle1 = "endArrow=classic;html=1;shape=flexArrow;fillColor=#000000;endWidth=4.938516283050313;endSize=2.5476510067114093;width=1.2080536912751678;"
+        self.arrowboldstyle1 = "endArrow=classic;html=1;shape=flexArrow;fillColor=#000000;endWidth=4.93;endSize=2.54;width=1.20;"
         self.arrow_width = 50 
         self.arrow_height = 50 
         self.text_width = 100 
@@ -102,11 +148,6 @@ class DrawioGen(SVgen):
         s += f' parent="{parent}" vertex="1">\n'
         yield s
         yield f'{ind.b}</mxCell>\n'  
-    def Stylestr( self, tp=None, **kwargs):
-        s = f'{tp}; ' if tp else ''
-        for k,v in kwargs.items(): 
-            s += f'{k}={v}; ' 
-        return s
     def ClassicArrowStr(self, value, style, shape, face , parent, ind):
         _d = DrawioGen(ind,self.session)
         mcblk = _d.mxCellBlk( value, style, parent, edge='1')
