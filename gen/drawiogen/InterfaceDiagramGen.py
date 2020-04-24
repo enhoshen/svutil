@@ -151,7 +151,7 @@ class InterfaceDiagramGen(DrawioGen):
         ToClip(s)
         f.write(s)
 if __name__ == '__main__':
-    g = DrawioGen()
+    g = InterfaceDiagramGen()
             
             
         

@@ -11,7 +11,12 @@ class BlockDiagramGen(DrawioGen):
     def __init__(self, ind= Ind(0), session =None):
         super().__init__(ind=ind, session = session)
         self.customlst += [ 
-             'hier_lvl']
+             'hier_lvl'
+            ,'block_width'
+            ,'block_min_width'
+            ,'block_ratio'
+            ,'block_ygap'
+        ]
         self.hier_lvl = 3
         self.top = self.incfile.split('/')[-1]
         self.top = self.session.hiers[self.top+'_sv']
@@ -121,7 +126,7 @@ class BlockDiagramGen(DrawioGen):
     #    ToClip(s)
     #    f.write(s)
 if __name__ == '__main__':
-    g = DrawioGen()
+    g = BlockDiagramGen()
             
             
         

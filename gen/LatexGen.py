@@ -37,11 +37,12 @@ class LatexGen(SVgen):
         if tp: 
             memb_tp = [SVType(i) for i in tp]
             if memb_tp[0].tp =='enum':
-                desp += self.DespStr(memb_tp[0].enumliteral, ind )
+                desp += self.EnumlDespStr(memb_tp[0].enumliteral, ind )
         name = self.L_(param.name)
         num = self.L_(param.numstr)
         s = f'{ind.b}\\parameter{{ {name} }} {{ \n'
-        s += f'{ind[1]}\\parameterDES{{  }} {{ {num} }} {{ None }} {{ {desp}{ind[1]} }} }}\n'
+        s += f'{ind[1]}\\parameterDES{{  }} {{ {num} }} {{ None }} {{ {desp}{ind[1]}}}\n'
+        s += f'{ind.b}}}\n'
         s = s.replace('$', '\\$')
         return s
     def SignalStr(self , sig, clk=None, ind=None):
@@ -70,18 +71,18 @@ class LatexGen(SVgen):
             #    if memb_tp :
             #        memb_tp = [SVType(i) for i in memb_tp]
             #        if memb_tp[0].tp =='enum':
-            #            desp += self.DespStr(memb_tp[0].enumliteral, ind )
+            #            desp += self.EnumlDespStr(memb_tp[0].enumliteral, ind )
             #    memblist.append( (name, io, desp, width, active, clk)  )
             sig_struct = self.cur_module.AllType.get(sig_tp)
             memblist = self.MemlistAppend(self.cur_module, sig, sig_struct,  ind, clk, self.struct_lvl)
             memblist = [ (self.L_(sig.name+'.')+name, *_) for name, *_ in memblist]
         else:
-            desp='\\TODO\n'
+            desp= f'\n{ind[2]}\\TODO\\\\\n'
             if sig_tp =='enum' :
-                desp += self.DespStr(sig.enumliteral, ind)
+                desp += self.EnumlDespStr(sig.enumliteral, ind)
             if (sig_tp!='logic' and sig_tp!='logic signed' and len(tp)==1 ):
                 try:
-                    desp += self.DespStr(tp[0].enumliteral, ind)
+                    desp += self.EnumlDespStr(tp[0].enumliteral, ind)
                 except:
                     self.print(tp, sig_tp)
             name = self.L_(sig.name+' '+sig.dimstr)
@@ -93,10 +94,11 @@ class LatexGen(SVgen):
             io = 'Input' if io =='input' else 'Output'
             memblist.append( ( name, io, desp, width, active, clk) )
             
+        reged = 'Yes' if sig.name in self.cur_module.regs else 'No' 
         for name,io,desp,width,active,clk in memblist:
             delay = self.default_input_delay if not 'clk' in sig.name else 'N/A'
             s += f'{ind.b}\\signal{{ {name} }} {{{io}}} {{\n'
-            s += f'{ind[1]}\\signalDES{{ {desp} {ind[1]}}} {{ {width} }} {{ {active} }} {{ {clk} }} {{ No }} {{ {delay}\\%}}  }}\n'
+            s += f'{ind[1]}\\signalDES{{ {desp} {ind[1]}}} {{ {width} }} {{ {active} }} {{ {clk} }} {{{reged}}} {{ {delay}\\%}}  }}\n'
         return s
     def MemlistAppend(self, module, sig, struct, ind, clk, lvl=1):
         memlist = []
@@ -106,7 +108,7 @@ class LatexGen(SVgen):
             if memb.tp != 'logic' and memb.tp != 'logic signed' and len(sub_tp) != 1 : 
                 sub_memlist = [(  self.L_(memb.name+'.')+name, *_ ) 
                     for  name, *_ in self.MemlistAppend(module, sig, sub_tp, ind, clk, lvl-1)] 
-                self.print(sub_memlist)
+                self.print(sub_memlist, verbose=2)
             else:
                 name = self.L_(memb.name +' '+sig.dimstr)
                 width = str(memb.bw)
@@ -116,11 +118,11 @@ class LatexGen(SVgen):
                 io = sig.direction
                 io = 'Input' if io =='input' else 'Output'
                 memb_tp = self.cur_module.AllType.get(memb.tp)
-                desp='\\TODO\n'
+                desp= f'\n{ind[2]}\\TODO\\\\\n'
                 if memb_tp :
                     memb_tp = [SVType(i) for i in memb_tp]
                     if memb_tp[0].tp =='enum':
-                        desp += self.DespStr(memb_tp[0].enumliteral, ind )
+                        desp += self.EnumlDespStr(memb_tp[0].enumliteral, ind )
                 sub_memlist = [(name, io, desp, width, active, clk)] 
             memlist += sub_memlist
         return memlist
@@ -188,9 +190,10 @@ class LatexGen(SVgen):
         for _slice, _type, _membtype, _default, _desp in zip(reg_slices, reg_types, reg_membtypes, reg_defaults, desp):
             _slice_name = _slice[0].replace('_', '\_')
             s += f'{ind[1]}\\regfield{{{_slice[1]}}}{{{_slice_name}}}{{{rw}}}{{\n'
-            s += f'{ind[2]}\\regDES{{{_desp}\n'
-            if _membtype and _membtype[0].tp == 'enum':
-                s += f'{ind[3]}{self.DespStr(_membtype[0].enumliteral, ind[3])}'
+            s += f'{ind[2]}\\regDES{{\n'
+            s += f'{ind[3]}{_desp}\n'
+            if (_membtype and _membtype[0].tp == 'enum'):
+                s += self.EnumlDespStr(_membtype[0].enumliteral, ind=ind+1)
             s += f'{ind[3]}}}{{{_default.__str__()}}}{{N/A}}\n'
             s += f'{ind[2]}}}\n'
         s += f'{ind.b}\\end{{regfieldtable}}\n'
@@ -214,7 +217,7 @@ class LatexGen(SVgen):
         s += f'{ind[2]}\\item \\textbf{{Read/Write Access:}} {rw}\n'
         s += f'{ind[1]}\\end{{paragitemize}}\n'
         return s
-    def DespStr ( self, enuml, ind ):
+    def EnumlDespStr ( self, enuml, ind ):
         desp = f'{ind[2]}\\\\\n'
         for e in enuml:
             _s = e.replace('_','\_')
@@ -272,7 +275,13 @@ class LatexGen(SVgen):
             width, rw, arr, *_= regbk.GetAddrCmt(reg.name) 
             reg_bw = width if not reg_bw else reg_bw
             reg_bw_str = width if not reg_bw_str else reg_bw_str
-            desp = None 
+            tps =[i for i in regbk.regtypes.get(reg.name,[None])]
+            tps.reverse()
+            if len(tps) == 1 and tps[0] is not None and tps[0].tp == 'enum':
+                desp = f'{Ind(3).b}\\TODO\\\\\n'
+                desp += self.EnumlDespStr(tps[0].enumliteral, Ind(1) )
+            else:
+                desp = None 
             regdesp = RegDesp( regbk.regbsize, reg_slices, defaults, reg_bw, reg_bw_str, rw, arr, desp,
                                 memblst=[   'reg_bsize', 
                                             'reg_slices',
@@ -309,7 +318,7 @@ class LatexGen(SVgen):
             tps.reverse()
             membtypes = [i for i in regbk.regmembtypes[reg]]
             membtypes.reverse()
-            desp = ['\\TODO\\\\' for i in membtypes]  
+            desp = [f'\\TODO\\\\' for i in membtypes]  
             regdesp = RegDesp(regbk.regslices[reg], tps, membtypes, defaults, rw, desp,
                                 memblst=['reg_slices',
                                          'reg_types',
