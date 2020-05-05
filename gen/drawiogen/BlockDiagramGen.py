@@ -17,6 +17,7 @@ class BlockDiagramGen(DrawioGen):
             ,'block_ratio'
             ,'block_ygap'
         ]
+        self.userfunclst += ['BlockDiagramToClip']
         self.hier_lvl = 3
         self.top = self.incfile.split('/')[-1]
         self.top = self.session.hiers[self.top+'_sv']

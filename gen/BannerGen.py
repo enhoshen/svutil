@@ -13,6 +13,7 @@ class BannerGen(SVgen):
         self.cur_ind = ind 
         self.genpath = './'
         self.customlst = ['name', 'email', 'genpath', 'yyyy', 'mm', 'dd', 'time']
+        self.userfunclst = ['UserReg', 'UserEmpty', 'FileReg', 'TimeReg']
         self.name = []
         self.email = []
         _time = time.localtime()
@@ -43,6 +44,7 @@ class GanzinBanner(BannerGen):
     def __init__(self, ind=Ind(0)):
         super().__init__()
         self.customlst += ['svcopyrightstr', 'svstatementstr']
+        self.userfunclst += ['FolderBanWrite', 'FolderBanIncWrite', 'BanWrite', 'BanIncWrite']
         self.svcopyrightstr = f'// Copyright (C) Ganzin Technology - All Rights Reserved\n'
         self.svstatementstr = \
               f'// ---------------------------\n'\

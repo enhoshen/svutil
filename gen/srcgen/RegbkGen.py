@@ -49,6 +49,16 @@ class RegbkGen(SrcGen):
                             ,'wo_cg_cond'
                             ,'ro_cg_cond'
                             ,'omitlogiclst']
+        self.userfunclst += [
+            'LoadPreset',
+            'LogicToClip',
+            'RdataToClip',
+            'WdataToClip', 
+            'IntrCombToClip',
+            'CombToClip',
+            'SeqToClip',
+            'ToFile'
+        ]
         self.addr_name = 'addr'
         self.addr_port_name = f'i_{self.addr_name}'
         self.write_name = 'i_write'

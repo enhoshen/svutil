@@ -10,6 +10,7 @@ import numpy as np
 class InterfaceDiagramGen(DrawioGen):
     def __init__(self, ind= Ind(0), session =None):
         super().__init__(ind=ind, session = session)
+        self.userfunclst += ['ToClip', 'ToClipTwoSide', 'ToFileTwoSide', 'ToFile']
     def Config(self, *arg, **kwargs):
         pass
     def ModuleBlockStr(self, module, parent, flip, ind):

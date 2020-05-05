@@ -17,6 +17,7 @@ class ConnectGen(SrcGen):
         super().__init__(session=session)
         self.customlst += [  'group_dft'
                             ,'logic_group_dft']
+        self.userfunclst += ['ShowIns']
         self.group_dft = 'short'
         self.logic_group_dft = 'short'
     # TODO

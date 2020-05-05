@@ -13,6 +13,12 @@ class LatexGen(SVgen):
         super().__init__(session=session)
         self.customlst = [   'default_input_delay'
                             ,'struct_lvl']
+        self.userfunclst = [
+            'SignalDesp',
+            'ParameterDesp',
+            'RegMemMapDesp',
+            'RegFieldDesp'
+        ]
         self.default_input_delay = 30
         self.struct_lvl = 2
         if regbk and type(regbk)==str:

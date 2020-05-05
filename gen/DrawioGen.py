@@ -80,6 +80,7 @@ class DrawioGen(SVgen):
             ,'arrowstyle1'
             ,'arrowboldstyle1'
             ,'struct_lvl'] 
+        self.userfunclst += []
         self.textstyle1 = "text; align=center; rounded=0; verticalAlign=middle; labelPosition=center; verticalLabelPosition=middle; ;verticalAlign=middle; align=right;"
         self.textstyle2 = "text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;"
         self.textstyle2left = "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;"

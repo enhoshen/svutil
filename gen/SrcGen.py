@@ -40,6 +40,7 @@ class SrcGen(SVgen):
         self.V_(GBV.VERBOSE) 
         self.customlst += [ 'clk_name',
                             'rst_name']
+        self.userfunclst += []
         self.clk_name = 'i_clk'
         self.rst_name = 'i_rst_n'
     @SVgen.Str

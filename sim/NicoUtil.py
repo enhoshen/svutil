@@ -95,10 +95,9 @@ class StructBusCreator():
         self.structName = structName
         self.attrs = attrs
     @classmethod
-    def FileParse(cls,paths=None):
-        ''' deprecated '''
+    def FileParse(cls,paths=None, inc=True, inclvl=-1):
         S = SVparseSession()
-        S.FileParse(paths)
+        S.FileParse(paths=paths, inc=inc, inclvl=inclvl)
         return S
     @classmethod
     def BasicTypes(cls):
@@ -114,10 +113,10 @@ class StructBusCreator():
                 StructBusCreator(k,v)
         return S
     @classmethod
-    def TopTypes(cls):
+    def TopTypes(cls, inclvl=-1):
         cls.Reset()
         cls.BasicTypes()
-        S = cls.FileParse( (False,GBV.TOPSV) )
+        S = cls.FileParse(paths=[GBV.TOPSV], inc=False, inclvl=inclvl)
         for T in SVparse.hiers[GBV.TOPMODULE].Types: # TOPMODULE defined in SVparse
             for k,v in T.items():
                 StructBusCreator(k,v)
@@ -405,26 +404,34 @@ class EventTrigger(SVutil):
             return self.time_out_ev 
     
 class NicoUtil(PYUtil):
-    def __init__(self):
+    def __init__(self, noparse=False):
         self.SBC = StructBusCreator
-        s = self.SBC.TopTypes()
-        self.session = s
-        super().__init__()
+        self.V_(GBV.VERBOSE)
+        self.endcycle = 10000
+        if not noparse:
+            self.session = self.SBC.TopTypes()
+            self.SessionInit()
+            super().__init__()
         self.test = GBV.TEST
         self.testname = GBV.TEST.rsplit('_tb')[0]
         self.fsdbname = self.testname + '_tb' #TODO
         self.topfile  = GBV.SV.rstrip('.sv')
         self.incfile  = GBV.INC
         self.dutname  = GBV.TESTMODULE 
+        self.ev = EventTrigger()
+    def TopTypes(self, inclvl=-1):
+        self.session = self.SBC.TopTypes(inclvl=inclvl)
+        self.SessionInit()
+    def AllTypes(self):
+        self.session = self.SBC.AllTypes()
+        self.SessionInit()
+    def SessionInit(self):
         self.dut = self.session.hiers.get(self.dutname)
         self.top = self.session.hiers.get(GBV.TOPMODULE)
         self.dutfile = self.session.hiers.get(self.dutname+'_sv')
         self.hiers = EAdict(self.session.hiers)
-        self.ev = EventTrigger()
-    def TopTypes(self):
-        self.session = self.SBC.TopTypes()
-    def AllTypes(self):
-        self.session = self.SBC.AllTypes()
+        self.regbkstr= self.session.hiers.get(GBV.REGBK)
+        self.regbk= SVRegbk(self.regbkstr) if self.regbkstr else None
     def Macro2num (self, s):
         _s = s 
         _s = SVstr(_s).MultiMacroExpand(self.top.AllMacro)

@@ -180,7 +180,8 @@ class SVstr(SVutil):
         for w in _s_no_op:
             if '::' in w:
                 _pkg , _param = w.split('::')
-                _s = _s.replace(_pkg+'::'+_param,str(package[_pkg].params[_param]) )
+                if _pkg in package:
+                    _s = _s.replace(_pkg+'::'+_param,str(package[_pkg].params[_param]) )
             for p in params:    
                 if w in p:
                     _s = re.sub(rf'\b{w}\b', str(p[w]), _s)
@@ -236,7 +237,7 @@ class SVstr(SVutil):
         try:
             return eval(ps.expr(_s.s).compile('file.py'))
         except:
-            self.print(f"S2lst {_s.s} failed, return original string: {self.s}",verbose=2)
+            self.print(f"S2lst {_s.s} failed, return original string: {self.s}",verbose=3)
             return [self.s]
     def Slice2num(self,params, macros=None):
         if self.s == '':
@@ -247,8 +248,8 @@ class SVstr(SVutil):
         try:
             return SVstr(_s).NumParse(params, macros)-SVstr(_e).NumParse(params, macros)+1
         except(TypeError):
-            self.print('Slice2num fail, TypeError')
-            self.print (self.s)
+            self.print('Slice2num fail, TypeError', verbose=2)
+            self.print (self.s, verbose='Slice2Num')
     def Slice2TwoNum(self,params, macros=None):
         if self.s == '':
             return 1
@@ -275,7 +276,7 @@ class SVstr(SVutil):
         try:
             return eval(ps.expr(exp).compile('file.py'))
         except:
-            self.print('macro expansion error')
+            self.print('macro expansion error', verbose=2)
     def MacroFuncExpand(self, macros):
         '''
             Expand a potentially nested macro to a string.
@@ -285,6 +286,7 @@ class SVstr(SVutil):
         '''
         _s = self.s.rstrip().lstrip()
         exp = _s
+        self.print(exp,verbose='MacroFunc')
         reobj = True
         exp = re.sub(rf'[\']', '\\\'', exp)
         exp = re.sub(rf'["]', '\\\"', exp)
@@ -294,7 +296,7 @@ class SVstr(SVutil):
         exp = re.sub(rf'(?![)]$)[)]',  '")+"', exp)
         exp = re.sub(rf'[)]$', '")', exp) 
         while reobj:
-            self.print(exp,verbose=3)
+            self.print(exp,verbose='MacroFunc')
             reobj = re.search( r'`(\w+)\b', exp )
             if reobj:
                 m0 = reobj.group(0)
@@ -307,9 +309,10 @@ class SVstr(SVutil):
         try:
             return eval(ps.expr(exp).compile('file.py'))
         except:
-            self.print('macro expansion error')
+            self.print('macro function expansion error', verbose=2)
     def MultiMacroExpand(self, macros):
         _s = self.s
+        self.print(_s,verbose='MacroFunc')
         nested = -1 
         rbkt= 0
         exp = _s
@@ -318,16 +321,23 @@ class SVstr(SVutil):
             reobj = re.search ( r'`(\w+)\b', exp)
             if reobj:
                 span = reobj.span()
-                for i,c in enumerate(exp[span[0]:]):
-                    if c == '(':
-                        nested += 1
-                    if c == ')':
-                        nested -= 1
-                        if nested == -1:
-                            rbkt = i
+                self.print(exp[span[0]:],verbose='MacroFunc')
+                funccheck = re.search( r'\s+[(]', exp[span[1]:])
+                if funccheck and funccheck.span[0] != 0:
+                    for i,c in enumerate(exp[span[0]:]):
+                        if c == '(':
+                            nested += 1
+                        if c == ')':
+                            nested -= 1
+                            if nested == -1:
+                                rbkt = i
                 if rbkt == 0:
                     rbkt = span[1]
-                    exp = exp[0:span[0]] + SVstr(exp[span[0]:rbkt]).SimpleMacroExpand(macros) + exp[rbkt:]
+                    try:
+                        exp = exp[0:span[0]] + SVstr(exp[span[0]:rbkt]).SimpleMacroExpand(macros) + exp[rbkt:]
+                    except:
+                        self.print(exp, verbose='SimpleMacro')
+                        break
                 else:
                     exp = exp[0:span[0]] + SVstr(exp[span[0]:rbkt+1]).MacroFuncExpand(macros) + exp[rbkt+1:]
                 nested = -1 

@@ -11,6 +11,7 @@ class TestGen(SVgen):
     def __init__(self, ind=Ind(0), session=None):
         super().__init__(session=session)
         self.customlst += ['eventlst', 'pyeventlgclst', 'clk_domain_lst']
+        self.userfunclst += ['WriteModuleTestALL', 'ShowIns', 'ShowModPortLogic']
         self.eventlst = [   ( 'intr_ev', 'intr_any'),
                             ( 'init_ev', 'init_cond'),                         
                             ( 'resp_ev', 'resp_cond'), 
@@ -30,7 +31,7 @@ class TestGen(SVgen):
         s += f'`define {self.endcyclemacro} 100\n'  
         s += f'`define {self.hclkmacro} 5\n'  
         s += f'`define TEST_CFG //TODO\n'
-        s += f'`define FSDBNAME(suffix) `"{self.fsdbname}``suffix``.fsdb`"\n'
+        s += f'`define FSDBNAME(suffix) "{self.fsdbname}``suffix``.fsdb`"\n'
         s = s.replace('\n',f'\n{ind.b}')
         yield s
     def ModBlk(self):
@@ -81,12 +82,12 @@ class TestGen(SVgen):
         for ck in self.clk_domain_lst:
             _aff = ck[0]+"_" if ck[0] != "" else ""
             rst = _aff+'rst'+ck[1]
-            _s += f'{ind[1]}{rst} = 0;\n' 
+            _s += f'{ind[1]}{rst} = {1 if ck[1] == "_n" else 0};\n' 
         _s += f'{ind[1]}#10\n'
         for ck in self.clk_domain_lst:
             _aff = ck[0]+"_" if ck[0] != "" else ""
             rst = _aff+'rst'+ck[1]
-            _s += f'{ind[1]}{rst} = 1;\n'
+            _s += f'{ind[1]}{rst} = {1 if ck[1] == "_n" else 0};\n'
             _s += f'{ind[1]}{_aff}clk_cnt = 0;\n'
         _s += '\n'
         _ck = self.clk_domain_lst[0][0]
@@ -153,9 +154,11 @@ class TestGen(SVgen):
         yield ''
         s = self.CommentBlkStr(  'Parameters' , ind )
         for pkg,param  in module.scope.imported.items():
-            s += f'{ind.b}import {pkg}::{param};\n'
+            for _p in param:
+                s += f'{ind.b}import {pkg}::{_p};\n'
         for pkg,param  in module.imported.items():
-            s += f'{ind.b}import {pkg}::{param};\n'
+            for _p in param:
+                s += f'{ind.b}import {pkg}::{_p};\n'
         pmfield = SVhier.paramfield
         for param,v in module.paramports.items():
             detail = module.paramsdetail[param]
@@ -283,7 +286,7 @@ class TestGen(SVgen):
         s += f'{ind[1]}#for jj in j:\n'
         s += f'{ind[1]}#    yield from jj.Join()\n'
         s += f'{ind[1]}#[jj.Destroy() for jj in j]\n'
-        s += f'{ind[1]}FinishSim()\n' 
+        s += f'{ind[1]}#FinishSim()\n' 
         yield s
  
     def ModuleTestSV(self , module=None , **conf):

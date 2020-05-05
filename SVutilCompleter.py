@@ -5,12 +5,19 @@ import rlcompleter
 
 import SVutil
 from SVparse import EAdict, SVhier
+import subprocess 
+import sys
 
 __all__ = ["SVutilCompleter"]
 
 CYAN = SVutil.colorama.Fore.CYAN
 CRESET = SVutil.colorama.Style.RESET_ALL
 class SVutilCompleter(rlcompleter.Completer):
+    def __init__(self):
+        super().__init__()
+        self.cur_sv_words = None
+        self.max_match_cols = 5
+        self.prompt = '>>>'
     def complete(self, text, state):
         """Return the next possible completion for 'text'.
         This is called successively with state == 0, 1, 2, ... until it
@@ -94,6 +101,7 @@ class SVutilCompleter(rlcompleter.Completer):
             words.update(get_class_members(thisobject.__class__))
 
         self.cur_sv_words = self.SVtypeAttr(thisobject)
+        self.cur_object = thisobject
         words.update(self.cur_sv_words)
 
         matches = []
@@ -135,26 +143,41 @@ class SVutilCompleter(rlcompleter.Completer):
     def SVtypeAttr(self, obj):
         if not hasattr(obj, '__class__'):
             return set()
-        tp = obj.__class__
-        CB = {EAdict: self.EAdictAttr}
-        x = CB.get(tp)
-        return set() if x is None else x(obj)
-    
-    def EAdictAttr(self, obj):
-        x = set(obj.dic.keys())
-        return x
+        if hasattr(obj, '__svcompleterattr__'):
+            return obj.__svcompleterattr__() 
+        else:
+            return set()
+    def SVtypeFmt(self, obj):
+        return hasattr(obj, '__svcompleterfmt__')
     def SV_display_hook(self, substitution, matches, longest_match_length):
         ''' broken '''
+        rows, columns = subprocess.check_output(['stty', 'size']).split()
         x = self.cur_sv_words 
-        w = max(map(len,matches))
-        for match in matches:
-            if match.split('.')[-1] in x:
-                _s = f'{CYAN}{match}{CRESET}'
+        w = longest_match_length+1
+        cols = int(int(columns)/w)
+        if not matches:
+            sys.stdout.flush()
+        else:
+            print()
+        cur_col = 0
+        for i, match in enumerate(matches):
+            _match = match.split('.')[-1]
+            if self.SVtypeFmt(self.cur_object):
+                attr = _match[:-1] if _match[-1] == '(' else _match
+                print(self.cur_object.__svcompleterfmt__(attr, f'{match:<{w}}'), end='')
             else:
-                _s = match
-            print(f'{_s:<{w}}', end='')
-        print(self.prompt.rstrip(), readline.get_line_buffer(), sep='', end='')
+                print(f'{match:<{w}}', end='')
+            if cur_col%cols == cols-1 \
+                or cur_col%self.max_match_cols == self.max_match_cols-1:
+                cur_col = 0 
+                print()
+            else:
+                cur_col += 1
+        if cur_col != 0:
+            print()
+        print(f'{self.prompt} ',readline.get_line_buffer(), sep='', end='')
         sys.stdout.flush()
+        return 
 
 
 def get_class_members(klass):
@@ -178,4 +201,6 @@ else:
     # reference to globals).
     atexit.register(lambda: readline.set_completer(None))
     _readline_available = True
-    #readline.set_completion_display_matches_hook(sc.SV_display_hook)
+    readline.set_completion_display_matches_hook(sc.SV_display_hook)
+    #sc.SV_display_hook(None, ['123','456','789'], 5)
+    #print(EAdict([1,2,3]).__svcompleterfmt__(1,'1'))

@@ -43,6 +43,16 @@ class EAdict():  #easy access
             raise TypeError
     def __getattr__(self, n):
         return self.dic[n]
+    # completer
+    def __svcompleterattr__(self):
+        x = set(self.dic.keys())
+        return x
+    def __svcompleterfmt__(self, attr, match):
+        if attr in self.dic.keys():
+            return f'{SVutil.ccyan}{match}{SVutil.creset}'        
+        else:
+            return f'{match}'        
+        
 class SVTypeDic(dict):
     def __init__(self, arg):
         super().__init__(arg)
@@ -325,15 +335,44 @@ class SVparse(SVutil):
                 SVhier(name,self.gb_hier,HIERTP.FILE) 
             SVparse.hiers[name]= self.cur_hier
         self.cur_key = ''
-        self.keyword = { 'logic':self.LogicParse , 'parameter':self.ParamParse, 'localparam':self.ParamParse,\
-                        'typedef':self.TypedefParse , 'struct':self.StructParse  , 'package':self.HierParse , 'enum': self.EnumParse,\
-                        'module':self.HierParse , 'import':self.ImportParse, 'input':self.PortParse , 'output':self.PortParse,\
-                        '`include':self.IncludeRead ,'`rdyack_input':self.RdyackParse, '`rdyack_output':self.RdyackParse,\
-                        'always_ff@': self.RegisterParse, 'always_ff': self.RegisterParse, '`define':self.DefineParse,\
-                        '`ifndef':self.IfNDefParse, '`ifdef':self.IfDefParse, '`endif':self.EndifParse,\
-                        '`elsif':self.ElsifParse, '`else':self.ElseParse}
-        self.parselist = {'typedef','package','import','module','`include', '`define',\
-                        '`ifdef', '`ifndef', '`endif', '`elsif', '`else'}
+        self.keyword = { 
+             'logic':self.LogicParse 
+            ,'parameter':self.ParamParse
+            ,'localparam':self.ParamParse
+            ,'typedef':self.TypedefParse 
+            ,'struct':self.StructParse  
+            ,'package':self.HierParse 
+            ,'enum': self.EnumParse
+            ,'module':self.HierParse 
+            ,'import':self.ImportParse
+            ,'input':self.PortParse 
+            ,'inout':self.PortParse 
+            ,'output':self.PortParse
+            ,'`include':self.IncludeRead 
+            ,'`rdyack_input':self.RdyackParse
+            ,'`rdyack_output':self.RdyackParse
+            ,'always_ff@': self.RegisterParse
+            ,'always_ff': self.RegisterParse
+            ,'`define':self.DefineParse
+            ,'`ifndef':self.IfNDefParse
+            ,'`ifdef':self.IfDefParse
+            ,'`endif':self.EndifParse
+            ,'`elsif':self.ElsifParse
+            ,'`else':self.ElseParse
+        }
+        self.parselist = {
+             'typedef'
+            ,'package'
+            ,'import'
+            ,'module'
+            ,'`include'
+            ,'`define'
+            ,'`ifdef'
+            ,'`ifndef'
+            ,'`endif'
+            ,'`elsif'
+            ,'`else'
+        }
         self.alwaysparselist = {'`endif', '`elsif', '`else'}
         for k in self.cur_hier.AllMacro.keys():
             self.keyword['`'+k] = self.MacroParse
@@ -346,6 +385,7 @@ class SVparse(SVutil):
         self.cur_s = SVstr('')
         self.last_pure_cmt = ''
         self.last_end = False 
+        self.inclvl = -1
     @classmethod
     def ARGSParse(cls):
         s = SVARGstr(GBV.ARGS)
@@ -361,31 +401,24 @@ class SVparse(SVutil):
                     SVutil(cls.verbose).print(k,v[2](), verbose='ARGSParse')
         pass
     @classmethod
-    def ParseFiles(cls , paths=[(True,GBV.INC)] ):
+    def ParseFiles(cls , paths=[GBV.INC], inc=True, inclvl=-1 ):
         SVutil().print ('project path:', GBV.PROJECT_PATH,', include path:', GBV.INC, trace=0)
         SVutil().print("assumed base path of the project:", cls.base_path, trace=0)
         cls.ARGSParse()
-        for p in paths:
-            if not p[1] == '':
-                cls.paths.append(f'{cls.include_path}{p[1]}.sv' if p[0] else p[1] )
+        cls.paths = paths
         SVutil().print('parsing list:',cls.paths, trace=0)
-        for p in cls.paths:
+        for  p in cls.paths:
             n = (p.rsplit('/',maxsplit=1)[1] if '/' in p else p ).replace('.','_')
+            if inc:
+                n += '_sv'
             cls.cur_parse = SVparse( n , cls.gb_hier)
-            cls.cur_parse.Readfile(p if '/' in p else f'./{p}')
+            cls.cur_parse.inclvl = inclvl 
+            cls.cur_parse.Readfile(p if '/' in p else f'./{p}', inc=inc)
         cls.parsed = True
-    @classmethod 
-    def IncludeFileParse(cls , path):
-        f = open(cls.include_path+path ,'r')
-        paths = []
-        for line in f.readlines():
-            line = line.split('//')[0]
-            if '`include' in line:
-                line = line.split('`include')[1].split()[0].replace('"','')
-                paths.append( cls.include_path+line)
-        return paths
     #TODO Testbench sv file parse
-    def Readfile(self , path):
+    def Readfile(self , path, inc=False):
+        if inc:
+            path = f'{SVparse.include_path}{path}.sv'
         path = os.path.normpath(path)
         self.print(f'{"":>{SVparse.path_level*4}}{path}', trace=2, level=True, verbose=2)
         self.f = open(path , 'r')
@@ -406,6 +439,8 @@ class SVparse(SVutil):
             _catch = None
             if _w in self.parselist:
                 self.cur_key = _w
+                if SVparse.path_level == self.inclvl and self.cur_key == '`include':
+                    continue
                 if self.flag_parse or _w in self.alwaysparselist:
                     _catch = self.keyword[_w](self.cur_s,self.lines) 
     def IncludeRead( self, s , lines):
@@ -413,15 +448,18 @@ class SVparse(SVutil):
         parent_path = self.cur_path
         _s = s.s.replace('"','')
         p = [ self.include_path+_s , self.src_path+_s , self.sim_path+_s ]
+        last_parse = SVparse.cur_parse
         for pp in p:
             if ( os.path.isfile(pp) ):
                 #path = self.cur_path.rsplit('/',maxsplit=1)[0] + '/' + _s
                 path = pp
                 n = path.rsplit('/',maxsplit=1)[1].replace('.','_')
                 SVparse.cur_parse = SVparse( n , self.cur_hier )
+                SVparse.cur_parse.inclvl = last_parse.inclvl
                 SVparse.cur_parse.Readfile(path)
                 
         SVparse.path_level -= 1
+        SVparse.cur_parse = last_parse
         return
     def LogicParse(self, s ,lines):
         '''
@@ -558,40 +596,50 @@ class SVparse(SVutil):
         
     def ImportParse(self, s , lines):
         s = s.split(';')[0]
-        if '::' in s:
-            _pkg , _param = s.rstrip().split('::')
-        else:
-            self.print('only support importing packages')
-            return 
-        self.cur_hier.imported[_pkg] = _param
-        if _param == '*':
-            for k,v in self.package[_pkg].params.items():
-                self.cur_hier.params[k] = v
-            for k,v in self.package[_pkg].paramsdetail.items():
-                self.cur_hier.paramsdetail[k]=v
-            for k,v in self.package[_pkg].types.items():
-                self.cur_hier.types[k] = v
-        else:
-            if _param in self.package[_pkg].params:
-                self.cur_hier.params[_param] = self.package[_pkg].params[_param]  
-            if _param in self.package[_pkg].paramsdetail:
-                self.cur_hier.paramsdetail[_param] = self.package[_pkg].paramsdetail[_param]  
-            if _param in self.package[_pkg].types:
-                tp = self.package[_pkg].types[_param] 
-                f = SVhier.typefield
-                if len(tp)==1:
-                    _tp = self.package[_pkg].types.get(tp[0][f.tp])
-                    if _tp:
-                        self.cur_hier.types[tp[0][f.tp]] = _tp 
-                else:
-                    for t in tp:
-                        _tp = self.package[_pkg].types.get(t[f.tp])
+        for _s in s.split(','):
+            if '::' in _s:
+                _pkg , _param = _s.lstrip().rstrip().split('::')
+            else:
+                self.print('only support importing packages')
+                return 
+
+            if _pkg in self.cur_hier.imported:
+                self.cur_hier.imported[_pkg] += [_param]
+            else:
+                self.cur_hier.imported[_pkg] = [_param]
+
+            if _pkg not in SVparse.package:
+                self.print(f'Package {_pkg} not yet parsed', verbose=2)
+                return
+
+            if _param == '*':
+                for k,v in SVparse.package[_pkg].params.items():
+                    self.cur_hier.params[k] = v
+                for k,v in SVparse.package[_pkg].paramsdetail.items():
+                    self.cur_hier.paramsdetail[k]=v
+                for k,v in SVparse.package[_pkg].types.items():
+                    self.cur_hier.types[k] = v
+            else:
+                if _param in SVparse.package[_pkg].params:
+                    self.cur_hier.params[_param] = SVparse.package[_pkg].params[_param]  
+                if _param in SVparse.package[_pkg].paramsdetail:
+                    self.cur_hier.paramsdetail[_param] = SVparse.package[_pkg].paramsdetail[_param]  
+                if _param in SVparse.package[_pkg].types:
+                    tp = SVparse.package[_pkg].types[_param] 
+                    f = SVhier.typefield
+                    if len(tp)==1:
+                        _tp = SVparse.package[_pkg].types.get(tp[0][f.tp])
                         if _tp:
-                            self.print(t[f.tp],verbose='ImportParse')
-                            self.cur_hier.types[t[f.tp]] = _tp 
-                self.cur_hier.types[_param] = tp 
-            if _param in self.package[_pkg].enums:
-                self.cur_hier.enums[_param] = self.package[_pkg].enums[_param]
+                            self.cur_hier.types[tp[0][f.tp]] = _tp 
+                    else:
+                        for t in tp:
+                            _tp = SVparse.package[_pkg].types.get(t[f.tp])
+                            if _tp:
+                                self.print(t[f.tp],verbose='ImportParse')
+                                self.cur_hier.types[t[f.tp]] = _tp 
+                    self.cur_hier.types[_param] = tp 
+                if _param in SVparse.package[_pkg].enums:
+                    self.cur_hier.enums[_param] = SVparse.package[_pkg].enums[_param]
     def StructParse(self ,s ,lines ):
         _step = 0      
         rule = [ '{' , '}' ]
@@ -747,7 +795,10 @@ class SVparse(SVutil):
         reobj = re.search( r'^[(]', _s)
         if reobj:
             span = SVstr(_s).FirstBracketSpan()
-            s.s = SVstr(k+_s[:span[1]+1]).MacroFuncExpand(self.cur_hier.AllMacro) + s.s[span[1]+1:]
+            try:
+                s.s = SVstr(k+_s[:span[1]+1]).MacroFuncExpand(self.cur_hier.AllMacro) + s.s[span[1]+1:]
+            except:
+                self.print('Macro expansion failed', k,_s, verbose=2)
             self.print(k+_s[:span[1]+1], verbose='MacroParse')
             self.print(s.s, verbose='MacroParse')
         else:
@@ -854,7 +905,7 @@ class SVparse(SVutil):
             _name = _s.IDParse()
             bw = _s.BracketParse()
             bw = SVstr(bw[0]).Slice2TwoNum(_params, macros) if bw else SVstr('').Slice2TwoNum(_params, macros)
-            _num = _s.NumParse(_params,self.cur_hier.AllMacro, self.package) 
+            _num = _s.NumParse(_params,self.cur_hier.AllMacro, SVparse.package) 
             if type(bw)==tuple:
                 bw = (0,bw[1]-1) if bw[0]=='' else bw
                 for i in range (bw[1]-bw[0]+1):
@@ -872,15 +923,13 @@ class SVparse(SVutil):
                 name_base.append(_name)
                 name.append(_name) #TODO
                 num.append ( ofs if _num == '' else _num)
-                ofs = ofs+1 if _num == '' else _num+1
+                try:
+                    ofs = ofs+1 if _num == '' else _num+1 
+                except:
+                    self.print(f"enum number intepretation failed",verbose=2)
+                    ofs = _num + '+1'
             _params[0][name[-1]] = num[-1]
         return name, num, cmts, idx, size, name_base
- 
-    
-def ParseFirstArgument():
-    ''' deprecated '''
-    import sys
-    SVparse.ParseFiles([(True,sys.argv[1])])
 hiers = EAdict(SVparse.hiers)
 class SVparseSession(SVutil):
     def __getattr__(self , n ):
@@ -929,35 +978,9 @@ class SVparseSession(SVutil):
     def HiersUpdate(self):
         global hiers
         hiers = EAdict(self.hiers) #TODO
-    def ParseFiles(self , paths=[(True,GBV.INC)] ):
-        ''' Deprecated '''
-        for p in paths:
-            self.paths.append(f'{cls.include_path}{p[1]}.sv' if p[0] else p[1] )
-        print(self.paths)
-        for p in cls.paths:
-            n = (p.rsplit('/',maxsplit=1)[1] if '/' in p else p ).replace('.','_')
-            cur_parse = SVparseFile( n , self.gb_hier)
-            cur_parse.Readfile(p if '/' in p else f'./{p}')
-        self.parsed = True
-    def IncludeFileParse(self, path):
-        f = open(self.include_path+path ,'r')
-        paths = []
-        '''
-        while 1:
-            line = f.readline()
-            if '`else' in line:
-                break
-            #TODO this part is very unpolished
-        '''
-        for line in f.readlines():
-            line = line.split('//')[0]
-            if '`include' in line:
-                line = line.split('`include')[1].split()[0].replace('"','')
-                paths.append( self.include_path+line)
-        return paths
     def ParseFirstArgument(self):
         import sys
-        self.FileParse([(True,sys.argv[1])])
+        self.FileParse(paths=[sys.argv[1]])
     def Reset(self):
         self.parsed = False
         self.package = {}
@@ -974,19 +997,19 @@ class SVparseSession(SVutil):
     def ShowPaths(self):
         for i,v in enumerate(self.paths):
             print (i ,':  ',v)
-    def FileParse(self, paths = None):
+    def FileParse(self, paths = None, inc=True, inclvl=-1):
         if not paths:
-            paths = [(True,GBV.INC)]
+            paths = [(GBV.INC)]
         self.SwapTo()
         if SVparse.parsed == True:
             return
         paths = [paths] if type(paths) == tuple else paths
-        SVparse.ParseFiles( paths)
+        SVparse.ParseFiles(paths, inc=inc, inclvl=inclvl)
         self.parsed = True
         self.HiersUpdate()
-    def Reload(self, paths=None):
+    def Reload(self, paths=None, inc=True, inclvl=-1):
         self.Reset()
-        self.FileParse(paths)
+        self.FileParse(paths=paths, inc=inc, inclvl=inclvl)
     def TopAllParamEAdict(self):
         return EAdict(self.gb_hier[TOPMODULE].AllParams)
     def ParamGet(self, s, svhier):
