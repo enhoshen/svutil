@@ -1,4 +1,4 @@
-# Simulation utilities (OUT OF DATA)
+# Simulation utilities (OUT OF DATE)
 
 SVutil simulation utilites works mainly on several environment variables so it doesn't messed with nicotb Makefiles:
 

@@ -7,6 +7,7 @@ import SVutil
 from SVparse import EAdict, SVhier
 import subprocess 
 import sys
+import shutil
 
 __all__ = ["SVutilCompleter"]
 
@@ -16,6 +17,7 @@ class SVutilCompleter(rlcompleter.Completer):
     def __init__(self):
         super().__init__()
         self.cur_sv_words = None
+        self.cur_object = None
         self.max_match_cols = 5
         self.prompt = '>>>'
     def complete(self, text, state):
@@ -150,8 +152,9 @@ class SVutilCompleter(rlcompleter.Completer):
     def SVtypeFmt(self, obj):
         return hasattr(obj, '__svcompleterfmt__')
     def SV_display_hook(self, substitution, matches, longest_match_length):
-        ''' broken '''
-        rows, columns = subprocess.check_output(['stty', 'size']).split()
+        #rows, columns = subprocess.check_output(['stty', 'size']).split()
+        #columns = subprocess.check_output(['tput', 'cols']).split()
+        columns, row = shutil.get_terminal_size((80, 20)) 
         x = self.cur_sv_words 
         w = longest_match_length+1
         cols = int(int(columns)/w)

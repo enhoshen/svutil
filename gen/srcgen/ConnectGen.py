@@ -114,6 +114,14 @@ class ConnectGen(SrcGen):
             Arguments:
                 module: a list of SVhier to be connected as sub modules
                 short : the shorthand for each sub modules
+                group : each name for the group. group name for ports are 
+                        the comments seperating ports.
+                        There are two special group that makes connection
+                        easier:
+                        'short': the logics are prefixed with the shorthand
+                        of the submodule.
+                        'io': the logics are prefixed with 'i_'/'o_' depending
+                        on its port direction.
         '''
         banw = 25
         module = [self.dut] if not module else module

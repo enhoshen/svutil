@@ -33,7 +33,7 @@ def ToClip(s):
         print( "xclip not found or whatever, copy it yourself")
         print( "try install xclip and export XCLIP variable for the executable path")
 class EAdict():  #easy access
-    def __init__(self, items ):
+    def __init__(self, items):
         if type(items) == dict:
             self.dic = items 
         elif type(items) == list:
@@ -295,6 +295,11 @@ class SVhier ():
                 f'{"types":^15}:{[x for x in self.types] !r:^}\n'+\
                 f'{"child":^15}:{[x for x in self.child] !r:^}\n'+\
                 f'{"ports":^15}:{[io[0]+" "+n for io,n,*_ in self.ports] !r:^}\n'
+    def __svcompleterfmt__(self, attr, match):
+        if 'Show' in attr:
+            return f'{SVutil.cgreen}{match}{SVutil.creset}'        
+        else:
+            return f'{match}'        
         
 class SVparse(SVutil):
     # One SVparse object one file, and it's also SVhier
@@ -932,8 +937,6 @@ class SVparse(SVutil):
         return name, num, cmts, idx, size, name_base
 hiers = EAdict(SVparse.hiers)
 class SVparseSession(SVutil):
-    def __getattr__(self , n ):
-        return self.hiers[n]
     def __init__(self,name=None,scope=None, verbose=None):
         self.verbose = V_(VERBOSE) 
         self.parsed = False
@@ -998,11 +1001,16 @@ class SVparseSession(SVutil):
         for i,v in enumerate(self.paths):
             print (i ,':  ',v)
     def FileParse(self, paths = None, inc=True, inclvl=-1):
+        '''
+            Arguments:
+                inc: the paths are include file name (without .sv suffix)
+                inclvl: the depth at which the included files to be parsed
+        '''
         if not paths:
             paths = [(GBV.INC)]
         self.SwapTo()
         if SVparse.parsed == True:
-            return
+            self.print('Incremental parse') 
         paths = [paths] if type(paths) == tuple else paths
         SVparse.ParseFiles(paths, inc=inc, inclvl=inclvl)
         self.parsed = True

@@ -293,7 +293,7 @@ class RegbkMaster(SVutil):
             self.master.callbacks = orig_cb
     def RegWriteAddrIt (self, regseq, rwseq, dataseq):
         '''
-            Used by nico protocol SendIter() thread with single data. This thread is 
+            Used by nico protocol SendIter() thread without addr bus. This thread is 
             a workaround by yielding the address and manually Write() data and write buses.
             That is, the corresponding protocol bus' data is the address bus.
             Ex: regbus = TwoWire.Master(buses.i_req, buses.o_ack, buses.i_addr, ck_ev)
@@ -408,16 +408,16 @@ class NicoUtil(PYUtil):
         self.SBC = StructBusCreator
         self.V_(GBV.VERBOSE)
         self.endcycle = 10000
-        if not noparse:
-            self.session = self.SBC.TopTypes()
-            self.SessionInit()
-            super().__init__()
         self.test = GBV.TEST
         self.testname = GBV.TEST.rsplit('_tb')[0]
         self.fsdbname = self.testname + '_tb' #TODO
         self.topfile  = GBV.SV.rstrip('.sv')
         self.incfile  = GBV.INC
         self.dutname  = GBV.TESTMODULE 
+        if not noparse:
+            self.session = self.SBC.TopTypes()
+            self.SessionInit()
+            super().__init__()
         self.ev = EventTrigger()
     def TopTypes(self, inclvl=-1):
         self.session = self.SBC.TopTypes(inclvl=inclvl)
