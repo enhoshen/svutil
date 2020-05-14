@@ -5,6 +5,11 @@ import os
 from subprocess import Popen, PIPE
 from SVutil import SVutil, V_
 VERBOSE = os.environ.get('VERBOSE',0)
+# verilog system function implementation
+# S2num can evaulate the functions directly
+class SVsysfunc():
+    def clog2(s):
+        return int(np.log2(s))
 class SVstr(SVutil):
     sp_chars = ['=','{','}','[',']','::',';',',','(',')','#']
     op_chars = ['+','-','*','/','(',')']
@@ -172,9 +177,10 @@ class SVstr(SVutil):
         pass
     def S2num(self,params, package=None):
         _s = self.s.lstrip()
-        if '$clog2' in _s:
-            _temp = self.s.split('(')[1].split(')')[0] 
-            _s = _s.replace( _s[_s.find('$'):_s.find(')')+1] , 'int(np.log2('+ _temp + '))')
+        #if '$clog2' in _s:
+        #    _temp = self.s.split('(')[1].split(')')[0] 
+        #    _s = _s.replace( _s[_s.find('$'):_s.find(')')+1] , 'int(np.log2('+ _temp + '))')
+        _s = _s.replace('$','SVsysfunc.')
         _s_no_op = SVstr(_s).ReplaceSplit(self.op_chars+[',', "'", '{', '}'])
         #TODO package import :: symbol  , white spaces around '::' not handled
         for w in _s_no_op:
@@ -198,7 +204,7 @@ class SVstr(SVutil):
             return eval(ps.expr(_s).compile('file.py'))
         except:
             if _s !='':
-                self.print(f"S2num failed, return original string: {_s}",verbose=2)
+                self.print(f"S2num {_s} failed, return original string: {self.s}",verbose=2)
             return _s
     def BaseConvert(self):
         mapping = { '\'b': '0b', '\'h': '0x', '\'o': '0o', '\'d': '', '\'':''}
@@ -364,7 +370,7 @@ class SVstr(SVutil):
         return (lbkt,rbkt)
     def DeepestBracketSpan(self, bracket=['{','}']):
         '''
-            Find the deepest nest bracket span of a 
+            Find the deepest nested bracket span of a 
             string
         '''
         lbkt, rbkt = 0,-1

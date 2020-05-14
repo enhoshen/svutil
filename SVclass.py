@@ -9,20 +9,22 @@ class SVclass(SVutil):
         return self.data[self.field.dic[n]]
     @property
     def ShowData(self):
+        s = ''
         for f in self.field.dic:
             try:
-                print(f'{self.data[self.field.dic[f]].__repr__():<{self.w}}', end='')
+                s += f'{self.data[self.field.dic[f]].__repr__():<{self.w}}'
             except:
-                print(f'{"":<{self.w}}', end='')
-        print()
+                s += f'{"":<{self.w}}'
+        return s + '\n'
     @property
     def ShowLine(self):
-        print(f'{"":{self.linechar}<{len(self.field.dic)*self.w}}')
+        return f'{"":{self.linechar}<{len(self.field.dic)*self.w}}'
     @property
     def ShowField(self):
+        s = ''
         for f in self.field.dic: 
-            print(f'{f:<{self.w}}', end='')
-        print() 
+            s += f'{f:<{self.w}}'
+        return s + '\n'
     @property
     def Show(self):
         self.ShowField
@@ -33,11 +35,22 @@ class SVclass(SVutil):
             cblst:callback list; applied to each field
             Ex: ShowDataCb([hex,bin]) would print hex(field0), bin(field1)
         '''
+        s = ''
         for f, cb in zip(self.field.dic, cblst):
-            s = cb(self.data[self.field.dic[f]]) if cb else self.data[self.field.dic[f]]
-            s = s.__repr__() if type(s) != str else s
-            print(f'{s:<{self.w}}', end='')
-        print()
+            _s = cb(self.data[self.field.dic[f]]) if cb else self.data[self.field.dic[f]]
+            _s = _s.__repr__() if type(_s) != str else _s
+            s += f'{_s:<{self.w}}'
+        return s + '\n'
+    # completer
+    def __svcompleterattr__(self):
+        x = set(self.field.dic.keys())
+        return x
+    def __svcompleterfmt__(self, attr, match):
+        if attr in self.field.dic.keys():
+            return f'{SVutil.ccyan}{match}{SVutil.creset}'        
+        else:
+            return f'{match}'        
+    
 class SVParam(SVclass):
     field = SVhier.paramfield
     def __init__(self, param=None):

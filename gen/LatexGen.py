@@ -43,7 +43,8 @@ class LatexGen(SVgen):
         if tp: 
             memb_tp = [SVType(i) for i in tp]
             if memb_tp[0].tp =='enum':
-                desp += self.EnumlDespStr(memb_tp[0].enumliteral, ind )
+                en = SVEnums (self.cur_module.AllEnums[memb_tp[0].name])
+                desp += self.EnumlDespStr(en, ind )
         name = self.L_(param.name)
         num = self.L_(param.numstr)
         s = f'{ind.b}\\parameter{{ {name} }} {{ \n'
@@ -85,10 +86,12 @@ class LatexGen(SVgen):
         else:
             desp= f'\n{ind[2]}\\TODO\\\\\n'
             if sig_tp =='enum' :
-                desp += self.EnumlDespStr(sig.enumliteral, ind)
+                en = SVEnums (self.cur_module.AllEnums[sig.tp])
+                desp += self.EnumlDespStr(en, ind)
             if (sig_tp!='logic' and sig_tp!='logic signed' and len(tp)==1 ):
                 try:
-                    desp += self.EnumlDespStr(tp[0].enumliteral, ind)
+                    en = SVEnums (self.cur_module.AllEnums[tp[0].name])
+                    desp += self.EnumlDespStr(en, ind)
                 except:
                     self.print(tp, sig_tp)
             name = self.L_(sig.name+' '+sig.dimstr)
@@ -128,11 +131,16 @@ class LatexGen(SVgen):
                 if memb_tp :
                     memb_tp = [SVType(i) for i in memb_tp]
                     if memb_tp[0].tp =='enum':
-                        desp += self.EnumlDespStr(memb_tp[0].enumliteral, ind )
+                        en = SVEnums (self.cur_module.AllEnums[memb_tp[0].name])
+                        desp += self.EnumlDespStr(en, ind )
                 sub_memlist = [(name, io, desp, width, active, clk)] 
             memlist += sub_memlist
         return memlist
     def RegMemMapStr(self, reg, regdesp): #reg is a SVEnuml object
+        ''' 
+            corresponds to latex macro memmap, the register memory map
+            lists
+        '''
         reg_bsize=regdesp.reg_bsize
         reg_slices=regdesp.reg_slices
         reg_defaults=regdesp.reg_defaults
@@ -178,6 +186,10 @@ class LatexGen(SVgen):
         s += f'{ind.b}}}\n'
         return s
     def RegFieldStr(self, reg_name, regdesp): # str, self.cur_regbk.regslices, self.cur_regbk.regtypes; align slices to types!
+        ''' 
+            corresponds to latex macro regfieldtable, the register 
+            field description. 
+        '''
         reg_slices = regdesp.reg_slices
         reg_types = regdesp.reg_types
         reg_membtypes = regdesp.reg_membtypes
@@ -199,7 +211,8 @@ class LatexGen(SVgen):
             s += f'{ind[2]}\\regDES{{\n'
             s += f'{ind[3]}{_desp}\n'
             if (_membtype and _membtype[0].tp == 'enum'):
-                s += self.EnumlDespStr(_membtype[0].enumliteral, ind=ind+1)
+                en = SVEnums (self.cur_regbk.pkg.enums[_membtype[0].name])
+                s += self.EnumlDespStr(en, ind=ind+1)
             s += f'{ind[3]}}}{{{_default.__str__()}}}{{N/A}}\n'
             s += f'{ind[2]}}}\n'
         s += f'{ind.b}\\end{{regfieldtable}}\n'
@@ -223,11 +236,17 @@ class LatexGen(SVgen):
         s += f'{ind[2]}\\item \\textbf{{Read/Write Access:}} {rw}\n'
         s += f'{ind[1]}\\end{{paragitemize}}\n'
         return s
-    def EnumlDespStr ( self, enuml, ind ):
+    def EnumlDespStr ( self, en:SVEnums, ind ):
+        ''' 
+            Return the enum literal and optionally its value
+            in seperated lines. Usedful for struct type member
+            , parameter enum value etc.
+        '''
         desp = f'{ind[2]}\\\\\n'
-        for e in enuml:
-            _s = e.replace('_','\_')
-            desp += f'{ind[2]}{_s}:\\\\\n'
+        for l, n in zip(en.names, en.nums):
+            l = self.L_(l)
+            n = self.L_(n) if type(n) == str else n
+            desp += f'{ind[2]}{l}({n}):\\\\\n'
         desp = desp[:-3]+'\n'
         return desp
     def SignalDesp( self, module=None, sel=None):
@@ -285,7 +304,8 @@ class LatexGen(SVgen):
             tps.reverse()
             if len(tps) == 1 and tps[0] is not None and tps[0].tp == 'enum':
                 desp = f'{Ind(3).b}\\TODO\\\\\n'
-                desp += self.EnumlDespStr(tps[0].enumliteral, Ind(1) )
+                en = SVEnums (self.cur_regbk.pkg.enums[tps[0].name])
+                desp += self.EnumlDespStr(en, Ind(1) )
             else:
                 desp = None 
             regdesp = RegDesp( regbk.regbsize, reg_slices, defaults, reg_bw, reg_bw_str, rw, arr, desp,

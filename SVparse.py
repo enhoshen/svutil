@@ -71,6 +71,15 @@ class SVParamDic(dict):
             return SVparse.package[_pkg].params[_param] 
         else:
             return super().get(k, d) 
+class SVEnumDic(dict):
+    def __init__(self, arg):
+        super().__init__(arg)
+    def get(self,k,d=None):
+        if '::' in k:
+            _pkg , _enum = k.split('::')
+            return SVparse.package[_pkg].enums[_enum] 
+        else:
+            return super().get(k, d) 
 class SVParamDetailDic(dict):
     def __init__(self, arg):
         super().__init__(arg)
@@ -125,6 +134,14 @@ class SVhier ():
         else:
             _l = self._scope.Params
             _l.appendleft(self.params)
+            return _l
+    @property
+    def Enums(self):
+        if self._scope == None:
+            return deque([h.enums for _ , h in self.child.items()]) 
+        else:
+            _l = self._scope.Enums
+            _l.appendleft(self.enums)
             return _l
     @property
     def ParamsDetail(self):
@@ -218,6 +235,12 @@ class SVhier ():
         s += self.FieldStr(self.paramfield,w)
         s += self.DictStr(self.AllParamDetails,w)
         return s
+    #########################
+    # enums 
+    #########################
+    @property
+    def AllEnums(self):
+        return SVEnumDic({ k:v for i in self.Enums for k,v in i.items() })
     #########################
     # macros 
     #########################
@@ -624,6 +647,8 @@ class SVparse(SVutil):
                     self.cur_hier.paramsdetail[k]=v
                 for k,v in SVparse.package[_pkg].types.items():
                     self.cur_hier.types[k] = v
+                for k,v in SVparse.package[_pkg].enums.items():
+                    self.cur_hier.enums[k] = v
             else:
                 if _param in SVparse.package[_pkg].params:
                     self.cur_hier.params[_param] = SVparse.package[_pkg].params[_param]  
