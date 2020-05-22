@@ -18,7 +18,7 @@ class SVclass(SVutil):
         return s + '\n'
     @property
     def ShowLine(self):
-        return f'{"":{self.linechar}<{len(self.field.dic)*self.w}}'
+        return f'{"":{self.linechar}<{len(self.field.dic)*self.w}}\n'
     @property
     def ShowField(self):
         s = ''
@@ -27,9 +27,11 @@ class SVclass(SVutil):
         return s + '\n'
     @property
     def Show(self):
-        self.ShowField
-        self.ShowLine
-        self.ShowData 
+        s = ''
+        s += self.ShowField
+        s += self.ShowLine
+        s += self.ShowData 
+        return s
     def ShowDataCb(self, cblst):
         ''' 
             cblst:callback list; applied to each field
@@ -58,6 +60,7 @@ class SVParam(SVclass):
         self.linechar = '='
         self.data = param
 class SVStruct(SVclass):
+    ''' bugged '''
     field = SVhier.typefield
     def __init__(self, tp = None):
         self.w = 15
@@ -79,6 +82,12 @@ class SVType(SVclass):
         module = type_.__module__
         qualname = type_.__qualname__
         return f"<{module}.{qualname} {self.name} at {hex(id(self))}>"
+    @property
+    def ShowData(self):
+        s = ''
+        for d in self.datas:
+            s += d.ShowData
+        return s
         
 class SVPort(SVclass):
     field = SVhier.portfield
@@ -178,21 +187,11 @@ class SVRegbk(SVutil):
             if len(_s) == 2:
                 self.regbws[_s[0]] = _v
         for i,v in pkg.enums.items():
-            _v = SVEnums(v)
-            _s = i.split(self.regfield_suf)
-            if len(_s) == 2:
-                self.regfields[_s[0]] = _v
-                pre_slice = 0
-                self.regslices[_s[0]] = []
-                _regslices =[ (name, [(start, end-1)] ) for name, start, end in zip(_v.names, _v.nums, _v.nums[1:]+[self.regbw])] 
-                reserved = []
-                for ii in _regslices:
-                    if self.reserved_name in ii[0]:
-                        reserved.append( ii[1][0] ) 
-                    else:
-                        self.regslices[_s[0]].append(ii)
-                if len(reserved)!=0:
-                    self.regslices[_s[0]].insert(0, (self.reserved_name , reserved))
+            self.EnumToRegfield(i,v)
+        for k in self.addrsdict.keys():
+            tp = self.GetType(k.lower())
+            if type(tp) == list and k not in self.regslices:
+                self.StructToRegfield(k, tp)
         for i,v in pkg.types.items():
             while True:
                 _v = v[0]
@@ -233,6 +232,34 @@ class SVRegbk(SVutil):
     def GetType(self, tp):
         tp = self.pkg.AllType.get(tp)
         return [ SVType(t) for t in tp] if tp else None
+    def EnumToRegfield(self, name, enum):
+        _v = SVEnums(enum)
+        _s = name.split(self.regfield_suf)
+        if len(_s) == 2:
+            self.regfields[_s[0]] = _v
+            pre_slice = 0
+            self.regslices[_s[0]] = []
+            _regslices =[ (name, [(start, end-1)] ) for name, start, end in zip(_v.names, _v.nums, _v.nums[1:]+[self.regbw])] 
+            reserved = []
+            for ii in _regslices:
+                if self.reserved_name in ii[0]:
+                    reserved.append( ii[1][0] ) 
+                else:
+                    self.regslices[_s[0]].append(ii)
+            if len(reserved)!=0:
+                self.regslices[_s[0]].insert(0, (self.reserved_name , reserved))
+    def StructToRegfield(self, name, struct):
+        '''struct is list of SVType'''
+        regfield = []
+        rev = [i for i in struct]
+        rev.reverse()
+        num = 0
+        for i in rev:
+            regfield += [(i.name.upper(), [num, num+i.bw-1])]
+            num += i.bw
+        if num < self.regbw-1:
+            regfield.insert(0, ('RESERVED', [num, self.regbw-1]))
+        self.regslices[name] = regfield
     def GetAddrCmt(self, reg):
         cmt = self.addrsdict[reg].cmt 
         width = ''

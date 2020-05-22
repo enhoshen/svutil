@@ -148,10 +148,11 @@ class RegbkGen(SrcGen):
         s = '\n' + ind.b +'endmodule'
         yield s
     @SVgen.Str
-    def LogicStr(self, w, reg, bw, tp, arr=None, comb=None, ind=None):
-        dim = ''
+    def LogicStr(self, w, reg, bw, tp, arr=None, dim=None, comb=None, ind=None):
         if arr and arr != '':
             dim = f' [{reg.upper()}{self.regbk.arr_num_suf}]'
+        else:
+            dim = '' if dim is None else dim
         if comb:
             return self.CombLogicStr(w, reg, bw, tp, dim, ind=ind)
         else:
@@ -291,7 +292,7 @@ class RegbkGen(SrcGen):
             s += f'{ind[1]}else begin\n'
             if reg.upper() == self.regbk.regintr_name.upper():
                 s += f'{ind[2]}\n'
-                s += self.IntrCombToClip(pkg=self.regbk, toclip=False, ind=ind+2)
+                s += self.IntrCombToClip(pkg=self.regbk, dim=dim, toclip=False, ind=ind+2)
             else:
                 if comb:
                     s += f'{ind[2]}{reg.lower()}[{dim}] = ;//TODO\n'
@@ -301,10 +302,11 @@ class RegbkGen(SrcGen):
             s += f'{ind[1]}end\n{ind.b}end\n'
         return s
     @SVgen.Str
-    def IntrCombStr(self, intr_logic, intr_field, ind=None):
-        s = f'{ind.b}if ({self.clr_affix}{intr_logic}_r) {self.regbk.regintr_name}_w.{intr_logic} = \'0;\n'
+    def IntrCombStr(self, intr_logic, intr_field, dim=None, ind=None):
+        dim = '' if dim is None else f'[{dim}]'
+        s = f'{ind.b}if ({self.clr_affix}{intr_logic}_r{dim}) {self.regbk.regintr_name}_w{dim}.{intr_logic} = \'0;\n'
         s += f'{ind.b}else begin\n'
-        s += f'{ind[1]}{self.regbk.regintr_name}_w.{intr_logic} = {self.regbk.regintr_name}_r.{intr_logic};//TODO\n'
+        s += f'{ind[1]}{self.regbk.regintr_name}_w{dim}.{intr_logic} = {self.regbk.regintr_name}_r{dim}.{intr_logic};//TODO\n'
         s += f'{ind.b}end\n'
         return s
     @SVgen.Str
@@ -375,7 +377,15 @@ class RegbkGen(SrcGen):
             if reg.name in self.omitlogiclst or omit:
                 pass
             else:
-                s += self.LogicStr( w, reg.name.lower(), bw, tp, arr=arr, comb=comb, ind=ind)
+                s += self.LogicStr( 
+                     w
+                    ,reg.name.lower()
+                    ,bw
+                    ,tp
+                    ,arr=arr
+                    ,comb=comb
+                    ,ind=ind
+                )
         s += '\n'
 
         s += f'{ind.b}// interrupt clear\n'
@@ -383,12 +393,20 @@ class RegbkGen(SrcGen):
         if not self.regbk.raw_intr_stat:
             self.print("interrupt struct not specified")
         else:
+            width, rw, arr, omit, comb, *_= self.regbk.GetAddrCmt(self.regbk.regintr_name.upper())
             w[0] = 0
             for intr in self.regbk.raw_intr_stat:
                 w[1] = max(w[1], len(self.clr_affix+intr.name)+2)
             for intr in self.regbk.raw_intr_stat:
                 if not self.clr_affix.upper()+intr.name.upper() in self.regbk.regaddrsdict:
-                    s += self.LogicStr( w, self.clr_affix+intr.name.lower(), 1, 'logic', ind=ind)
+                    s += self.LogicStr( 
+                         w
+                        ,self.clr_affix+intr.name.lower()
+                        ,1
+                        ,'logic'
+                        ,dim = f' [{self.regbk.regintr_name.upper()}{self.regbk.arr_num_suf}]'
+                        ,ind=ind
+                    )
             s += '\n'
 
         s += f'{ind.b}// flags\n'
@@ -505,7 +523,7 @@ class RegbkGen(SrcGen):
                     s += self.WdataSeqStr( reg.name, _slice, rw, ind=ind) + '\n'
         return s
     @Clip
-    def IntrCombToClip(self, pkg=None, toclip=True, ind=None):
+    def IntrCombToClip(self, dim=None, pkg=None, toclip=True, ind=None):
         r"""
         Help build clear register read part of interrupts combinational logics.
         """
@@ -515,7 +533,7 @@ class RegbkGen(SrcGen):
             self.print("interrupt struct not specified")
             return ""
         for intr, field in zip ( self.regbk.raw_intr_stat, self.regbk.regfields[self.regbk.regintr_name.upper()].enumls):
-            s += self.IntrCombStr( intr.name, field.name, ind=ind) + '\n'
+            s += self.IntrCombStr( intr.name, field.name, dim=dim, ind=ind) + '\n'
         return s 
     @SVgen.Clip
     def CombToClip(self, pkg=None, toclip=True, ind=None):
@@ -625,7 +643,7 @@ class RegbkGen(SrcGen):
         elif self.disable_style == DISABLE_PRESET.EN_WIRE:
             pass
         return s
-    def ToFile(self, pkg=None, ind=None, overwrite=False):
+    def ToFile(self, pkg=None, ind=None, toclip=False, overwrite=False):
         self.Custom()
         regbktemp = self.Swap(pkg)
         ind = self.cur_ind if not ind else ind
@@ -642,7 +660,8 @@ class RegbkGen(SrcGen):
         rdata = self.Str2Blk(self.RdataToClip, pkg=pkg, toclip=False)
         wdata = self.Str2Blk(self.WdataToClip, pkg=pkg, toclip=False)
         s = self.Genlist ( [(mod,), mod, (1,logicban, logic, combban, comb, seqban, seq, regbkban), [Ind,rdata], [Ind,wdata],  mod] )
-        ToClip(s)
+        if toclip:
+            ToClip(s)
         p = self.FileWrite( self.regbkstr, s, 'sv', overwrite=overwrite)
         self.print ('Regbk file write to', p) 
         self.regbk = regbktemp
