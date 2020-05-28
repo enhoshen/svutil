@@ -105,8 +105,8 @@ class ConnectGen(SrcGen):
             connect = f'{gname}{name}'
         return connect
     def InstanceName(self, s):
-        name_split = re.split(rf'([A-Z][^A-Z]+)', s)
-        return '_'.join([ x.lower() for x in name_split if x!=''])
+        name_split = re.split(rf'([A-Z][^A-Z]+)|([A-Z]*(?=[A-Z][^A-Z]*))', s)
+        return '_'.join([ x.lower() for x in name_split if x != '' and x is not None])
     @SVgen.Clip
     def ShowIns(self, module=[], short=[], group=[], toclip=True, ind=None):
         '''

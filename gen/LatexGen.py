@@ -288,6 +288,7 @@ class LatexGen(SVgen):
         s = ''
         regbk = SVRegbk(pkg) if pkg and type(pkg)==str else self.regbk
         self.cur_regbk = regbk
+        last_gp = None 
         for reg in regbk.addrs.enumls:
             reg_slices = regbk.regslices.get(reg.name)
             defaults = self.L_(regbk.GetDefaultsStr(reg.name, lst=True))
@@ -318,6 +319,10 @@ class LatexGen(SVgen):
                                             'arr',
                                             'desp'])
             s += self.RegMemMapStr(reg, regdesp) 
+            if reg.group != [] and  reg.group[0] != last_gp:
+                last_gp = reg.group[0]
+                s += f'\n{Ind(1).b}\\emptyrowbold{{5}}\n'
+                s += f'{Ind(1).b}\\ganzinmergerowbold{{1.2}}{{5}}{{\\centering \\textbf{{{last_gp}}}}}\n' 
         ToClip(s)
         return s
     def RegFieldDesp(self, pkg=None):
@@ -360,8 +365,14 @@ class LatexGen(SVgen):
         regfpat = r'(\regDES{)([^}]*)(})'
         pass
     def RegSliceStr(self, _slice):
+        ''' 
+            return a list of slice string 
+            meant for multiple slice for a same field
+            such as RESERVED
+        '''
         _slice_str = ''
         for _ss in _slice[1]:
+            self.print(_ss)
             if _ss[0] == _ss[1]:
                 _slice_str += f'{_ss[0]}, '
             else:

@@ -583,11 +583,12 @@ class SVparse(SVutil):
         cmt = self.cur_cmt
         cmts = []
         _s = SVstr(s.s).lsplit('}') if '}' in s else s.s
-        enums = [ i for i in re.split( r'{ *| *, *', _s) ]
+        enums = [ i for i in re.split( r'{ *| *, *', _s) if i is not '']
         groups = [  list(['']) if self.last_pure_cmt == '' else [list(self.last_pure_cmt)] 
                     for i in range(len(enums))]
         cmt = [''] if cmt =='' else cmt
-        cmts = [ [''] for i in range(len(enums)-1) ] + [cmt]
+        cmts = [ [''] for i in range(len(enums)-1) ]
+        cmts += [cmt for i in enums]
         while '}' not in s:
             #TODO ifdef ifndef blabla
             _s, cmt = self.Rdline(lines)
@@ -595,7 +596,9 @@ class SVparse(SVutil):
             group = [''] if self.last_pure_cmt == '' else self.last_pure_cmt 
             s += _s
             _s = _s.lsplit('}') if '}' in _s else _s.s
-            _enum = [ i for i in re.split( r'{ *| *, *', _s) ]
+            _enum = [ i for i in re.split( r'{ *| *, *', _s) if i is not '']
+            if _enum == []:
+                continue
             enums += _enum
             cmts += [ [''] for i in range(len(_enum)-1) ] + [cmt]
             groups += [ list(group) for i in range(len(_enum)) ]  
@@ -612,7 +615,14 @@ class SVparse(SVutil):
         s.lsplit('}')
         n = s.IDarrParse()
         for _n in n:
-            self.cur_hier.enums[_n] = ( enum_name, enum_num , cmts, idxs, sizes, name_bases, groups)
+            self.cur_hier.enums[_n] = ( 
+                 enum_name
+                ,enum_num 
+                ,cmts
+                ,idxs
+                ,sizes
+                ,name_bases
+                ,groups)
         return [(    _n
                     ,bw.Slice2num(self.cur_hier.Params
                     , self.cur_hier.AllMacro)

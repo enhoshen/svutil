@@ -248,9 +248,9 @@ class RegbkGen(SrcGen):
                 s += f'{ind[2]}{reg.lower()}_w = {self.wdata_name}[{reg}{self.regbk.bw_suf}-1:0];\n'
             s += f'{ind[1]}end \n'
             s += f'{ind[1]}else begin\n'
-            if reg.upper() == self.regbk.regintr_name.upper():
+            if self.regbk.regintr_name.upper() in reg.upper() :
                 s += f'{ind[2]}\n'
-                s += self.IntrCombToClip(pkg=self.regbk, toclip=False, ind=ind+2)
+                s += self.IntrCombToClip(reg, pkg=self.regbk, toclip=False, ind=ind+2)
             else:
                 if comb:
                     s += f'{ind[2]}{reg.lower()} = ;//TODO\n'
@@ -290,9 +290,9 @@ class RegbkGen(SrcGen):
                 s += f'{ind[2]}{reg.lower()}_w[{dim}] = {self.wdata_name}[{reg}{self.regbk.bw_suf}-1:0];\n' #TODO
             s += f'{ind[1]}end \n'
             s += f'{ind[1]}else begin\n'
-            if reg.upper() == self.regbk.regintr_name.upper():
+            if self.regbk.regintr_name.upper() in reg.upper() :
                 s += f'{ind[2]}\n'
-                s += self.IntrCombToClip(pkg=self.regbk, dim=dim, toclip=False, ind=ind+2)
+                s += self.IntrCombToClip(reg, pkg=self.regbk, dim=dim, toclip=False, ind=ind+2)
             else:
                 if comb:
                     s += f'{ind[2]}{reg.lower()}[{dim}] = ;//TODO\n'
@@ -523,16 +523,13 @@ class RegbkGen(SrcGen):
                     s += self.WdataSeqStr( reg.name, _slice, rw, ind=ind) + '\n'
         return s
     @Clip
-    def IntrCombToClip(self, dim=None, pkg=None, toclip=True, ind=None):
+    def IntrCombToClip(self, reg, dim=None, pkg=None, toclip=True, ind=None):
         r"""
         Help build clear register read part of interrupts combinational logics.
         """
         s = ''
         w = 30
-        if not self.regbk.raw_intr_stat:
-            self.print("interrupt struct not specified")
-            return ""
-        for intr, field in zip ( self.regbk.raw_intr_stat, self.regbk.regfields[self.regbk.regintr_name.upper()].enumls):
+        for intr, field in zip ( self.regbk.GetType(reg.lower()), self.regbk.regfields[self.regbk.regintr_name.upper()].enumls):
             s += self.IntrCombStr( intr.name, field.name, dim=dim, ind=ind) + '\n'
         return s 
     @SVgen.Clip
