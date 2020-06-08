@@ -625,7 +625,7 @@ class RegbkGen(SrcGen):
         elif self.wrdata_style == WRDATA_PRESET.NEXT_CYCLE: 
             s += self.SeqCeStr([f'reqNack_r <= \'0;'], [f'reqNack_r <= i_req && o_ack;'], ind=ind)
             s += self.SeqCeStr( [f'write_r <= \'0;',f'{self.addr_name}_r <= \'0;'] 
-                                ,[f'write_r <= {self.write_name};', f'{self.addr_name} <= i_{self.addr_name};']
+                                ,[f'write_r <= {self.write_name};', f'{self.addr_name}_r <= i_{self.addr_name};']
                                 ,ce = 'i_req && o_ack'
                                 ,ind=ind)
         s += f'{ind.b}\n'

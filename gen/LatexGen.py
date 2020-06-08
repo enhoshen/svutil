@@ -329,7 +329,7 @@ class LatexGen(SVgen):
         s = ''
         regbk = SVRegbk(pkg) if pkg and type(pkg)==str else self.regbk
         self.cur_regbk = regbk
-        for reg in regbk.regfields:
+        for reg in regbk.regslices:
             ofs = regbk.addrsdict[reg].num*regbk.regbsize
             ofs = hex(ofs).upper().replace('X', 'x')
             reg_bw = self.L_(regbk.GetBWStr(reg))
@@ -345,6 +345,8 @@ class LatexGen(SVgen):
             defaults = self.L_(regbk.GetDefaultsStr(reg, lst=True))
             if defaults:
                 defaults.reverse()
+            else:
+                defaults = [ '' for i in regbk.regtypes[reg]]   
             tps =[i for i in regbk.regtypes[reg]]
             tps.reverse()
             membtypes = [i for i in regbk.regmembtypes[reg]]
@@ -372,7 +374,6 @@ class LatexGen(SVgen):
         '''
         _slice_str = ''
         for _ss in _slice[1]:
-            self.print(_ss)
             if _ss[0] == _ss[1]:
                 _slice_str += f'{_ss[0]}, '
             else:

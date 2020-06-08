@@ -211,7 +211,7 @@ class SVRegbk(SVutil):
         if not d:
             d = self.regdefaults.get(reg.name_base)
         if not d:
-            return None
+            return None 
         if lst:
             _s = d.numstrlst
         else:
@@ -224,10 +224,13 @@ class SVRegbk(SVutil):
             bw = self.regbws.get(reg.name_base) 
         if not bw:
             return None 
-        if lst:
-            _s = bw.numstrlst
-        else:
-            _s = bw.numstr
+        try:
+            if lst:
+                _s = bw.numstrlst
+            else:
+                _s = bw.numstr
+        except:
+            _s = str(bw)
         return _s 
     def GetType(self, tp):
         tp = self.pkg.AllType.get(tp)
@@ -260,6 +263,7 @@ class SVRegbk(SVutil):
         if num < self.regbw-1:
             regfield.insert(0, ('RESERVED', [(num, self.regbw-1)]))
         self.regslices[name] = regfield
+        self.regbws[name] = num 
     def GetAddrCmt(self, reg):
         cmt = self.addrsdict[reg].cmt 
         width = ''
