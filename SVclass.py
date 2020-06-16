@@ -253,16 +253,24 @@ class SVRegbk(SVutil):
                 self.regslices[_s[0]].insert(0, (self.reserved_name , reserved))
     def StructToRegfield(self, name, struct):
         '''struct is list of SVType'''
-        regfield = []
+        regfield  = SVEnums([[] for i in SVhier.enumsfield.dic])
+        regslice = []
         rev = [i for i in struct]
         rev.reverse()
         num = 0
         for i in rev:
-            regfield += [(i.name.upper(), [(num, num+i.bw-1)])]
+            regfield.nums += [num]
+            regfield.names += [f'{name}_{i.name}'.upper()]
+            regslice += [(i.name.upper(), [(num, num+i.bw-1)])]
             num += i.bw
         if num < self.regbw-1:
-            regfield.insert(0, ('RESERVED', [(num, self.regbw-1)]))
-        self.regslices[name] = regfield
+            regfield.nums += [num]
+            regfield.names += [f'{name.upper()}_RESERVED']
+            regslice.insert(0, ('RESERVED', [(num, self.regbw-1)]))
+        self.regslices[name] = regslice 
+        import itertools 
+        regfield.enumls = [ SVEnuml(d) for d in itertools.zip_longest(*regfield.data)]
+        self.regfields[name] = regfield
         self.regbws[name] = num 
     def GetAddrCmt(self, reg):
         cmt = self.addrsdict[reg].cmt 

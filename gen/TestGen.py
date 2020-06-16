@@ -20,7 +20,7 @@ class TestGen(SVgen):
                             ( 'sim_pass_ev' , 'sim_pass'),
                             ( 'time_out_ev' , 'time_out')]
         self.pyeventlgclst = ['sim_pass', 'sim_stop', 'time_out']
-        self.clk_domain_lst = [('','')]
+        self.clk_domain_lst = [('','_n')]
     def SVDefineBlk(self): 
         ind = self.cur_ind.Copy() 
         yield ''
@@ -31,7 +31,7 @@ class TestGen(SVgen):
         s += f'`define {self.endcyclemacro} 100\n'  
         s += f'`define {self.hclkmacro} 5\n'  
         s += f'`define TEST_CFG //TODO\n'
-        s += f'`define FSDBNAME(suffix) "{self.fsdbname}``suffix``.fsdb`"\n'
+        s += f'`define FSDBNAME(suffix) `"{self.fsdbname}``suffix``.fsdb`"\n'
         s = s.replace('\n',f'\n{ind.b}')
         yield s
     def ModBlk(self):
@@ -82,7 +82,7 @@ class TestGen(SVgen):
         for ck in self.clk_domain_lst:
             _aff = ck[0]+"_" if ck[0] != "" else ""
             rst = _aff+'rst'+ck[1]
-            _s += f'{ind[1]}{rst} = {1 if ck[1] == "_n" else 0};\n' 
+            _s += f'{ind[1]}{rst} = {0 if ck[1] == "_n" else 1};\n' 
         _s += f'{ind[1]}#10\n'
         for ck in self.clk_domain_lst:
             _aff = ck[0]+"_" if ck[0] != "" else ""
