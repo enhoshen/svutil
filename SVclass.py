@@ -140,6 +140,7 @@ class SVRegbk(SVutil):
                             'regbsize_name',
                             'regbsizebw_name',
                             'regintr_name']
+        self.userfunclst = ['ShowAddr']
         self.regfield_suf = '_regfield'
         self.default_suf  = '_DEFAULT'
         self.bw_suf  = '_BW'
@@ -344,8 +345,8 @@ class SVRegbk(SVutil):
         print ( f'{self.pkg.name:-^{3*self.w}}')
         SVEnuml().ShowField
         SVEnuml().ShowLine
-        for i in self.addrs.enumls:
-            i.ShowDataCb([None, hex, None])
+        for i in self.regaddrs.enumls:
+            print(i.ShowDataCb([None, lambda x: str(x)+' '+hex(x*self.regbsize).upper(), None]))
     def ShowRegfield(self, name):
         pass
     def RegfieldPack (self, regfieldlst, datalst):

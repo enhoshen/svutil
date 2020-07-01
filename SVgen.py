@@ -155,16 +155,6 @@ class SVgen(SVutil):
                 for idx, j in enumerate(i):
                     w[idx] = max(w[idx], len(j))
             return w
-    # completer
-    def __svcompleterattr__(self):
-        return set() 
-    def __svcompleterfmt__(self, attr, match):
-        if attr in self.customlst:
-            return f'{SVutil.cyellow}{match}{SVutil.creset}'        
-        elif attr in self.userfunclst:
-            return f'{SVutil.cgreen}{match}{SVutil.creset}'        
-        else:
-            return f'{match}'        
     # decorators
     def Str(orig):
         @wraps(orig)

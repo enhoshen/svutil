@@ -230,7 +230,7 @@ class RegbkGen(SrcGen):
         if rw and rw == 'RO':
             if self.clr_affix.upper() in reg:
                 s += f'{ind[1]}if ({self.read_cond} && {addr}{self.addr_slice} == {reg}) '
-                s += f'{reg.lower()}_w = \'1;\n'
+                s += f'{reg.lower()}_w = 1;\n'
                 s += f'{ind[1]}else {reg.lower()}_w = \'0;//TODO\n'
                 s += f'{ind[1]}//TODO\n{ind.b}end\n'
             else:
@@ -256,7 +256,7 @@ class RegbkGen(SrcGen):
                     s += f'{ind[2]}{reg.lower()} = ;//TODO\n'
                 else:
                     if disable_reg:
-                        s += f'{ind[2]}if (clr_disabled_r && state_main_r == DISABLED) disable_w = \'0;\n'
+                        s += f'{ind[2]}if (clr_disable_r && state_main_r == DISABLED) disable_w = \'0;\n'
                         s += f'{ind[2]}else disable_w = disable_r;\n'
                     else:
                         s += f'{ind[2]}{reg.lower()}_w = {reg.lower()}_r;\n'
@@ -272,7 +272,7 @@ class RegbkGen(SrcGen):
         if rw and rw == 'RO':
             if self.clr_affix.upper() in reg:
                 s += f'{ind[1]}if ({self.read_cond} && (({addr}{self.addr_slice} - {reg}) == {dim})) '
-                s += f'{reg.lower()}_w[{dim}] = \'1;\n'
+                s += f'{reg.lower()}_w[{dim}] = 1;\n'
                 s += f'{ind[1]}else {reg.lower()}_w[{dim}] = \'0;//TODO\n'
                 s += f'{ind[1]}//TODO\n{ind.b}end\n'
             else:
@@ -399,12 +399,16 @@ class RegbkGen(SrcGen):
                 w[1] = max(w[1], len(self.clr_affix+intr.name)+2)
             for intr in self.regbk.raw_intr_stat:
                 if not self.clr_affix.upper()+intr.name.upper() in self.regbk.regaddrsdict:
+                    if arr:
+                        dim = f' [{self.regbk.regintr_name.upper()}{self.regbk.arr_num_suf}]'
+                    else:
+                        dim = ''
                     s += self.LogicStr( 
                          w
                         ,self.clr_affix+intr.name.lower()
                         ,1
                         ,'logic'
-                        ,dim = f' [{self.regbk.regintr_name.upper()}{self.regbk.arr_num_suf}]'
+                        ,dim = dim
                         ,ind=ind
                     )
             s += '\n'
@@ -581,7 +585,7 @@ class RegbkGen(SrcGen):
             s += f'{ind[1]}case (state_main_r)\n'
             s += f'{ind[2]}MAIN_IDLE: state_main_w = (disable_r)? DISABLED : ()? WORK: MAIN_IDLE;//TODO\n'
             s += f'{ind[2]}WORK:      state_main_w = (disable_r)? DISABLED : ()? MAIN_IDLE : WORK;//TODO\n'
-            s += f'{ind[2]}DISABLED:  state_main_w = (clr_disabled_r)? MAIN_IDLE : DISABLED;//TODO\n'
+            s += f'{ind[2]}DISABLED:  state_main_w = (clr_disable_r)? MAIN_IDLE : DISABLED;//TODO\n'
             s += f'{ind[2]}default    state_main_w = MAIN_IDLE;\n'
             s += f'{ind[1]}endcase\n'
             s += f'{ind.b}end\n'
@@ -604,6 +608,7 @@ class RegbkGen(SrcGen):
             s += self.ReqAckSeqStr(ind=ind)
 
         s += f'{ind.b}\n'
+        #TODO array clear interrupt
         if not self.regbk.raw_intr_stat:
             self.print("interrupt struct not specified")
         else:

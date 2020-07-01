@@ -206,11 +206,12 @@ class RegbkMaster(SVutil):
         from nicotb.protocol import TwoWire
         from nicotb.protocol import OneWire 
         from protocol import Apb
+        from protocol import Ahb
         self.proto_it_dict = { 
-                TwoWire.Master: self.RegWriteAddrIt,\
-                OneWire.Master: self.RegWriteAddrIt,\
-                Apb.Master: self.RegWriteIt
-            }
+             TwoWire.Master: self.RegWriteAddrIt
+            ,OneWire.Master: self.RegWriteAddrIt
+            ,Apb.Master: self.RegWriteIt
+            ,Ahb.Master: self.AhbRegWriteIt}
         self.ac= f'{colorama.Fore.YELLOW}' # attribute color
         self.cr= f'{colorama.Style.RESET_ALL}' # color reset
         self.regfieldfmt = lambda f, endl=f'\n{"":>8}': f'{endl}{self.ac}Reg fields: {self.cr}{f.__str__()}{endl}' if f else '' 
@@ -237,6 +238,9 @@ class RegbkMaster(SVutil):
         assert self.master, "Specify the protocol master"
         it = self.proto_it_dict[type(self.master)]
         yield from self.master.SendIter(it(regseq, rwseq, dataseq))
+    def IssueCommands(self, regseq, rwseq, dataseq):
+        it = self.proto_it_dict[type(self.master)]
+        yield from self.master.IssueCommands(it(regseq, rwseq, dataseq))
     def RegWriteIt (self, regseq, rwseq, dataseq):
         '''
             Generate an iterable to loop through a sequence of register bank's
@@ -307,6 +311,9 @@ class RegbkMaster(SVutil):
             self.write.Write()
             self.wdata.Write()
             yield self.addr.value
+    def AhbRegWriteIt ( self, regseq, rwseq, dataseq):
+        for addr, wdata, rw in self.RegWriteIt(regseq, rwseq, dataseq):
+            yield (rw, addr, wdata)
 class ThreadCreator(SVutil):
     ''' Helper class for creating simulation threads. '''
     def __init__(self, ck_ev):

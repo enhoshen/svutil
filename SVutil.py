@@ -125,6 +125,16 @@ class SVutil():
             v = self.__dict__[i]
             v = f'"{v}"' if type(v) == str else v.__str__()
             self.print(f'    {self.cgreen}{i:>{w}}:{self.creset} {v}', trace=2)
+    # completer
+    def __svcompleterattr__(self):
+        return set() 
+    def __svcompleterfmt__(self, attr, match):
+        if attr in self.customlst:
+            return f'{SVutil.cyellow}{match}{SVutil.creset}'        
+        elif attr in self.userfunclst:
+            return f'{SVutil.cgreen}{match}{SVutil.creset}'        
+        else:
+            return f'{match}'        
 class SVcvar():
     ''' 
         SVcvar marks customizable variables;

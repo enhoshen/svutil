@@ -339,7 +339,7 @@ class SVparse(SVutil):
     if GBV.PROJECT_PATH:
         base_path = os.environ.get("PWD")+'/'+GBV.PROJECT_PATH
     else:
-        match = re.search( r'/sim\b|/include\b|/src\b', os.environ.get("PWD"))
+        match = re.search( r'/include\b|/src\b|/sim\b|', os.environ.get("PWD"))
         if match:
             base_path = os.environ.get("PWD")[0:match.span()[0]] + '/'
         else:
@@ -477,15 +477,20 @@ class SVparse(SVutil):
         _s = s.s.replace('"','')
         p = [ self.include_path+_s , self.src_path+_s , self.sim_path+_s ]
         last_parse = SVparse.cur_parse
+        visited = None
         for pp in p:
             if ( os.path.isfile(pp) ):
+                if visited:
+                    self.print('Warning, duplicated file:'
+                        ,os.path.normpath(visited)
+                        ,os.path.normpath(pp))
+                visited = pp 
                 #path = self.cur_path.rsplit('/',maxsplit=1)[0] + '/' + _s
                 path = pp
                 n = path.rsplit('/',maxsplit=1)[1].replace('.','_')
                 SVparse.cur_parse = SVparse( n , self.cur_hier )
                 SVparse.cur_parse.inclvl = last_parse.inclvl
                 SVparse.cur_parse.Readfile(path)
-                
         SVparse.path_level -= 1
         SVparse.cur_parse = last_parse
         return

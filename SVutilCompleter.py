@@ -8,6 +8,7 @@ from SVparse import EAdict, SVhier
 import subprocess 
 import sys
 import shutil
+import inspect
 
 __all__ = ["SVutilCompleter"]
 
@@ -102,9 +103,10 @@ class SVutilCompleter(rlcompleter.Completer):
             words.add('__class__')
             words.update(get_class_members(thisobject.__class__))
 
-        self.cur_sv_words = self.SVtypeAttr(thisobject)
-        self.cur_object = thisobject
-        words.update(self.cur_sv_words)
+        if not inspect.isclass(thisobject):
+            self.cur_sv_words = self.SVtypeAttr(thisobject)
+            self.cur_object = thisobject
+            words.update(self.cur_sv_words)
 
         matches = []
         n = len(attr)

@@ -58,7 +58,7 @@ class TestGen(SVgen):
             
         w = self.FindFormatWidth([ i[0]+', '+i[1]+',' for i in self.eventlst])
         for ev in self.eventlst:
-            s += f'{ind.b}`PosIf({ev[0]+", "+ev[1]+",":<{w}} {self.rststr})//TODO modify reset logic\n' 
+            s += f'{ind.b}`PosIf({ev[0]+", "+ev[1]+",":<{w}} {self.rststr}_n)//TODO modify reset logic\n' 
 
         s += f'{ind.b}`WithFinish\n\n' 
         for i,ck in enumerate(self.clk_domain_lst):

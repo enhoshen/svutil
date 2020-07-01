@@ -132,5 +132,5 @@ class ConnectGen(SrcGen):
         ins = tuple( self.InsBlk(m, short=s, group=g) for m,s,g in zip_longest(module, short, group) )
         ins = (1,) + ins
         s =  self.Genlist( [logicban, logic, '\n', combban, ins]) 
-        self.print('\n',s, verbose=1)
+        self.print('\n',s, verbose=1, level=True)
         return s

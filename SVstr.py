@@ -9,7 +9,7 @@ VERBOSE = os.environ.get('VERBOSE',0)
 # S2num can evaulate the functions directly
 class SVsysfunc():
     def clog2(s):
-        return int(np.log2(s))
+        return int(np.ceil((np.log2(s))))
 class SVstr(SVutil):
     sp_chars = ['=','{','}','[',']','::',';',',','(',')','#']
     op_chars = ['+','-','*','/','(',')']
