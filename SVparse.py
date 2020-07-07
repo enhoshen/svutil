@@ -613,7 +613,12 @@ class SVparse(SVutil):
         self.print(enums,cmts, verbose='EnumParse')
         #_s = s.lsplit('}')
         #enums = SVstr(_s).ReplaceSplit(['{',','] )
-        enum_name, enum_num, cmts, idxs, sizes, name_bases= self.Enum2Num( enums, cmts, params=self.cur_hier.Params, macros=self.cur_hier.AllMacro)
+        enum_name, enum_num, cmts, idxs, sizes, name_bases, groups = self.Enum2Num( 
+             enums
+            ,cmts
+            ,groups
+            ,params=self.cur_hier.Params
+            ,macros=self.cur_hier.AllMacro)
         for _name, _num in zip( enum_name, enum_num):
             self.cur_hier.params[_name] = _num
             self.cur_hier.paramsdetail[_name] = ( _name , () , '', 1 , _num , '', '', '','enum literal')
@@ -934,9 +939,10 @@ class SVparse(SVutil):
         return reduce(lambda x,y : x+f'[{y}]' , t , '')
     def Bw2num(self, bw):
         return SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier.Params, self.cur_hier.AllMacro)
-    def Enum2Num(self, enum, cmt, params={}, macros=None):
+    def Enum2Num(self, enum, cmt, group, params={}, macros=None):
         ofs =0
         cmts = []
+        groups = []
         name = []
         name_base = []
         idx = []
@@ -945,7 +951,7 @@ class SVparse(SVutil):
         import copy
         _params = copy.deepcopy(params)
         _params.appendleft({})
-        for e,c in zip(enum, cmt):
+        for e,c,g in zip(enum, cmt, group):
             _s = SVstr(e)
             _name = _s.IDParse()
             bw = _s.BracketParse()
@@ -960,11 +966,13 @@ class SVparse(SVutil):
                     name_base.append(_name)
                     num.append( ofs+i if _num=='' else _num + i)
                     cmts.append(c)
+                    groups.append(g)
                 ofs = ofs + bw[1] - bw[0] + 1 if _num=='' else _num + bw[1] - bw[0] + 1
             else:
                 idx.append(0)
                 size.append(0)
                 cmts.append(c)
+                groups.append(g)
                 name_base.append(_name)
                 name.append(_name) #TODO
                 num.append ( ofs if _num == '' else _num)
@@ -974,7 +982,7 @@ class SVparse(SVutil):
                     self.print(f"enum number intepretation failed",verbose=2)
                     ofs = _num + '+1'
             _params[0][name[-1]] = num[-1]
-        return name, num, cmts, idx, size, name_base
+        return name, num, cmts, idx, size, name_base, groups
 hiers = EAdict(SVparse.hiers)
 class SVparseSession(SVutil):
     def __init__(self,name=None,scope=None, verbose=None):
