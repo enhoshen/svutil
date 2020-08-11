@@ -164,19 +164,18 @@ StickSet-TextColor = black
 [FSM_Dlg-Print]
 Orientation = Landscape
 [FileBrowser]
+nWaveRestoreRCDirHistory = "\"/home/enhoshen/research/lpAccel/sim/Address.rc\"" "\"/home/enhoshen/research/lpAccel/sim/novas.rc\"" "\"/home/enhoshen/research/lpAccel/sim/Controls.rc\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/I2cMaster_test1.rc\"" "\"/home/enho.shen/GZE200\
+/sim/Peripheral/RTC/apbsyncrtc.rc\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CSlave/PG.rc\"" "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/ahbmastif.rc\""
 nWaveOpenFsdbDirHistory = "\"/home/enhoshen/research/lpAccel/sim/loop.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072205_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_ug_072205\
 _syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest_5ns.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072206_syn_PEt\
-est.fsdb\"" "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/DMAAhb_tb_.fsdb\"" "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/DMAAhb_tb_BS.fsdb\"" "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/DMAAhb_tb_DP.fsdb\""
-nWaveRestoreRCDirHistory = "\"/home/enhoshen/research/lpAccel/sim/Address.rc\"" "\"/home/enhoshen/research/lpAccel/sim/novas.rc\"" "\"/home/enhoshen/research/lpAccel/sim/Controls.rc\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/I2cMaster_test1.rc\"" "\"/home/enho.shen/GZE200\
-/sim/Peripheral/RTC/apbsyncrtc.rc\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CSlave/PG.rc\"" "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/ahbmastif.rc\"" "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/ahbdma.rc\""
+est.fsdb\"" "\"/home/enho.shen/GZE200/sim/Top/SimBvh/fsdb/Gze200Chip_bsim.flash_rw.fsdb\""
 [Form]
-version = Verdi_P-2019.06-1
-wave/unknownSave.fm = 100,100,520,275
+version = Verdi_Q-2020.03-SP1
 [General]
 autoSaveSession = FALSE
 TclAutoSource = 
 SyncBrowserDir = TRUE
-version = Verdi_P-2019.06-1
+version = Verdi_Q-2020.03-SP1
 SignalCaseInSensitive = FALSE
 cmd_enter_form = FALSE
 ShowWndCtntDuringResizing = FALSE
@@ -266,18 +265,18 @@ Show_Cycle_Info = TRUE
 aboutVerdiDialog = 221,85,773,641
 VirtualFileEditorDialog = 297,235,637,403
 SetWindowTimeUnitDialog = 1063,1035,433,86
-ActiveFileDialog = 1005,942,549,272
 QwShortcutDialog = 1731,1217,800,600
 gridOptionsDialog = 1829,1477,421,269
 QwInfoMsgDlg = 1667,1236,750,250
 QwQuestionMsgDlg = 444,366,324,110
-openFileDlg = 1352,1373,1374,484
-restoreSigDlg = 1763,1400,551,438
 CreateBusDialog = 1645,1260,788,709
-qWaveSignalDialog = 1298,1158,1404,860
-QwWarnMsgDlg = 479,1018,600,250
-QwUserAskDlg = 1322,1345,324,148
 saveSigDlg = 1763,1422,551,386
+QwUserAskDlg = 1322,1345,324,142
+ActiveFileDialog = 1765,1475,556,272
+restoreSigDlg = 1763,1396,551,438
+openFileDlg = 1352,1373,1374,484
+qWaveSignalDialog = 1337,1185,1404,860
+QwWarnMsgDlg = 385,1011,600,250
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile1]
 shortcut = 
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile3]
@@ -489,7 +488,7 @@ PointStyle = FALSE
 SetDefaultRadix = TRUE
 FilterTextField = FALSE
 anaAuto100VertFit = FALSE
-getSignalForm = 1298 1158 1404 860 343 762 815 53
+getSignalForm = 1337 1185 1404 860 343 762 815 185
 viewPort = 1081 1111 1916 1008 377 127
 signalSpacing = 5
 digitalSignalHeight = 15
@@ -722,6 +721,8 @@ signal_vertical_scroll_bar = TRUE
 showPortNameForDroppedInstance = FALSE
 truncateFilePathInTitleBar = TRUE
 filterPropVacuousSuccess = FALSE
+filterClassInternalAttribute = FALSE
+createStartEndMarkerWhenAddClassObject = FALSE
 includeLocalSignals = FALSE
 encloseSignalsByGroup = FALSE
 resaveSignals = TRUE
@@ -761,11 +762,11 @@ curveWindow_Drag&Drop_Mode = TRUE
 hspiceIncOpenMode = TRUE
 pcSelectMode = FALSE
 hierarchyDelimiter = /
-RecentFile1 = "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/ahbdma.rc\""
-RecentFile2 = "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/DMAAhb_tb_DP.fsdb\""
-RecentFile3 = "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/ahbmastif.rc\""
-RecentFile4 = "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/DMAAhb_tb_BS.fsdb\""
-RecentFile5 = "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/DMAAhb_tb_.fsdb\""
+RecentFile1 = "\"/home/enho.shen/GZE200/sim/Top/SimBvh/fsdb/Gze200Chip_bsim.flash_rw.fsdb\""
+RecentFile2 = "\"/home/enho.shen/GZE200/sim/Peripheral/I2CSlave/PG.rc\""
+RecentFile3 = "\"/home/enho.shen/GZE200/sim/Peripheral/I2CSlave/I2cSlave_tb_PG.fsdb\""
+RecentFile4 = "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/I2cTwoPhaseMaster_tb_NACK.fsdb\""
+RecentFile5 = "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/I2cTwoPhaseMaster_tb_BW.fsdb\""
 open_file_time_range = FALSE
 value_window_aligment = Right
 signal_window_alignment = Left
@@ -781,6 +782,8 @@ getsignal_form_font = -f COURIER12
 SigsCheckNum = on 1000
 filter_synthesized_net = off n
 filterOutNet = on
+exclude_signal_with_prefix = off n
+synthesizeNetOnly = on
 filter_synthesized_instance = off 
 filterOutInstance = on
 showGroupTree = TRUE
@@ -802,6 +805,7 @@ displayVerticalRuler = FALSE
 displayHorizontalRuler = FALSE
 displayVerticalGrid = FALSE
 displayHorizontalGrid = FALSE
+waveClickMemberNode = FALSE
 [finsim]
 TPLanguage = Verilog
 TPName = Super-FinSim

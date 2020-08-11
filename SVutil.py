@@ -129,9 +129,9 @@ class SVutil():
     def __svcompleterattr__(self):
         return set() 
     def __svcompleterfmt__(self, attr, match):
-        if attr in self.customlst:
+        if hasattr(self, 'customlst') and attr in self.customlst:
             return f'{SVutil.cyellow}{match}{SVutil.creset}'        
-        elif attr in self.userfunclst:
+        elif hasattr(self, 'userfunclst') and attr in self.userfunclst:
             return f'{SVutil.cgreen}{match}{SVutil.creset}'        
         else:
             return f'{match}'        

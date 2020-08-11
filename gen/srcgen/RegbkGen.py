@@ -48,6 +48,7 @@ class RegbkGen(SrcGen):
                             ,'cg_cond'
                             ,'wo_cg_cond'
                             ,'ro_cg_cond'
+                            ,'arr_idx_suf'
                             ,'omitlogiclst']
         self.userfunclst += [
             'LoadPreset',
@@ -71,6 +72,7 @@ class RegbkGen(SrcGen):
         self.cg_cond = 'ce'
         self.wo_cg_cond = 'wo_ce'
         self.ro_cg_cond = 'ro_ce'
+        self.arr_idx_suf = 'arr_idx'
         self.protocol = None
         self.wrdata_style = None
         self.disable_style = None
@@ -187,8 +189,16 @@ class RegbkGen(SrcGen):
         pad = '{{'+f'{pad}'+'{1\'b0}}'
         logic = f'{reg.lower()}' if comb else f'{reg.lower()}_r'
         logic = "" if const else logic
-        s += f'{pad:<{w[1]}} ,{logic}[{self.addr_port_name}{self.addr_slice}-{reg}]}};{"//TODO" if const else ""}\n'
+        s += f'{pad:<{w[1]}} ,{logic}[{reg.lower()}_{self.arr_idx_suf}]}};{"//TODO" if const else ""}\n'
         s += f'{ind.b}end\n'
+        return s 
+    @SVgen.Str
+    def RdataArrIdxLogic(self, reg, ind=None):
+        s = f'{ind.b}logic [$clog2({reg.upper()}_NUM)-1:0] {reg.lower()}_{self.arr_idx_suf};\n'
+        return s
+    @SVgen.Str
+    def RdataArrIdxComb(self, reg, ind=None):
+        s = f'{ind.b}assign {reg.lower()}_{self.arr_idx_suf} = {self.addr_port_name}{self.addr_slice}-{reg};\n'
         return s 
     @SVgen.Str
     def WdataSeqStr(self, reg, _slice, rw=None, dim=None, ind=None):
@@ -430,7 +440,27 @@ class RegbkGen(SrcGen):
         logics based on the regaddr enum list.
         """
         w = [0,0]
-        s = f'{ind.b}always_comb begin\n'
+        s = ''
+        arr_reg = []
+        nonarr_reg = []
+        for i in self.regbk.addrs.enumls:
+            w[0] = max(w[0], len(i.name))
+            w[1] = max(w[1], len(self.regbk.regbw_name+i.name+self.regbk.bw_suf)+10)
+            width, rw, arr, omit, comb, *_= self.regbk.GetAddrCmt(i.name)
+            if arr != '':
+                arr_reg.append((i, width, rw, arr, omit, comb))
+            else:
+                nonarr_reg.append((i, width, rw, arr, omit, comb))
+        if arr_reg != []:
+            s += f'{ind.b}// array register read data index\n'
+            for i in arr_reg:
+                 s += self.RdataArrIdxLogic(i[0].name, ind=ind)
+            for i in arr_reg:
+                 s += self.RdataArrIdxComb(i[0].name, ind=ind)
+
+            
+        s += f'\n'
+        s += f'{ind.b}always_comb begin\n'
         rdata_dst = f'o_{self.rdata_name}'  if self.wrdata_style == WRDATA_PRESET.INSTANT\
                                             and self.protocol != PRCL_PRESET.REQACK\
                                             else f'{self.rdata_name}_w' 
@@ -446,16 +476,6 @@ class RegbkGen(SrcGen):
         
         s += f'{ind[1]}end\n'
         s += f'{ind[1]}else if ({self.read_cond}) begin\n'
-        arr_reg = []
-        nonarr_reg = []
-        for i in self.regbk.addrs.enumls:
-            w[0] = max(w[0], len(i.name))
-            w[1] = max(w[1], len(self.regbk.regbw_name+i.name+self.regbk.bw_suf)+10)
-            width, rw, arr, omit, comb, *_= self.regbk.GetAddrCmt(i.name)
-            if arr != '':
-                arr_reg.append((i, width, rw, arr, omit, comb))
-            else:
-                nonarr_reg.append((i, width, rw, arr, omit, comb))
         # array registers
         for i, (reg, width, rw, arr, omit, comb) in enumerate(arr_reg):
             reg = reg.name
