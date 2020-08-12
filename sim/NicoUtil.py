@@ -246,8 +246,10 @@ class RegbkMaster(SVutil):
             Generate an iterable to loop through a sequence of register bank's
             address, read/write, and data.
             Args:
-                regseq: list of register name string, or the integer address offset,
-                        or even a tuple of (register name, offset) representing an
+                regseq: list of 
+                        (1)register name string, or 
+                        (2)the integer address offset, or
+                        (3)even a tuple of (register name, offset) representing an
                         offset starting from the register 
                 rwseq : list of read/write, 1 for write, 0 for read.
                 dataseq: list of data. Data can be either integer or list 
@@ -282,9 +284,15 @@ class RegbkMaster(SVutil):
                 if not rw:
                     self.Read()
                     dlst, rf= self.regbk.RegRead(reg, self.rdata.value[0])
-                    self.print( self.readfmt(reg, offset, addr,  dlst, rf, w), verbose=1, trace=2)
+                    self.print( self.readfmt(reg, offset, addr,  dlst, rf, w)
+                        ,verbose=1
+                        ,trace=2
+                        ,level=True)
                 else:
-                    self.print(self.writefmt(reg, rw,  offset, addr, wdata, regfields, data, w), verbose=1, trace=2)
+                    self.print(self.writefmt(reg, rw,  offset, addr, wdata, regfields, data, w)
+                        ,verbose=1
+                        ,trace=2
+                        ,level=True)
             try:
                 if self.verbose >= 1:
                     self.msgcb = MsgCb
