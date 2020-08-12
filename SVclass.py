@@ -66,6 +66,8 @@ class SVStruct(SVclass):
         self.w = 15
         self.linechar = '='
         self.datas = [ SVType(t) for t in tp] 
+    def IsAlias(self):
+        pass
     @property
     def ShowData(self):
         for d in self.datas:
@@ -85,7 +87,7 @@ class SVType(SVclass):
     @property
     def ShowData(self):
         s = ''
-        for d in self.datas:
+        for d in self.data:
             s += d.ShowData
         return s
         
@@ -189,10 +191,6 @@ class SVRegbk(SVutil):
                 self.regbws[_s[0]] = _v
         for i,v in pkg.enums.items():
             self.EnumToRegfield(i,v)
-        for k in self.addrsdict.keys():
-            tp = self.GetType(k.lower())
-            if type(tp) == list and k not in self.regslices:
-                self.StructToRegfield(k, tp)
         for i,v in pkg.types.items():
             while True:
                 _v = v[0]
@@ -205,6 +203,10 @@ class SVRegbk(SVutil):
             tt = [ self.GetType(vv.tp) for vv in _v ]
             self.regtypes[i.upper()] = _v
             self.regmembtypes[i.upper()] = tt
+        for k in self.addrsdict.keys():
+            tp = self.regtypes.get(k)
+            if type(tp) == list and k not in self.regslices:
+                self.StructToRegfield(k, tp)
         #self.regfields = pkg. TODO reg fields, defaults etc...
     def GetDefaultsStr(self, name, lst=False):
         reg = self.regaddrsdict.get(name)
