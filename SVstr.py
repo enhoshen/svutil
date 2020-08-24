@@ -4,12 +4,22 @@ import re
 import os
 from subprocess import Popen, PIPE
 from SVutil import SVutil, V_
+from SVclass import *
+
 VERBOSE = os.environ.get('VERBOSE',0)
 # verilog system function implementation
 # S2num can evaulate the functions directly
 class SVsysfunc():
+    # current SVhier
     def clog2(s):
         return int(np.ceil((np.log2(s))))
+    def bits(s, cur_hier):
+        if cur_hier.types.get(s):
+            bits = 0
+            for i in cur_hier.types.get(s):
+                i = SVType(i)
+                bits += i.bw
+            return bits
 class SVstr(SVutil):
     sp_chars = ['=','{','}','[',']','::',';',',','(',')','#']
     op_chars = ['+','-','*','/','(',')']
@@ -159,7 +169,7 @@ class SVstr(SVutil):
             return func,args
         else:
             return func, []
-    def NumParse(self,params,macros=None, package=None):
+    def NumParse(self, cur_hier, package=None):
         '''
             split the equal sign at the start of the string
             return left string as num, meaning that it converts
@@ -168,19 +178,22 @@ class SVstr(SVutil):
             empty. Try to expand text macro if macros is provided.
         '''
         _s = self.lstrip('=') 
-        if macros:
-            _s = SVstr(_s.MultiMacroExpand(macros))
-        num = _s.S2num(params, package)
+        #if cur_hier.AllMacro:
+        _s = SVstr(_s.MultiMacroExpand(cur_hier.AllMacro))
+
+        num = _s.S2num(cur_hier, package)
         self.s = ''
         return num 
     def Arit2num(self, s):
         pass
-    def S2num(self,params, package=None):
+    def S2num(self, cur_hier, package=None):
+        params = cur_hier.Params
         _s = self.s.lstrip()
         #if '$clog2' in _s:
         #    _temp = self.s.split('(')[1].split(')')[0] 
         #    _s = _s.replace( _s[_s.find('$'):_s.find(')')+1] , 'int(np.log2('+ _temp + '))')
         _s = _s.replace('$','SVsysfunc.')
+        _s = re.sub(rf'SVsysfunc.bits\((\w*)\)', r'SVsysfunc.bits("\1", cur_hier)', _s)
         _s_no_op = SVstr(_s).ReplaceSplit(self.op_chars+[',', "'", '{', '}'])
         #TODO package import :: symbol  , white spaces around '::' not handled
         for w in _s_no_op:
@@ -245,18 +258,18 @@ class SVstr(SVutil):
         except:
             self.print(f"S2lst {_s.s} failed, return original string: {self.s}",verbose=3)
             return [self.s]
-    def Slice2num(self,params, macros=None):
+    def Slice2num(self, cur_hier):
         if self.s == '':
             return 1
         _temp = self.s.replace('::','  ')
         _idx = _temp.find(':')
         _s,_e = self.s[0:_idx] , self.s[_idx+1:]
         try:
-            return SVstr(_s).NumParse(params, macros)-SVstr(_e).NumParse(params, macros)+1
+            return SVstr(_s).NumParse(cur_hier)-SVstr(_e).NumParse(cur_hier)+1
         except(TypeError):
             self.print('Slice2num fail, TypeError', verbose=2)
             self.print (self.s, verbose='Slice2Num')
-    def Slice2TwoNum(self,params, macros=None):
+    def Slice2TwoNum(self, cur_hier):
         if self.s == '':
             return 1
         _temp = self.s.replace('::','  ')
@@ -264,7 +277,7 @@ class SVstr(SVutil):
         self.print(_idx , verbose='Slice2TwoNum')
         _s,_e = self.s[0:_idx] if _idx != -1 else '', self.s[_idx+1:]
         self.print(_s, _e , verbose='Slice2TwoNum')
-        return (SVstr(_s).NumParse(params, macros),SVstr(_e).NumParse(params, macros))
+        return (SVstr(_s).NumParse(cur_hier),SVstr(_e).NumParse(cur_hier))
     def SimpleMacroExpand(self, macros):
         '''
             Expand a simple substituion macro

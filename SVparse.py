@@ -7,6 +7,7 @@ from collections import deque
 from subprocess import Popen, PIPE
 from functools import reduce
 from SVutil import SVutil, V_
+from SVclass import *
 from SVstr import *
 class GBV(SVutil):
     #Nico makefile specified
@@ -32,26 +33,6 @@ def ToClip(s):
     except:
         print( "xclip not found or whatever, copy it yourself")
         print( "try install xclip and export XCLIP variable for the executable path")
-class EAdict():  #easy access
-    def __init__(self, items):
-        if type(items) == dict:
-            self.dic = items 
-        elif type(items) == list:
-            self.dic = { v:i for i,v in enumerate(items) }
-        else:
-            print("un-supported type for EAdict")
-            raise TypeError
-    def __getattr__(self, n):
-        return self.dic[n]
-    # completer
-    def __svcompleterattr__(self):
-        x = set(self.dic.keys())
-        return x
-    def __svcompleterfmt__(self, attr, match):
-        if attr in self.dic.keys():
-            return f'{SVutil.ccyan}{match}{SVutil.creset}'        
-        else:
-            return f'{match}'        
         
 class SVTypeDic(dict):
     def __init__(self, arg):
@@ -93,13 +74,13 @@ class HIERTP():
     FILE=0; MODULE=1; PACKAGE=2;
     
 class SVhier ():
-    paramfield = EAdict([ 'name' , 'dim' , 'tp', 'bw' , 'num' , 'bwstr' , 'dimstr', 'numstr' , 'paramtype', 'numstrlst'] )
-    typefield  = EAdict([ 'name' , 'bw' , 'dim' , 'tp' , 'enumliteral', 'cmts' ] )
-    portfield =  EAdict( [ 'direction' , 'name' , 'dim' , 'tp' , 'bw' , 'bwstr', 'dimstr', 'dimstrtuple', 'cmts', 'group' ] )
-    enumfield  = EAdict( [ 'name', 'bw', 'dim', 'tp', 'enumliterals', 'cmts'] )
-    enumsfield = EAdict( [ 'names' , 'nums' , 'cmts', 'idxs', 'sizes', 'name_bases', 'groups'] )
-    enumlfield = EAdict( [ 'name' , 'num' , 'cmt', 'idx', 'size', 'name_base', 'group'  ] )
-    macrofield = EAdict( [ 'args', 'macrostr', 'lambda'] )
+    paramfield = paramfield 
+    typefield  = typefield  
+    portfield  = portfield  
+    enumfield  = enumfield  
+    enumsfield = enumsfield 
+    enumlfield = enumlfield 
+    macrofield = macrofield 
     def __init__(self,name,scope,tp=None):
         self.hier= name # this is fucking ambiguous, but str method use it so it remains 
         self.name = name
@@ -358,6 +339,7 @@ class SVparse(SVutil):
         if name:
             if scope != None: 
                 self.cur_hier = SVhier(name,scope,HIERTP.FILE) 
+                SVsysfunc.cur_hier = self.cur_hier
                 self.gb_hier.child[name] = self.cur_hier
             else: 
                 SVhier(name,self.gb_hier,HIERTP.FILE) 
@@ -508,7 +490,7 @@ class SVparse(SVutil):
         bw = SVstr(''if bw == () else bw[0])
         n, d = s.IDDIMarrParse()
         tp = ('signed ' if sign==True else '') + 'logic'
-        lst = [(_n,bw.Slice2num(self.cur_hier.Params, self.cur_hier.AllMacro),self.Tuple2num(_d),tp) for _n,_d in zip(n,d)]
+        lst = [(_n,bw.Slice2num(self.cur_hier),self.Tuple2num(_d),tp) for _n,_d in zip(n,d)]
         self.print(lst,verbose=3)
         return lst 
     def ArrayParse(self, s , lines):
@@ -531,7 +513,7 @@ class SVparse(SVutil):
         numstr = s.rstrip().rstrip(';').rstrip(',').s.lstrip('=').lstrip()
         numstrlst = SVstr(numstr).S2lst()
         #num =self.cur_hier.params[name]=s.lstrip('=').S2num(self.cur_hier.Params)
-        num = self.cur_hier.params[name] = s.NumParse(self.cur_hier.Params, self.cur_hier.AllMacro, self.package)
+        num = self.cur_hier.params[name] = s.NumParse(self.cur_hier, self.package)
         self.cur_hier.paramsdetail[name] = ( name ,\
                                              self.Tuple2num(dim) ,\
                                              tp,\
@@ -560,7 +542,7 @@ class SVparse(SVutil):
                 if 'reged' in i:
                     self.cur_hier.regs[name] = 'N/A'
         bwstr = self.Tuple2str(bw)
-        bw = SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier.Params, self.cur_hier.AllMacro)
+        bw = SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier)
         dim = s.BracketParse()
         dimstrtuple = dim
         dimstr = self.Tuple2str(dim)
@@ -616,9 +598,7 @@ class SVparse(SVutil):
         enum_name, enum_num, cmts, idxs, sizes, name_bases, groups = self.Enum2Num( 
              enums
             ,cmts
-            ,groups
-            ,params=self.cur_hier.Params
-            ,macros=self.cur_hier.AllMacro)
+            ,groups)
         for _name, _num in zip( enum_name, enum_num):
             self.cur_hier.params[_name] = _num
             self.cur_hier.paramsdetail[_name] = ( _name , () , '', 1 , _num , '', '', '','enum literal')
@@ -634,8 +614,7 @@ class SVparse(SVutil):
                 ,name_bases
                 ,groups)
         return [(    _n
-                    ,bw.Slice2num(self.cur_hier.Params
-                    , self.cur_hier.AllMacro)
+                    ,bw.Slice2num(self.cur_hier)
                     ,() 
                     , 'enum' 
                     , enum_name
@@ -934,12 +913,13 @@ class SVparse(SVutil):
             self.last_end = _s.End()
         return ( _s.rstrip() , cmt ) 
     def Tuple2num(self, t ):
-        return tuple(map(lambda x : SVstr(x).NumParse(params=self.cur_hier.Params, macros=self.cur_hier.AllMacro, package=self.package) ,t))
+        return tuple(map(lambda x : SVstr(x).NumParse(self.cur_hier, self.package), t))
+        #NumParse(params=self.cur_hier.Params, macros=self.cur_hier.AllMacro, package=self.package) 
     def Tuple2str(self, t):
         return reduce(lambda x,y : x+f'[{y}]' , t , '')
     def Bw2num(self, bw):
-        return SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier.Params, self.cur_hier.AllMacro)
-    def Enum2Num(self, enum, cmt, group, params={}, macros=None):
+        return SVstr('' if bw==() else bw[0]).Slice2num(self.cur_hier)
+    def Enum2Num(self, enum, cmt, group):
         ofs =0
         cmts = []
         groups = []
@@ -949,14 +929,13 @@ class SVparse(SVutil):
         size = []
         num = []
         import copy
-        _params = copy.deepcopy(params)
-        _params.appendleft({})
         for e,c,g in zip(enum, cmt, group):
             _s = SVstr(e)
             _name = _s.IDParse()
             bw = _s.BracketParse()
-            bw = SVstr(bw[0]).Slice2TwoNum(_params, macros) if bw else SVstr('').Slice2TwoNum(_params, macros)
-            _num = _s.NumParse(_params,self.cur_hier.AllMacro, SVparse.package) 
+            bw = SVstr(bw[0]).Slice2TwoNum(self.cur_hier) \
+                if bw else SVstr('').Slice2TwoNum(self.cur_hier)
+            _num = _s.NumParse(self.cur_hier, SVparse.package) 
             if type(bw)==tuple:
                 bw = (0,bw[1]-1) if bw[0]=='' else bw
                 for i in range (bw[1]-bw[0]+1):
@@ -981,7 +960,7 @@ class SVparse(SVutil):
                 except:
                     self.print(f"enum number intepretation failed",verbose=2)
                     ofs = _num + '+1'
-            _params[0][name[-1]] = num[-1]
+            self.cur_hier.params[name[-1]] = num[-1]
         return name, num, cmts, idx, size, name_base, groups
 hiers = EAdict(SVparse.hiers)
 class SVparseSession(SVutil):

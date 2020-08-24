@@ -1,5 +1,36 @@
-from SVparse import * 
 from SVutil import *
+
+VERBOSE = os.environ.get('VERBOSE',0)
+
+class EAdict():  #easy access
+    def __init__(self, items):
+        if type(items) == dict:
+            self.dic = items 
+        elif type(items) == list:
+            self.dic = { v:i for i,v in enumerate(items) }
+        else:
+            print("un-supported type for EAdict")
+            raise TypeError
+    def __getattr__(self, n):
+        return self.dic[n]
+    # completer
+    def __svcompleterattr__(self):
+        x = set(self.dic.keys())
+        return x
+    def __svcompleterfmt__(self, attr, match):
+        if attr in self.dic.keys():
+            return f'{SVutil.ccyan}{match}{SVutil.creset}'        
+        else:
+            return f'{match}'        
+
+paramfield = EAdict([ 'name' , 'dim' , 'tp', 'bw' , 'num' , 'bwstr' , 'dimstr', 'numstr' , 'paramtype', 'numstrlst'] )
+typefield  = EAdict([ 'name' , 'bw' , 'dim' , 'tp' , 'enumliteral', 'cmts' ] )
+portfield =  EAdict( [ 'direction' , 'name' , 'dim' , 'tp' , 'bw' , 'bwstr', 'dimstr', 'dimstrtuple', 'cmts', 'group' ] )
+enumfield  = EAdict( [ 'name', 'bw', 'dim', 'tp', 'enumliterals', 'cmts'] )
+enumsfield = EAdict( [ 'names' , 'nums' , 'cmts', 'idxs', 'sizes', 'name_bases', 'groups'] )
+enumlfield = EAdict( [ 'name' , 'num' , 'cmt', 'idx', 'size', 'name_base', 'group'  ] )
+macrofield = EAdict( [ 'args', 'macrostr', 'lambda'] )
+
 class SVclass(SVutil):
     def __init__(self):
         self.w = 20
@@ -54,14 +85,15 @@ class SVclass(SVutil):
             return f'{match}'        
     
 class SVParam(SVclass):
-    field = SVhier.paramfield
+    field = paramfield
     def __init__(self, param=None):
         self.w = 20
         self.linechar = '='
         self.data = param
+
 class SVStruct(SVclass):
     ''' bugged '''
-    field = SVhier.typefield
+    field = typefield
     def __init__(self, tp = None):
         self.w = 15
         self.linechar = '='
@@ -74,7 +106,7 @@ class SVStruct(SVclass):
             d.ShowData
         
 class SVType(SVclass):
-    field = SVhier.typefield
+    field = typefield
     def __init__(self, tp = None):
         self.w = 15
         self.linechar = '='
@@ -92,13 +124,13 @@ class SVType(SVclass):
         return s
         
 class SVPort(SVclass):
-    field = SVhier.portfield
+    field = portfield
     def __init__(self, port=None):
         self.w = 20
         self.linechar = '='
         self.data = port
 class SVEnums(SVclass):
-    field = SVhier.enumsfield
+    field = enumsfield
     def __init__(self, enums=None):
         self.w = 30
         self.linechar = '='
@@ -112,7 +144,7 @@ class SVEnums(SVclass):
         return '[ '+' , '.join(slst)+' ]'
 class SVEnuml(SVclass):
     ''' enum literal '''
-    field = SVhier.enumlfield
+    field = enumlfield
     def __init__(self, enuml=None):
         self.w = 20
         self.linechar = '='
@@ -256,7 +288,7 @@ class SVRegbk(SVutil):
                 self.regslices[_s[0]].insert(0, (self.reserved_name , reserved))
     def StructToRegfield(self, name, struct):
         '''struct is list of SVType'''
-        regfield  = SVEnums([[] for i in SVhier.enumsfield.dic])
+        regfield  = SVEnums([[] for i in enumsfield.dic])
         regslice = []
         rev = [i for i in struct]
         rev.reverse()
