@@ -450,7 +450,7 @@ class NicoUtil(PYUtil):
     def Macro2num (self, s):
         _s = s 
         _s = SVstr(_s).MultiMacroExpand(self.top.AllMacro)
-        _s = SVstr(_s).S2num(self.top.Params) 
+        _s = SVstr(_s).S2num(self.top) 
         reobj = True
         while reobj:
             if type(_s) == int:
@@ -458,7 +458,7 @@ class NicoUtil(PYUtil):
             reobj = re.search(r'`(\w+)\b', _s)
             if reobj:    
                 _s = SVstr(_s).MultiMacroExpand(self.top.AllMacro)
-                _s = SVstr(_s).S2num(self.top.Params) 
+                _s = SVstr(_s).S2num(self.top) 
         return _s 
     @property
     def DutPorts(self):
