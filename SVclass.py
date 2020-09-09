@@ -24,13 +24,54 @@ class EAdict():  #easy access
         else:
             return f'{match}'        
 
-paramfield = EAdict([ 'name' , 'dim' , 'tp', 'bw' , 'num' , 'bwstr' , 'dimstr', 'numstr' , 'paramtype', 'numstrlst'] )
-typefield  = EAdict([ 'name' , 'bw' , 'dim' , 'tp' , 'enumliteral', 'cmts' ] )
-portfield =  EAdict( [ 'direction' , 'name' , 'dim' , 'tp' , 'bw' , 'bwstr', 'dimstr', 'dimstrtuple', 'cmts', 'group' ] )
-enumfield  = EAdict( [ 'name', 'bw', 'dim', 'tp', 'enumliterals', 'cmts'] )
-enumsfield = EAdict( [ 'names' , 'nums' , 'cmts', 'idxs', 'sizes', 'name_bases', 'groups'] )
-enumlfield = EAdict( [ 'name' , 'num' , 'cmt', 'idx', 'size', 'name_base', 'group'  ] )
-macrofield = EAdict( [ 'args', 'macrostr', 'lambda'] )
+paramfield = EAdict([ 'name' 
+    , 'dim' 
+    , 'tp'
+    , 'bw' 
+    , 'num' 
+    , 'bwstr' 
+    , 'dimstr'
+    , 'numstr' 
+    , 'paramtype'
+    , 'numstrlst'] )
+typefield  = EAdict([ 'name' 
+    , 'bw' 
+    , 'dim' 
+    , 'tp' 
+    , 'enumliteral'
+    , 'cmts' ] )
+portfield =  EAdict( [ 'direction' 
+    , 'name' 
+    , 'dim' 
+    , 'tp' 
+    , 'bw' 
+    , 'bwstr'
+    , 'dimstr'
+    , 'dimstrtuple'
+    , 'cmts'
+    , 'group' ] )
+enumfield  = EAdict( [ 'name'
+    , 'bw'
+    , 'dim'
+    , 'tp'
+    , 'enumliterals'
+    , 'cmts'] )
+enumsfield = EAdict( [ 'names' 
+    , 'nums' 
+    , 'cmts'
+    , 'idxs'
+    , 'sizes'
+    , 'name_bases'
+    , 'groups'] )
+enumlfield = EAdict( [ 'name' 
+    , 'num' 
+    , 'cmt'
+    , 'idx'
+    , 'size'
+    , 'name_base', 'group'  ] )
+macrofield = EAdict( [ 'args'
+    , 'macrostr'
+    , 'lambda'] )
 
 class SVclass(SVutil):
     def __init__(self):
@@ -189,15 +230,16 @@ class SVRegbk(SVutil):
         self.regbsizebw_name = 'REG_BSIZE_BW'
         self.regintr_name = 'raw_intr_stat'
 
+        self.name = pkg.name
         self.verbose = V_(VERBOSE) 
         self.w = 20
         self.pkg = pkg
         self.addrs = pkg.enums.get(self.regaddr_name) 
         self.addrs = SVEnums(self.addrs) if self.addrs else None
-        self.addrsdict = { x.name: x for x in self.addrs.enumls }
+        self.addrsdict = { x.name: x for x in self.addrs.enumls } if self.addrs else None
         self.regaddrs = self.addrs
         self.regaddrsdict = self.addrsdict
-        self.regaddrsreversedict = {v:k for k,v in self.addrsdict.items()}
+        self.regaddrsreversedict = {v:k for k,v in self.addrsdict.items()} if self.addrsdict else None
         self.regaddrs_arr = pkg.enums.get(self.regaddr_arr_name)
         self.regaddrs_arr = SVEnums(self.regaddrs_arr) if self.regaddrs_arr else None
         self.regaddrs_arrdict = { x.name: x for x in self.regaddrs_arr.enumls } if self.regaddrs_arr else None
@@ -236,10 +278,11 @@ class SVRegbk(SVutil):
             tt = [ self.GetType(vv.tp) for vv in _v ]
             self.regtypes[i.upper()] = _v
             self.regmembtypes[i.upper()] = tt
-        for k in self.addrsdict.keys():
-            tp = self.regtypes.get(k)
-            if type(tp) == list and k not in self.regslices:
-                self.StructToRegfield(k, tp)
+        if self.addrsdict:
+            for k in self.addrsdict.keys():
+                tp = self.regtypes.get(k)
+                if type(tp) == list and k not in self.regslices:
+                    self.StructToRegfield(k, tp)
         #self.regfields = pkg. TODO reg fields, defaults etc...
     def GetDefaultsStr(self, name, lst=False):
         reg = self.regaddrsdict.get(name)
@@ -286,7 +329,7 @@ class SVRegbk(SVutil):
                 else:
                     self.regslices[_s[0]].append(ii)
             if len(reserved)!=0:
-                self.regslices[_s[0]].insert(0, (self.reserved_name , reserved))
+                self.regslices[_s[0]] += [(self.reserved_name , reserved)]
     def StructToRegfield(self, name, struct):
         '''struct is list of SVType'''
         regfield  = SVEnums([[] for i in enumsfield.dic])
@@ -295,6 +338,7 @@ class SVRegbk(SVutil):
         rev.reverse()
         num = 0
         for i in rev:
+            regfield.cmts.append(i.cmts)
             regfield.nums += [num]
             regfield.names += [f'{name}_{i.name}'.upper()]
             regslice += [(i.name.upper(), [(num, num+i.bw-1)])]
@@ -302,7 +346,8 @@ class SVRegbk(SVutil):
         if num < self.regbw-1:
             regfield.nums += [num]
             regfield.names += [f'{name.upper()}_RESERVED']
-            regslice.insert(0, ('RESERVED', [(num, self.regbw-1)]))
+            regslice += [('RESERVED', [(num, self.regbw-1)])]
+            regfield.cmts.append(['']) 
         self.regslices[name] = regslice 
         import itertools 
         regfield.enumls = [ SVEnuml(d) for d in itertools.zip_longest(*regfield.data)]
@@ -310,14 +355,16 @@ class SVRegbk(SVutil):
         self.regbws[name] = num 
     def GetAddrCmt(self, reg):
         cmt = self.addrsdict[reg].cmt 
+        return self.GetCmt(cmt)
+    def GetCmt(self, cmt):
         width = ''
         rw = ''
         arr= ''
         omit = ''
         comb = ''
-        _ = None # dummy unpack
+        _ = ''
         for c in cmt:
-            if re.search(r'RW|R/W|RO|WO',c):
+            if re.search(r'RW|R/W|RO|WO|RC|W1C',c):
                 rw= c.lstrip().rstrip()
                 continue
             if re.search(r"\d",c):

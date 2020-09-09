@@ -490,7 +490,12 @@ class SVparse(SVutil):
         bw = SVstr(''if bw == () else bw[0])
         n, d = s.IDDIMarrParse()
         tp = ('signed ' if sign==True else '') + 'logic'
-        lst = [(_n,bw.Slice2num(self.cur_hier),self.Tuple2num(_d),tp) for _n,_d in zip(n,d)]
+        cmts = [''] if not self.cur_cmt else self.cur_cmt
+        lst = [(_n,bw.Slice2num(self.cur_hier)
+            ,self.Tuple2num(_d)
+            ,tp
+            , [] #enumliteral, not used , this fucking needs refactor
+            ,cmts) for _n,_d in zip(n,d)]
         self.print(lst,verbose=3)
         return lst 
     def ArrayParse(self, s , lines):
@@ -514,16 +519,17 @@ class SVparse(SVutil):
         numstrlst = SVstr(numstr).S2lst()
         #num =self.cur_hier.params[name]=s.lstrip('=').S2num(self.cur_hier.Params)
         num = self.cur_hier.params[name] = s.NumParse(self.cur_hier, self.package)
-        self.cur_hier.paramsdetail[name] = ( name ,\
-                                             self.Tuple2num(dim) ,\
-                                             tp,\
-                                             bw ,\
-                                             num ,\
-                                             bwstr,\
-                                             dimstr,\
-                                             numstr ,\
-                                             self.cur_key,\
-                                             numstrlst)
+        self.cur_hier.paramsdetail[name] = (
+             name 
+            ,self.Tuple2num(dim) 
+            ,tp
+            ,bw 
+            ,num 
+            ,bwstr
+            ,dimstr
+            ,numstr 
+            ,self.cur_key
+            ,numstrlst)
         if self.flag_port == 'pport' :
             self.cur_hier.paramports[name] = num 
         return name , num
@@ -707,7 +713,7 @@ class SVparse(SVutil):
                 #dim = _s.BracketParse()
                 #dimstr = self.Tuple2str(dim)
                 #dim = self.Tuple2num(dim) 
-                attrlist += [( _n , bw, self.Tuple2num(_d) , tp) for _n, _d in zip(n, d)]
+                attrlist += [( _n , bw, self.Tuple2num(_d) , tp, [], self.cur_cmt) for _n, _d in zip(n, d)]
     def TypedefParse(self, s , lines):
         _w = s.lsplit()
         types = self.cur_hier.AllTypeKeys

@@ -123,7 +123,7 @@ class ConnectGen(SrcGen):
                         'io': the logics are prefixed with 'i_'/'o_' depending
                         on its port direction.
         '''
-        banw = 25
+        banw = 20
         module = [self.dut] if not module else module
         logicban = (1,) + (self.Line3BannerBlk( banw, '//', 'Logic'),)
         logic = tuple( self.LogicBlk(m, short=s, group=g) for m,s,g in zip_longest(module, short, group) )

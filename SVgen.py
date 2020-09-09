@@ -208,6 +208,7 @@ if __name__ == "__main__":
     from gen.drawiogen.BlockDiagramGen import BlockDiagramGen 
     from gen.LatexGen import LatexGen
     from gen.BannerGen import GanzinBanner
+    from gen.xlgen.MemmapGen import MemmapGen
     session = SVparseSession(V_(VERBOSE))
     session.FileParse(paths=None)
     hiers = EAdict(session.hiers)
@@ -236,3 +237,8 @@ if __name__ == "__main__":
     except:
         SVutil().print('LatexGen initialization failed') 
     gBanner = GanzinBanner()
+    try:
+        gmemmapxl = MemmapGen(session=session)
+    except:
+        SVutil().print('MemmapGen initialization failed') 
+    gmemmapxl = MemmapGen(session=session)
