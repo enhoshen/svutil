@@ -141,7 +141,10 @@ class MemmapGen(XLGen):
         self.cur_sh.write_row(self.field_row, self.col_start, self.cols, self.fieldfmt)
     def AddReg(self, regbk, regenum, rowidx):
         _, rw, *_= regbk.GetCmt(regenum.cmt)
-        dft = self.DftConvert(regbk, regenum.name, tp='list')
+        dft = regbk.regdefaults.get(regenum.name.upper())
+        dft = dft.num if dft else 'TODO'
+        if type(dft) == list:
+            dft = self.DftConvert(regbk, regenum.name, dft)
         data = [
              hex(regenum.num * regbk.regbsize)
             ,regenum.name
@@ -157,18 +160,21 @@ class MemmapGen(XLGen):
         _, regrw, *_= regbk.GetCmt(regbk.regaddrsdict[name].cmt)
         slices = regbk.regslices.get(name.upper())
         field = regbk.regfields.get(name.upper())
-        dft = self.DftConvert(regbk, name, tp='int')
+        dft = regbk.regdefaults.get(name.upper())
+        dft = dft.num if dft else 'TODO'
         # if dft is a list, it is in reverse or, where the last element
         # is the default value of the first field value
         if field:
             acc_dic = {}
+            if type(dft) == int:
+                dft = self.DftConvert(regbk, name, dft)
             for n,c in zip(field.names, field.cmts):
                 _, rw, *_= regbk.GetCmt(c)
                 acc_dic[n] = rw if rw != '' else regrw
                 acc_dic[re.sub(rf'{name.upper()}_', '', n)] = rw if rw != '' else regrw
                 acc_dic['RESERVED'] = 'RO'
             for i,s in enumerate(slices):
-                if len(dft) > i and type(dft)==list:
+                if type(dft)==list and len(dft) > i:
                     fdft = dft[i] 
                 else:
                     fdft = '0' if s[0] == 'RESERVED' else 'TODO'
@@ -181,6 +187,8 @@ class MemmapGen(XLGen):
                 self.RegfieldRow(data)
             return True
         else:
+            if type(dft) == list:
+                dft = self.DftConvert(regbk, name, dft)
             bw = regbk.regbws.get(name)
             try: 
                 bw = bw.num
@@ -207,14 +215,14 @@ class MemmapGen(XLGen):
                 self.SetGroup(self.cur_row, self.regfield_lvl) 
             self.cur_row += 1
              
-    def DftConvert(self, regbk, name, tp='list'):
-        dft = regbk.regdefaults.get(name.upper())
-        dft = dft.num if dft else 'TODO'
-        if type(dft)==list and tp == 'list':
-            _, dft, _ = regbk.RegWrite(name, dft)
+    def DftConvert(self, regbk, regname, dft):
+        if type(dft) == str:
             return dft
-        if type(dft)==int and tp == 'int':
-            dft, _ = regbk.RegRead(name, dft)
+        if type(dft)==list:
+            _, dft, _ = regbk.RegWrite(regname, dft)
+            return dft
+        if type(dft)==int:
+            dft, _ = regbk.RegRead(regname, dft)
             return dft 
         return dft
     def SliceToString(self, slice_lst):

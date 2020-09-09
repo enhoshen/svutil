@@ -364,6 +364,8 @@ class SVRegbk(SVutil):
         comb = ''
         _ = ''
         for c in cmt:
+            if type(c) != str:
+                continue
             if re.search(r'RW|R/W|RO|WO|RC|W1C',c):
                 rw= c.lstrip().rstrip()
                 continue
