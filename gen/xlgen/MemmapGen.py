@@ -204,7 +204,7 @@ class MemmapGen(XLGen):
             self.cur_row += 1
             if bw != regbk.regbw:
                 slce = f'[{regbk.regbw-1}:{bw}]'
-                data = [slce ,name ,regrw , '0', 'Reserved']
+                data = [slce ,'RESERVED',regrw , '0', 'Reserved']
                 self.RegfieldRow(data)
             return True
     def RegfieldRow(self, data):
