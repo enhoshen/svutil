@@ -361,7 +361,7 @@ class SVparse(SVutil):
             ,'`include':self.IncludeRead 
             ,'`rdyack_input':self.RdyackParse
             ,'`rdyack_output':self.RdyackParse
-            ,'always_ff@': self.RegisterParse
+            ,'always_ff@': self.negisterParse
             ,'always_ff': self.RegisterParse
             ,'`define':self.DefineParse
             ,'`ifndef':self.IfNDefParse
@@ -752,9 +752,9 @@ class SVparse(SVutil):
                 continue
             pre_w = _w
             _w = s.lsplit()
-            if 'begin' in _w:
+            if re.match(r'\bbegin\b', _w):
                 endflag += 1
-            if 'end' in _w:
+            if re.match(r'\bend\b', _w):
                 endflag -= 1
             if s.s[0:2] == '<=':
                 pre_w = _w

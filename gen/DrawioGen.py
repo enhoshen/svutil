@@ -6,6 +6,7 @@ from SVgen import *
 from SVclass import *
 import itertools
 import numpy as np
+# TODO use ElementTree to work with XML files
 class Shape():
     def __init__(self, x=None, y=None, w=None, h=None):
         self.x = x
