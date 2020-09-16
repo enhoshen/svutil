@@ -361,7 +361,7 @@ class SVparse(SVutil):
             ,'`include':self.IncludeRead 
             ,'`rdyack_input':self.RdyackParse
             ,'`rdyack_output':self.RdyackParse
-            ,'always_ff@': self.negisterParse
+            ,'always_ff@': self.RegisterParse
             ,'always_ff': self.RegisterParse
             ,'`define':self.DefineParse
             ,'`ifndef':self.IfNDefParse
