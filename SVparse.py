@@ -628,6 +628,9 @@ class SVparse(SVutil):
                     , groups  ) for _n in n]
         
     def ImportParse(self, s , lines):
+        while ';' not in s:
+            _s, cmt = self.Rdline(lines)
+            s += _s
         s = s.split(';')[0]
         for _s in s.split(','):
             if '::' in _s:
