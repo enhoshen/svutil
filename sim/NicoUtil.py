@@ -108,7 +108,7 @@ class StructBusCreator():
         cls.Reset()
         cls.BasicTypes()
         S = cls.FileParse()
-        for h in SVparse.hiers.values():
+        for h in SVparse.session.hiers.values():
             for k,v in h.types.items():
                 StructBusCreator(k,v)
         return S
@@ -117,7 +117,7 @@ class StructBusCreator():
         cls.Reset()
         cls.BasicTypes()
         S = cls.FileParse(paths=[GBV.TOPSV], inc=False, inclvl=inclvl)
-        for T in SVparse.hiers[GBV.TOPMODULE].Types: # TOPMODULE defined in SVparse
+        for T in SVparse.session.hiers[GBV.TOPMODULE].Types: # TOPMODULE defined in SVparse
             for k,v in T.items():
                 StructBusCreator(k,v)
         return S
@@ -125,7 +125,7 @@ class StructBusCreator():
     def Get(cls,t,name,hier='',dim=(),dtype=np.int32):
         if '::' in t:
             _pkg , _type= t.split('::')
-            tp = SVparse.package[_pkg].types[_type] 
+            tp = SVparse.session.package[_pkg].types[_type] 
             StructBusCreator(t,tp)
         if dim == ():
             return cls.structlist[t].CreateStructBus(name,hier,dim, dtype=dtype)

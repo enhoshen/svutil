@@ -40,7 +40,7 @@ class SVTypeDic(dict):
     def get(self,k,d=None):
         if '::' in k:
             _pkg , _type= k.split('::')
-            return SVparse.package[_pkg].types[_type] 
+            return SVparse.session.package[_pkg].types[_type] 
         else:
             return super().get(k, d) 
 class SVParamDic(dict):
@@ -49,7 +49,7 @@ class SVParamDic(dict):
     def get(self,k,d=None):
         if '::' in k:
             _pkg , _param = k.split('::')
-            return SVparse.package[_pkg].params[_param] 
+            return SVparse.session.package[_pkg].params[_param] 
         else:
             return super().get(k, d) 
 class SVEnumDic(dict):
@@ -58,7 +58,7 @@ class SVEnumDic(dict):
     def get(self,k,d=None):
         if '::' in k:
             _pkg , _enum = k.split('::')
-            return SVparse.package[_pkg].enums[_enum] 
+            return SVparse.session.package[_pkg].enums[_enum] 
         else:
             return super().get(k, d) 
 class SVParamDetailDic(dict):
@@ -67,7 +67,7 @@ class SVParamDetailDic(dict):
     def get(self,k,d=None):
         if '::' in k:
             _pkg , _param = k.split('::')
-            return SVparse.package[_pkg].paramsdetail[_param] 
+            return SVparse.session.package[_pkg].paramsdetail[_param] 
         else:
             return super().get(k, d) 
 class HIERTP():
@@ -307,33 +307,34 @@ class SVhier ():
         
 class SVparse(SVutil):
     # One SVparse object one file, and it's also SVhier
-    verbose = V_(VERBOSE) 
-    parsed = False
-    package = {}
-    module = {}
-    hiers = {}
-    paths = []
-    gb_hier = SVhier('files',None, HIERTP.FILE)
-    gb_hier.types =  {'integer':None,'int':None,'logic':None}
-    _top =  GBV.TOPMODULE
-    top = _top if _top != None else ''
-    if GBV.PROJECT_PATH:
-        base_path = os.environ.get("PWD")+'/'+GBV.PROJECT_PATH
-    else:
-        match = re.search( r'/include\b|/src\b|/sim\b|', os.environ.get("PWD"))
-        if match:
-            base_path = os.environ.get("PWD")[0:match.span()[0]] + '/'
-        else:
-            base_path = os.environ.get("PWD")
-    include_path = base_path + 'include/'
-    sim_path = base_path+'sim/'
-    src_path = base_path+'src/'
-    cur_scope = '' 
-    cur_path= ''
-    flags = { 'pport': False , 'module' : False } #TODO
-    path_level = 0
+    session = None
+    session_var_lst = [
+         'verbose' 
+        ,'parsed' 
+        ,'package' 
+        ,'module' 
+        ,'hiers' 
+        ,'paths' 
+        ,'gb_hier'
+        ,'top' 
+        ,'base_path' 
+        ,'include_path' 
+        ,'sim_path' 
+        ,'src_path' 
+        ,'cur_scope'
+        ,'cur_path'
+        ,'flags' 
+        ,'path_level' 
+    ]
+    @classmethod
+    def __cls_getattr__(cls, n ):
+        if n in cls.session_var_lst: 
+            return getattr(cls.session, n)
     def __getattr__(self , n ):
-        return hiers[n]
+        if n in SVparse.session_var_lst: 
+            return getattr(SVparse.session, n)
+        else:
+            return hiers[n]
     def __init__(self,name=None,scope=None,parse=None):
         self.parse = parse
         if name:
@@ -343,7 +344,7 @@ class SVparse(SVutil):
                 self.gb_hier.child[name] = self.cur_hier
             else: 
                 SVhier(name,self.gb_hier,HIERTP.FILE) 
-            SVparse.hiers[name]= self.cur_hier
+            SVparse.session.hiers[name]= self.cur_hier
         self.cur_key = ''
         self.keyword = { 
              'logic':self.LogicParse 
@@ -403,34 +404,34 @@ class SVparse(SVutil):
         for _l in l:
             func = _l[0]
             args = _l[1:]
-            SVutil(cls.verbose).print(func, args, verbose='ARGSParse')
+            SVutil(cls.session.verbose).print(func, args, verbose='ARGSParse')
             if func == 'define':
                 m = s.define(args) 
                 for k,v in m.items():
-                    cls.gb_hier.macros[k]=v
-                    SVutil(cls.verbose).print(k,v[2](), verbose='ARGSParse')
+                    cls.session.gb_hier.macros[k]=v
+                    SVutil(cls.session.verbose).print(k,v[2](), verbose='ARGSParse')
         pass
     @classmethod
     def ParseFiles(cls , paths=[GBV.INC], inc=True, inclvl=-1 ):
         SVutil().print ('project path:', GBV.PROJECT_PATH,', include path:', GBV.INC, trace=0)
-        SVutil().print("assumed base path of the project:", cls.base_path, trace=0)
+        SVutil().print("assumed base path of the project:", cls.session.base_path, trace=0)
         cls.ARGSParse()
-        cls.paths = paths
-        SVutil().print('parsing list:',cls.paths, trace=0)
-        for  p in cls.paths:
+        cls.session.paths = paths
+        SVutil().print('parsing list:',cls.session.paths, trace=0)
+        for  p in cls.session.paths:
             n = (p.rsplit('/',maxsplit=1)[1] if '/' in p else p ).replace('.','_')
             if inc:
                 n += '_sv'
-            cls.cur_parse = SVparse( n , cls.gb_hier)
-            cls.cur_parse.inclvl = inclvl 
-            cls.cur_parse.Readfile(p if '/' in p else f'./{p}', inc=inc)
-        cls.parsed = True
+            cls.session.cur_parse = SVparse( n , cls.session.gb_hier)
+            cls.session.cur_parse.inclvl = inclvl 
+            cls.session.cur_parse.Readfile(p if '/' in p else f'./{p}', inc=inc)
+        cls.session.parsed = True
     #TODO Testbench sv file parse
     def Readfile(self , path, inc=False):
         if inc:
-            path = f'{SVparse.include_path}{path}.sv'
+            path = f'{SVparse.session.include_path}{path}.sv'
         path = os.path.normpath(path)
-        self.print(f'{"":>{SVparse.path_level*4}}{path}', trace=2, level=True, verbose=2)
+        self.print(f'{"":>{SVparse.session.path_level*4}}{path}', trace=2, level=True, verbose=2)
         self.f = open(path , 'r')
         self.cur_path = path
         self.lines = iter(self.f.readlines())
@@ -449,16 +450,16 @@ class SVparse(SVutil):
             _catch = None
             if _w in self.parselist:
                 self.cur_key = _w
-                if SVparse.path_level == self.inclvl and self.cur_key == '`include':
+                if SVparse.session.path_level == self.inclvl and self.cur_key == '`include':
                     continue
                 if self.flag_parse or _w in self.alwaysparselist:
                     _catch = self.keyword[_w](self.cur_s,self.lines) 
     def IncludeRead( self, s , lines):
-        SVparse.path_level += 1
+        SVparse.session.path_level += 1
         parent_path = self.cur_path
         _s = s.s.replace('"','')
         p = [ self.include_path+_s , self.src_path+_s , self.sim_path+_s ]
-        last_parse = SVparse.cur_parse
+        last_parse = SVparse.session.cur_parse
         visited = None
         for pp in p:
             if ( os.path.isfile(pp) ):
@@ -470,11 +471,11 @@ class SVparse(SVutil):
                 #path = self.cur_path.rsplit('/',maxsplit=1)[0] + '/' + _s
                 path = pp
                 n = path.rsplit('/',maxsplit=1)[1].replace('.','_')
-                SVparse.cur_parse = SVparse( n , self.cur_hier )
-                SVparse.cur_parse.inclvl = last_parse.inclvl
-                SVparse.cur_parse.Readfile(path)
-        SVparse.path_level -= 1
-        SVparse.cur_parse = last_parse
+                SVparse.session.cur_parse = SVparse( n , self.cur_hier )
+                SVparse.session.cur_parse.inclvl = last_parse.inclvl
+                SVparse.session.cur_parse.Readfile(path)
+        SVparse.session.path_level -= 1
+        SVparse.session.cur_parse = last_parse
         return
     def LogicParse(self, s ,lines):
         '''
@@ -644,40 +645,40 @@ class SVparse(SVutil):
             else:
                 self.cur_hier.imported[_pkg] = [_param]
 
-            if _pkg not in SVparse.package:
+            if _pkg not in SVparse.session.package:
                 self.print(f'Package {_pkg} not yet parsed', verbose=2)
                 return
 
             if _param == '*':
-                for k,v in SVparse.package[_pkg].params.items():
+                for k,v in SVparse.session.package[_pkg].params.items():
                     self.cur_hier.params[k] = v
-                for k,v in SVparse.package[_pkg].paramsdetail.items():
+                for k,v in SVparse.session.package[_pkg].paramsdetail.items():
                     self.cur_hier.paramsdetail[k]=v
-                for k,v in SVparse.package[_pkg].types.items():
+                for k,v in SVparse.session.package[_pkg].types.items():
                     self.cur_hier.types[k] = v
-                for k,v in SVparse.package[_pkg].enums.items():
+                for k,v in SVparse.session.package[_pkg].enums.items():
                     self.cur_hier.enums[k] = v
             else:
-                if _param in SVparse.package[_pkg].params:
-                    self.cur_hier.params[_param] = SVparse.package[_pkg].params[_param]  
-                if _param in SVparse.package[_pkg].paramsdetail:
-                    self.cur_hier.paramsdetail[_param] = SVparse.package[_pkg].paramsdetail[_param]  
-                if _param in SVparse.package[_pkg].types:
-                    tp = SVparse.package[_pkg].types[_param] 
+                if _param in SVparse.session.package[_pkg].params:
+                    self.cur_hier.params[_param] = SVparse.session.package[_pkg].params[_param]  
+                if _param in SVparse.session.package[_pkg].paramsdetail:
+                    self.cur_hier.paramsdetail[_param] = SVparse.session.package[_pkg].paramsdetail[_param]  
+                if _param in SVparse.session.package[_pkg].types:
+                    tp = SVparse.session.package[_pkg].types[_param] 
                     f = SVhier.typefield
                     if len(tp)==1:
-                        _tp = SVparse.package[_pkg].types.get(tp[0][f.tp])
+                        _tp = SVparse.session.package[_pkg].types.get(tp[0][f.tp])
                         if _tp:
                             self.cur_hier.types[tp[0][f.tp]] = _tp 
                     else:
                         for t in tp:
-                            _tp = SVparse.package[_pkg].types.get(t[f.tp])
+                            _tp = SVparse.session.package[_pkg].types.get(t[f.tp])
                             if _tp:
                                 self.print(t[f.tp],verbose='ImportParse')
                                 self.cur_hier.types[t[f.tp]] = _tp 
                     self.cur_hier.types[_param] = tp 
-                if _param in SVparse.package[_pkg].enums:
-                    self.cur_hier.enums[_param] = SVparse.package[_pkg].enums[_param]
+                if _param in SVparse.session.package[_pkg].enums:
+                    self.cur_hier.enums[_param] = SVparse.session.package[_pkg].enums[_param]
     def StructParse(self ,s ,lines ):
         _step = 0      
         rule = [ '{' , '}' ]
@@ -707,8 +708,8 @@ class SVparse(SVutil):
             if not tp == '':
                 if '::' in tp:
                     _pkg , _param = tp.split('::')
-                    self.cur_hier.types[tp] = SVparse.package[_pkg].types[_param]
-                    bw = np.sum([x[1] for x in SVparse.package[_pkg].types[_param] ] )
+                    self.cur_hier.types[tp] = SVparse.session.package[_pkg].types[_param]
+                    bw = np.sum([x[1] for x in SVparse.session.package[_pkg].types[_param] ] )
                 else:
                     bw = np.sum([x[1] for x in self.cur_hier.AllType[tp] ]) 
                 n, d = _s.IDDIMarrParse()
@@ -724,7 +725,7 @@ class SVparse(SVutil):
         if not tp == '':
             try:
                 _pkg , _param = tp.split('::')
-                self.cur_hier.types[tp] = SVparse.package[_pkg].types[_param]
+                self.cur_hier.types[tp] = SVparse.session.package[_pkg].types[_param]
             except:
                 pass
         _m = self.keyword.get(_w)
@@ -770,13 +771,13 @@ class SVparse(SVutil):
         self.PortFlag(self.cur_key, self.cur_s.s)
         name = self.cur_s.IDParse()
         new_hier = SVhier(name, self.cur_hier)
-        SVparse.hiers[name] = new_hier        
+        SVparse.session.hiers[name] = new_hier        
         if self.cur_key == 'module':
-            SVparse.module[name] = new_hier
+            SVparse.session.module[name] = new_hier
             self.cur_hier.scope.identifiers[name] = new_hier
             new_hier.hiertype = HIERTP.MODULE
         if self.cur_key == 'package':
-            SVparse.package[name] = new_hier
+            SVparse.session.package[name] = new_hier
             new_hier.hiertype = HIERTP.PACKAGE
         self.cur_hier = new_hier
         _end = {'package':'endpackage' , 'module':'endmodule'}[self.cur_key]
@@ -944,7 +945,7 @@ class SVparse(SVutil):
             bw = _s.BracketParse()
             bw = SVstr(bw[0]).Slice2TwoNum(self.cur_hier) \
                 if bw else SVstr('').Slice2TwoNum(self.cur_hier)
-            _num = _s.NumParse(self.cur_hier, SVparse.package) 
+            _num = _s.NumParse(self.cur_hier, SVparse.session.package) 
             if type(bw)==tuple:
                 bw = (0,bw[1]-1) if bw[0]=='' else bw
                 for i in range (bw[1]-bw[0]+1):
@@ -971,9 +972,12 @@ class SVparse(SVutil):
                     ofs = _num + '+1'
             self.cur_hier.params[name[-1]] = num[-1]
         return name, num, cmts, idx, size, name_base, groups
-hiers = EAdict(SVparse.hiers)
 class SVparseSession(SVutil):
     def __init__(self,name=None,scope=None, verbose=None):
+        ''' 
+            this part must be synced with SVparse class initialization.
+            Might as well do an overhaul of refactor.
+        '''
         self.verbose = V_(VERBOSE) 
         self.parsed = False
         self.package = {}
@@ -998,22 +1002,9 @@ class SVparseSession(SVutil):
         self.cur_scope = '' 
         self.cur_path= ''
         self.flags = { 'pport': False , 'module' : False } #TODO
+        self.path_level = 0
     def SwapTo (self):
-        SVparse.verbose =self.verbose
-        SVparse.parsed =self.parsed
-        SVparse.package =self.package
-        SVparse.module =self.module
-        SVparse.hiers =self.hiers
-        SVparse.paths =self.paths
-        SVparse.gb_hier =self.gb_hier
-        SVparse.top =self.top
-        SVparse.base_path =self.base_path
-        SVparse.include_path =self.include_path
-        SVparse.sim_path =self.sim_path
-        SVparse.src_path =self.src_path
-        SVparse.cur_scope =self.cur_scope
-        SVparse.cur_path =self.cur_path
-        SVparse.flags =self.flags
+        SVparse.session = self
     def HiersUpdate(self):
         global hiers
         hiers = EAdict(self.hiers) #TODO
@@ -1045,7 +1036,7 @@ class SVparseSession(SVutil):
         if not paths:
             paths = [(GBV.INC)]
         self.SwapTo()
-        if SVparse.parsed == True:
+        if self.parsed == True:
             self.print('Incremental parse') 
         paths = [paths] if type(paths) == tuple else paths
         SVparse.ParseFiles(paths, inc=inc, inclvl=inclvl)
@@ -1085,16 +1076,16 @@ if __name__ == '__main__':
     #print(sv.Slice2num(' 13:0 '))
     #print(sv.StructParse(iter([' {logic a [2];','parameter sex =5;',' logic b [3];', '} mytype;',' logic x;'])))
     #import sys
-    #SVparse.ParseFiles(sys.argv[1])
+    #SVparse.session.ParseFiles(sys.argv[1])
     #
     #print('typedef \'Conf\' under PECfg:')
-    #    #SVparse.IncludeFileParse('PE_compile.sv')
-    #for i in SVparse.gb_hier.child['DatapathControl.sv'].Types:
+    #    #SVparse.session.IncludeFileParse('PE_compile.sv')
+    #for i in SVparse.session.gb_hier.child['DatapathControl.sv'].Types:
     #    print(i)
-    #for i in SVparse.hiers.keys():
+    #for i in SVparse.session.hiers.keys():
     #    print (i)
-    #print(SVparse.hiers['PECtlCfg'])
+    #print(SVparse.session.hiers['PECtlCfg'])
     SVstr.verbose = VERBOSE 
-    SVparse.verbose = VERBOSE 
+    SVparse.session.verbose = VERBOSE 
     S = SVparseSession()
     S.ParseFirstArgument()
