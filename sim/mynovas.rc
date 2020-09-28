@@ -168,10 +168,11 @@ nWaveRestoreRCDirHistory = "\"/home/enhoshen/research/lpAccel/sim/Address.rc\"" 
 /sim/Peripheral/RTC/apbsyncrtc.rc\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CSlave/PG.rc\"" "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/ahbmastif.rc\""
 nWaveOpenFsdbDirHistory = "\"/home/enhoshen/research/lpAccel/sim/loop.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072205_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_ug_072205\
 _syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest_5ns.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072206_syn_PEt\
-est.fsdb\"" "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/Gze200MemorySystem_tb_BS.fsdb\""
+est.fsdb\"" "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/Gze200MemorySystem_tb_BS.fsdb\"" "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/Gze200MemorySystem_tb_AHBOFS.fsdb\"" "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200M\
+emorySystem/Gze200MemorySystem_tb_P2P.fsdb\"" "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/Gze200MemorySystem_tb_AHBDC.fsdb\"" "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/Gze200MemorySystem_tb_AHBRWH.fsdb\""
 [Form]
 version = Verdi_Q-2020.03-SP1
-wave/unknownSave.fm = 100,100,520,275
+wave/unknownSave.fm = 100,100,575,275
 [General]
 autoSaveSession = FALSE
 TclAutoSource = 
@@ -270,14 +271,14 @@ QwShortcutDialog = 1731,1217,800,600
 gridOptionsDialog = 1829,1477,421,269
 QwInfoMsgDlg = 1667,1236,750,250
 QwQuestionMsgDlg = 444,366,324,110
-CreateBusDialog = 1645,1260,788,709
 saveSigDlg = 1763,1422,551,386
-ActiveFileDialog = 1765,1475,556,272
 restoreSigDlg = 1763,1396,551,438
-openFileDlg = 1353,1369,1374,484
-QwUserAskDlg = 1322,1345,324,114
 QwWarnMsgDlg = 385,1011,600,250
-qWaveSignalDialog = 1521,1295,1404,860
+QwUserAskDlg = 1322,1345,324,134
+CreateBusDialog = 1646,1257,788,709
+ActiveFileDialog = 1693,1475,693,272
+openFileDlg = 1610,1431,1374,484
+qWaveSignalDialog = 1345,1208,1404,860
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile1]
 shortcut = 
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile3]
@@ -489,8 +490,8 @@ PointStyle = FALSE
 SetDefaultRadix = TRUE
 FilterTextField = FALSE
 anaAuto100VertFit = FALSE
-getSignalForm = 1521 1295 1404 860 593 762 761 373
-viewPort = 1080 1103 1920 1017 490 158
+getSignalForm = 1345 1208 1404 860 442 762 912 311
+viewPort = 1080 1103 1920 1017 275 65
 signalSpacing = 5
 digitalSignalHeight = 15
 analogSignalHeight = 98
@@ -763,11 +764,11 @@ curveWindow_Drag&Drop_Mode = TRUE
 hspiceIncOpenMode = TRUE
 pcSelectMode = FALSE
 hierarchyDelimiter = /
-RecentFile1 = "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/Gze200MemorySystem_tb_BS.fsdb\""
-RecentFile2 = "\"/home/enho.shen/GZE200/sim/Top/SimBvh/fsdb/Gze200Chip_bsim.flash_rw.fsdb\""
-RecentFile3 = "\"/home/enho.shen/GZE200/sim/Peripheral/I2CSlave/PG.rc\""
-RecentFile4 = "\"/home/enho.shen/GZE200/sim/Peripheral/I2CSlave/I2cSlave_tb_PG.fsdb\""
-RecentFile5 = "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/I2cTwoPhaseMaster_tb_NACK.fsdb\""
+RecentFile1 = "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/Gze200MemorySystem_tb_P2P.fsdb\""
+RecentFile2 = "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/Gze200MemorySystem_tb_AHBOFS.fsdb\""
+RecentFile3 = "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/Gze200MemorySystem_tb_AHBRWH.fsdb\""
+RecentFile4 = "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/Gze200MemorySystem_tb_AHBDC.fsdb\""
+RecentFile5 = "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/Gze200MemorySystem_tb_BS.fsdb\""
 open_file_time_range = FALSE
 value_window_aligment = Right
 signal_window_alignment = Left

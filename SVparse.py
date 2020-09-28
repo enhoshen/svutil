@@ -307,7 +307,7 @@ class SVhier ():
         
 class SVparse(SVutil):
     # One SVparse object one file, and it's also SVhier
-    session = None
+    session = None 
     session_var_lst = [
          'verbose' 
         ,'parsed' 
