@@ -15,7 +15,9 @@ class MemmapGen(XLGen):
             ,'fieldfmt'
             ,'regdespfmt'
             ]
-        self.userfunclst += []
+        self.userfunclst += [
+             'AllRegbk'
+            ]
         self.filepath = './memmap.xlsx'
         self.CreateWorkbook(self.filepath)
         self.cols = [

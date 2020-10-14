@@ -41,7 +41,7 @@ class ConnectGen(SrcGen):
                 cur_group = p.group
             _c = '' if short is None and cur_group_name == 'short' else cur_group_name
             connect = self.ConnectName(_c, short, p)
-            if p.tp == 'logic' or p.tp == 'signed logic':
+            if p.tp == 'logic' or p.tp == 'logic signed':
                 s += f'{ind.b}{p.tp+" "+p.bwstr:<{w}} {connect}'
             else:
                 s += f'{ind.b}{p.tp:<{w}} {connect}'

@@ -488,9 +488,13 @@ class SVparse(SVutil):
         s.lstrip()
         sign = s.SignParse() 
         bw = s.BracketParse()
+        packed_dim = [tuple()]
+        if len(bw) > 1:
+            packed_dim = [ tuple(i) for i in bw[1:] ]
         bw = SVstr(''if bw == () else bw[0])
         n, d = s.IDDIMarrParse()
-        tp = ('signed ' if sign==True else '') + 'logic'
+        d = packed_dim + d
+        tp = 'logic' + ('signed ' if sign==True else '')
         cmts = [''] if not self.cur_cmt else self.cur_cmt
         lst = [(_n,bw.Slice2num(self.cur_hier)
             ,self.Tuple2num(_d)
