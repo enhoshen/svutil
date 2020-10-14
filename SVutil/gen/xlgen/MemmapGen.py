@@ -1,8 +1,7 @@
 
 import os
 import sys
-sys.path.append(os.environ.get('SVutil'))
-from gen.XLGen import *
+from SVutil.gen.XLGen import *
 import xlsxwriter as xl
 
 class MemmapGen(XLGen):

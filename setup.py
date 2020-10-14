@@ -18,7 +18,9 @@ setup(
     ,packages=[
          'SVutil'
          ,'SVutil.gen'
-         ,'SVutil.gen.srcgen'
+             ,'SVutil.gen.srcgen'
+             ,'SVutil.gen.drawiogen'
+             ,'SVutil.gen.xlgen'
          ,'SVutil.sim']
     ,package_dir={
          'SVutil': 'SVutil'

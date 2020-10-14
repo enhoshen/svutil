@@ -1,9 +1,8 @@
 import os
 import sys
-sys.path.append(os.environ.get('SVutil'))
-from SVparse import *
-from gen.SrcGen import * 
-from SVclass import *
+from SVutil.SVparse import *
+from SVutil.gen.SrcGen import * 
+from SVutil.SVclass import *
 import itertools
 import numpy as np
 class RegbkGen(SrcGen):
