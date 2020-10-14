@@ -1,9 +1,8 @@
 
 import os
 import sys
-sys.path.append(os.environ.get('SVutil'))
 import xlsxwriter as xl
-from SVgen import * 
+from SVutil.SVgen import * 
 
 class XLGen(SVgen):
     def __init__(self, session=None):

@@ -1,4 +1,4 @@
-from SVparse import * 
+from SVutil.SVparse import * 
 import os
 from functools import wraps
 class Ind():
@@ -187,7 +187,7 @@ class SVgen(SVutil):
             x = orig(*arg, **kwargs) 
             yield from x
         return new_func
-if __name__ == "__main__":
+def GenSession():
     pass
     #dut = hiers.Ahb2ToReqAckWrap
     #ins = g.InsGen(dut, 'u1' )  
@@ -196,19 +196,20 @@ if __name__ == "__main__":
     #ind = g.IndBlk()                                     
     #g.Genlist( [ (tb,), tb , (lg,) , [ins] , tb , tb])
     #print(o)
-    from SVparse import *
+if __name__ == "__main__":
+    from SVutil.SVparse import *
     import sys
     sys.path.append('./gen')
-    import SVutilCompleter
-    from gen.SrcGen import *
-    from gen.TestGen import TestGen
-    from gen.srcgen.RegbkGen import RegbkGen 
-    from gen.srcgen.ConnectGen import ConnectGen
-    from gen.drawiogen.InterfaceDiagramGen import InterfaceDiagramGen 
-    from gen.drawiogen.BlockDiagramGen import BlockDiagramGen 
-    from gen.LatexGen import LatexGen
-    from gen.BannerGen import GanzinBanner
-    from gen.xlgen.MemmapGen import MemmapGen
+    import SVutil.SVutilCompleter
+    from SVutil.gen.SrcGen import *
+    from SVutil.gen.TestGen import TestGen
+    from SVutil.gen.srcgen.RegbkGen import RegbkGen 
+    from SVutil.gen.srcgen.ConnectGen import ConnectGen
+    from SVutil.gen.drawiogen.InterfaceDiagramGen import InterfaceDiagramGen 
+    from SVutil.gen.drawiogen.BlockDiagramGen import BlockDiagramGen 
+    from SVutil.gen.LatexGen import LatexGen
+    from SVutil.gen.BannerGen import GanzinBanner
+    from SVutil.gen.xlgen.MemmapGen import MemmapGen
     session = SVparseSession(V_(VERBOSE))
     session.FileParse(paths=None)
     hiers = EAdict(session.hiers)
@@ -241,4 +242,3 @@ if __name__ == "__main__":
         gmemmapxl = MemmapGen(session=session)
     except:
         SVutil().print('MemmapGen initialization failed') 
-    gmemmapxl = MemmapGen(session=session)

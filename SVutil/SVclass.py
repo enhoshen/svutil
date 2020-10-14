@@ -1,4 +1,4 @@
-from SVutil import *
+from SVutil.SVutil import *
 import re
 
 VERBOSE = os.environ.get('VERBOSE',0)

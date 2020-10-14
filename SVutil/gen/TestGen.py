@@ -1,9 +1,8 @@
 import os
 import sys
-sys.path.append(os.environ.get('SVutil'))
-from SVparse import *
-from SVgen import * 
-from SVclass import *
+from SVutil.SVparse import *
+from SVutil.SVgen import * 
+from SVutil.SVclass import *
 import itertools
 import numpy as np
 from functools import reduce

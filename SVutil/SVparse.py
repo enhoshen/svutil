@@ -6,9 +6,9 @@ from collections import namedtuple
 from collections import deque
 from subprocess import Popen, PIPE
 from functools import reduce
-from SVutil import SVutil, V_
-from SVclass import *
-from SVstr import *
+from SVutil.SVutil import SVutil, V_
+from SVutil.SVclass import *
+from SVutil.SVstr import *
 class GBV(SVutil):
     #Nico makefile specified
     ARGS = os.environ.get('ARGS','')

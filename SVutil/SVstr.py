@@ -3,8 +3,8 @@ import parser as ps
 import re
 import os
 from subprocess import Popen, PIPE
-from SVutil import SVutil, V_
-from SVclass import *
+from SVutil.SVutil import SVutil, V_
+from SVutil.SVclass import *
 
 VERBOSE = os.environ.get('VERBOSE',0)
 # verilog system function implementation

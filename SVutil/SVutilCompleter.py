@@ -3,8 +3,8 @@ import builtins
 import __main__
 import rlcompleter
 
-import SVutil
-from SVparse import EAdict, SVhier
+from SVutil.SVutil import SVutil, colorama
+from SVutil.SVparse import EAdict, SVhier
 import subprocess 
 import sys
 import shutil
@@ -12,8 +12,8 @@ import inspect
 
 __all__ = ["SVutilCompleter"]
 
-CYAN = SVutil.colorama.Fore.CYAN
-CRESET = SVutil.colorama.Style.RESET_ALL
+CYAN = colorama.Fore.CYAN
+CRESET = colorama.Style.RESET_ALL
 class SVutilCompleter(rlcompleter.Completer):
     def __init__(self):
         super().__init__()
