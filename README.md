@@ -16,4 +16,5 @@
   # under SVutil repo folder
   git pull
   python -m pip install . --upgrade --user
+  ```
 
