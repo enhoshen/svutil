@@ -1,8 +1,8 @@
 from nicotb import *
-from SVparse import *
-from SVclass import *
-from SVsim   import *
-import colorama
+from SVutil.SVparse import *
+from SVutil.SVclass import *
+from SVutil.SVsim   import *
+from SVutil.SVutil import colorama
 import os
 import itertools
 import numpy as np

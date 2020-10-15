@@ -225,7 +225,6 @@ class TestGen(SVgen):
         s = '\n'
         s +='import sys\n'
         s +='import os\n'
-        #s +='sys.path.append(os.environ.get(\'SVutil\'))\n'
         s +='sys.path.append(os.environ.get(\'PROJECT_PATH\')+\'/sim\')\n'
         s +='from itertools import repeat\n'
         s +='from nicotb.primitives import JoinableFork\n'
@@ -235,6 +234,24 @@ class TestGen(SVgen):
         s +='Nico = NicoUtil() \n'
         s = s.replace('\n',f'\n{ind.b}') 
         yield s
+    def NicoutilImportBlkNonPackage(self):
+        ''' deprecated '''
+        ind = self.cur_ind.Copy()
+        yield ''
+        s = '\n'
+        s +='import sys\n'
+        s +='import os\n'
+        s +='sys.path.append(os.environ.get(\'SVutil\'))\n'
+        s +='sys.path.append(os.environ.get(\'PROJECT_PATH\')+\'/sim\')\n'
+        s +='from itertools import repeat\n'
+        s +='from nicotb.primitives import JoinableFork\n'
+        s +='from SVparse import SVparse,EAdict\n'
+        s +='from sim.NicoUtil import *\n\n'
+        s +='TEST_CFG= os.environ.get(\'TEST_CFG\',None)\n'
+        s +='Nico = NicoUtil() \n'
+        s = s.replace('\n',f'\n{ind.b}') 
+        yield s
+
     def PYbusinitBlk(self,module):
         ind = self.cur_ind.Copy()
         yield ''

@@ -31,5 +31,8 @@ setup(
          'SVutil.gen': ['drawio_block_ex.txt, *.md']
         ,'Svutil.sim': ['*.md', 'mynWave.conf', 'mynovas.rc']
         }
+    ,scripts = [
+         'script/Gen.py'
+        ]
     ,
 )
