@@ -1,6 +1,6 @@
 # SVutil
  
-  SVutil is a python library that comes with a simple parser that parse some useful information from your systemverilog code, a collection of code, datasheet, figure, xlsx or systemverilog code generation modu    les, and some simulation utility module meant to be used in conjunction with [nicotb](https://github.com/johnjohnlin/nicotb) 
+  SVutil is a python library that comes with a simple parser that parse some useful information from your systemverilog code, a collection of code, datasheet, figure, xlsx or systemverilog code generation modules, and some simulation utility module meant to be used in conjunction with [nicotb](https://github.com/johnjohnlin/nicotb) 
  
   ## Setup
  
