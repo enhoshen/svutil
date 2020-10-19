@@ -993,7 +993,7 @@ class SVparseSession(SVutil):
         else:
             match = re.search( r'/sim\b|/include\b|/src\b', os.environ.get("PWD"))
             if match:
-                self.base_path = os.environ.get("PWD")[0:match.span()[0]] + '/'
+                self.base_path = os.path.join(os.environ.get("PWD")[0:match.span()[0]], '')
             else:
                 self.base_path = os.environ.get("PWD")
         self.include_path = self.base_path + 'include/'

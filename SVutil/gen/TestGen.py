@@ -212,9 +212,11 @@ class TestGen(SVgen):
         self.print(self.eventlst, verbose=3)
         ev_lst = reduce( lambda x,y: x+', '+y[0], self.eventlst + [("","")], '')[2:-2]
         self.print(ev_lst, verbose=3)
-        ev_lst_str = reduce( (lambda x,y: x+ ', '+f'"{str(y[0])}"'), self.eventlst +[("","")], '')[2:-4]
+        ev_lst_str = reduce( (lambda x,y: x + f'{ind[1]},"{str(y[0])}"\n')
+            ,self.eventlst
+            ,'')[:-1]
         self.print(ev_lst_str, verbose=3)
-        s += f'{ind.b}{ev_lst} = CreateEvents([{ev_lst_str}])\n\n'
+        s += f'{ind.b}{ev_lst} = CreateEvents([\n{ev_lst_str}])\n\n'
         s += f'{ind.b}RegisterCoroutines([\n'
         s += f'{ind[1]}main()\n'
         s += f'{ind.b}])'
