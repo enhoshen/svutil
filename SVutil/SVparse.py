@@ -989,7 +989,7 @@ class SVparseSession(SVutil):
         _top =  GBV.TOPMODULE
         self.top = _top if _top != None else ''
         if GBV.PROJECT_PATH:
-            self.base_path = os.environ.get("PWD")+'/'+GBV.PROJECT_PATH
+            self.base_path = os.path.join(os.environ.get("PWD"), GBV.PROJECT_PATH, '')
         else:
             match = re.search( r'/sim\b|/include\b|/src\b', os.environ.get("PWD"))
             if match:

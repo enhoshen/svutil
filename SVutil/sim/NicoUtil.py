@@ -263,6 +263,9 @@ class RegbkMaster(SVutil):
         '''
         w = 15 
         orig_cb = self.master.callbacks
+        leng = list(map(len,  [regseq, rwseq, dataseq]))
+        if len([ len(i) for i in [regseq, rwseq, dataseq] if len(i) != len(regseq)]) != 0:
+            self.print(f'[Warning] {leng} register sequence length mismatch', trace=0)
         for reg, rw, data in itertools.zip_longest (regseq, rwseq, dataseq, fillvalue=0):
             offset = ''
             if type(reg) == int:
