@@ -84,6 +84,10 @@ class StructBus():
         return s 
 class StructBusCreator():
     structlist = {}
+    basic_sv_type = [
+         'logic'
+        ,'signed logic'
+        ,'bit' ]
     def __init__ ( self, structName , attrs):
         if attrs:
             for memb in attrs:
@@ -102,6 +106,7 @@ class StructBusCreator():
     @classmethod
     def BasicTypes(cls):
         StructBusCreator('logic',None)
+        StructBusCreator('signed logic',None)
         StructBusCreator('enum',None)
     @classmethod
     def AllTypes(cls):
@@ -142,7 +147,7 @@ class StructBusCreator():
             return  CreateBus( ((hier, signalName, DIM, dtype),) ) 
         else:
             for  n , bw, dim ,t ,*_ in attrs :
-                if t=='logic':
+                if t in self.basic_sv_type:
                     buses.append ( CreateBus( ((hier, signalName+'.'+n ,DIM+dim, dtype),) ) )
                 elif t == 'enum':
                     buses.append ( CreateBus( ((hier, signalName , DIM+dim, dtype),) ) )
@@ -155,6 +160,7 @@ class StructBusCreator():
             return self.CreateStructBus(signalName,hier,DIM, dtype=dtype)
         else:
             for d in range(DIM[0]):
+                print(d)
                 buses.append( self.MDACreateStructBus(signalName+f'[{d}]', hier, DIM[1:], dtype=dtype)  )
             return buses
 class Busdict (EAdict):

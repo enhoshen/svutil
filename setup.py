@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from distutils.core import setup, Extension
+from setuptools import setup
 from glob import glob
 from sysconfig import get_config_var
 
@@ -22,6 +22,10 @@ setup(
              ,'SVutil.gen.drawiogen'
              ,'SVutil.gen.xlgen'
          ,'SVutil.sim']
+    ,install_requires=[
+         'colorama'
+        ,'xlsxwriter'
+        ]
     ,package_dir={
          'SVutil': 'SVutil'
         }

@@ -418,7 +418,7 @@ class SVparse(SVutil):
         cls.ARGSParse()
         cls.session.paths = paths
         SVutil().print('parsing list:',cls.session.paths, trace=0)
-        for  p in cls.session.paths:
+        for p in cls.session.paths:
             n = (p.rsplit('/',maxsplit=1)[1] if '/' in p else p ).replace('.','_')
             if inc:
                 n += '_sv'
@@ -458,7 +458,7 @@ class SVparse(SVutil):
         SVparse.session.path_level += 1
         parent_path = self.cur_path
         _s = s.s.replace('"','')
-        p = [ self.include_path+_s , self.src_path+_s , self.sim_path+_s ]
+        p = [ _s, self.include_path+_s , self.src_path+_s , self.sim_path+_s ]
         last_parse = SVparse.session.cur_parse
         visited = None
         for pp in p:
@@ -470,7 +470,8 @@ class SVparse(SVutil):
                 visited = pp 
                 #path = self.cur_path.rsplit('/',maxsplit=1)[0] + '/' + _s
                 path = pp
-                n = path.rsplit('/',maxsplit=1)[1].replace('.','_')
+                n = path.rsplit('/',maxsplit=1)[1] if '/' in path else path
+                n = n.replace('.', '_')
                 SVparse.session.cur_parse = SVparse( n , self.cur_hier )
                 SVparse.session.cur_parse.inclvl = last_parse.inclvl
                 SVparse.session.cur_parse.Readfile(path)
