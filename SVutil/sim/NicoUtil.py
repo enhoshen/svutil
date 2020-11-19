@@ -84,10 +84,10 @@ class StructBus():
         return s 
 class StructBusCreator():
     structlist = {}
-    basic_sv_type = [
-         'logic'
-        ,'signed logic'
-        ,'bit' ]
+    basic_sv_type = {
+         'logic': np.uint32
+        ,'signed logic': np.int32
+        ,'bit': np.bool}
     def __init__ ( self, structName , attrs):
         if attrs:
             for memb in attrs:
@@ -148,7 +148,11 @@ class StructBusCreator():
         else:
             for  n , bw, dim ,t ,*_ in attrs :
                 if t in self.basic_sv_type:
-                    buses.append ( CreateBus( ((hier, signalName+'.'+n ,DIM+dim, dtype),) ) )
+                    if dtype is None:
+                        _dtype = self.basic_sv_type[t]
+                    else:
+                        _dtype = dtype
+                    buses.append ( CreateBus( ((hier, signalName+'.'+n ,DIM+dim, _dtype),) ) )
                 elif t == 'enum':
                     buses.append ( CreateBus( ((hier, signalName , DIM+dim, dtype),) ) )
                 else:

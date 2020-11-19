@@ -202,11 +202,13 @@ class SVstr(SVutil):
                 if _pkg in package:
                     _s = _s.replace(_pkg+'::'+_param,str(package[_pkg].params[_param]) )
             for p in params:    
+                # substitute numbers found in cur_hier.params for identifiers in the string
                 if w in p:
                     _s = re.sub(rf'\b{w}\b', str(p[w]), _s)
                     #_s = _s.replace( w , str(p[w]) )
                     break
         _s = _s.replace("\'{", ' [ ').replace('{',' [ ').replace('}',' ] ').replace(',',' , ')
+        _s = re.sub(rf'/([^/])', rf'//\1', _s)
         slist = _s.split()
         for i,v in enumerate(slist):
             _n, _= SVstr(v).BaseConvert()

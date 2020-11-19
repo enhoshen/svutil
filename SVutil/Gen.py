@@ -1,18 +1,18 @@
-import sys
 from SVutil.SVparse import *
-#from SVutil import SVutilCompleter
-#from SVutil.gen.SrcGen import *
-#from SVutil.gen.TestGen import TestGen
-#from SVutil.gen.srcgen.RegbkGen import RegbkGen 
-#from SVutil.gen.srcgen.ConnectGen import ConnectGen
-#from SVutil.gen.drawiogen.InterfaceDiagramGen import InterfaceDiagramGen 
-#from SVutil.gen.drawiogen.BlockDiagramGen import BlockDiagramGen 
-#from SVutil.gen.LatexGen import LatexGen
-#from SVutil.gen.BannerGen import GanzinBanner
-#from SVutil.gen.xlgen.MemmapGen import MemmapGen
+import sys
+import SVutil.SVutilCompleter
+from SVutil.gen.SrcGen import *
+from SVutil.gen.TestGen import TestGen
+from SVutil.gen.srcgen.RegbkGen import RegbkGen 
+from SVutil.gen.srcgen.ConnectGen import ConnectGen
+from SVutil.gen.drawiogen.InterfaceDiagramGen import InterfaceDiagramGen 
+from SVutil.gen.drawiogen.BlockDiagramGen import BlockDiagramGen 
+from SVutil.gen.LatexGen import LatexGen
+from SVutil.gen.BannerGen import GanzinBanner
+from SVutil.gen.xlgen.MemmapGen import MemmapGen
 
 if __name__ == "__main__":
-    session = SVparse.SVparseSession(V_(VERBOSE))
+    session = SVparseSession(V_(VERBOSE))
     session.FileParse(paths=None)
     hiers = EAdict(session.hiers)
     try:

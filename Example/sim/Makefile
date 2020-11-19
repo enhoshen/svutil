@@ -25,7 +25,7 @@ all:
 gentest:
 	ARGS="+define+TEST_PAT0" \
 	INC=ValMatrix_include \
-	Gen.py
+	python -i -m SVutil.Gen
 
 valtest:
 	make ValMatrix ARGS="+define+TIMEOUTCYCLE=3000+TEST_PAT0" \

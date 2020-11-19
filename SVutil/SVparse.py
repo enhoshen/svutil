@@ -419,12 +419,17 @@ class SVparse(SVutil):
         cls.session.paths = paths
         SVutil().print('parsing list:',cls.session.paths, trace=0)
         for p in cls.session.paths:
-            n = (p.rsplit('/',maxsplit=1)[1] if '/' in p else p ).replace('.','_')
-            if inc:
-                n += '_sv'
-            cls.session.cur_parse = SVparse( n , cls.session.gb_hier)
-            cls.session.cur_parse.inclvl = inclvl 
-            cls.session.cur_parse.Readfile(p if '/' in p else f'./{p}', inc=inc)
+            if not cls.session.visited.get(os.path.normpath(p)):
+                n = (p.rsplit('/',maxsplit=1)[1] if '/' in p else p ).replace('.','_')
+                if inc:
+                    n += '_sv'
+                cls.session.cur_parse = SVparse( n , cls.session.gb_hier)
+                cls.session.cur_parse.inclvl = inclvl 
+                cls.session.cur_parse.Readfile(p if '/' in p else f'./{p}', inc=inc)
+                cls.session.visited[os.path.normpath(p)] = True
+            else:
+                self.print(f'{"":>{SVparse.session.path_level*4}}{os.path.normpath(p)} visited!'
+                    ,trace=2, level=True, color='YELLOW', verbose=2)
         cls.session.parsed = True
     #TODO Testbench sv file parse
     def Readfile(self , path, inc=False):
@@ -462,19 +467,25 @@ class SVparse(SVutil):
         last_parse = SVparse.session.cur_parse
         visited = None
         for pp in p:
+            pp = os.path.normpath(pp)
             if ( os.path.isfile(pp) ):
                 if visited:
                     self.print('Warning, duplicated file:'
                         ,os.path.normpath(visited)
                         ,os.path.normpath(pp))
                 visited = pp 
-                #path = self.cur_path.rsplit('/',maxsplit=1)[0] + '/' + _s
-                path = pp
-                n = path.rsplit('/',maxsplit=1)[1] if '/' in path else path
-                n = n.replace('.', '_')
-                SVparse.session.cur_parse = SVparse( n , self.cur_hier )
-                SVparse.session.cur_parse.inclvl = last_parse.inclvl
-                SVparse.session.cur_parse.Readfile(path)
+                if not SVparse.session.visited.get(pp):
+                    #path = self.cur_path.rsplit('/',maxsplit=1)[0] + '/' + _s
+                    path = pp
+                    n = path.rsplit('/',maxsplit=1)[1] if '/' in path else path
+                    n = n.replace('.', '_')
+                    SVparse.session.cur_parse = SVparse( n , self.cur_hier )
+                    SVparse.session.cur_parse.inclvl = last_parse.inclvl
+                    SVparse.session.cur_parse.Readfile(path)
+                    SVparse.session.visited[pp] = True
+                else:
+                    self.print(f'{"":>{SVparse.session.path_level*4}}{os.path.normpath(pp)} visited!'
+                        ,trace=2, level=True, color='YELLOW',verbose=2)
         SVparse.session.path_level -= 1
         SVparse.session.cur_parse = last_parse
         return
@@ -985,6 +996,7 @@ class SVparseSession(SVutil):
         self.module= {}
         self.hiers = {}
         self.paths = []
+        self.visited = {}
         self.gb_hier = SVhier('files',None)
         self.gb_hier.types =  {'integer':None,'int':None,'logic':None}
         _top =  GBV.TOPMODULE
@@ -1017,6 +1029,7 @@ class SVparseSession(SVutil):
         self.package = {}
         self.hiers = {}
         self.paths = []
+        self.visited = {}
         self.gb_hier = SVhier('files',None, HIERTP.FILE)
         self.gb_hier.types =  {'integer':None,'int':None,'logic':None}
     def ShowFile(n,start=0,end=None):

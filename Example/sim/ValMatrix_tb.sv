@@ -32,9 +32,11 @@ module ValMatrix_tb;
     string ansi_yellow = "\033[33m";
     string ansi_red    = "\033[31m";
     string ansi_reset  = "\033[0m";
+    localparam DIV_TEST = (10<<15)/190;
     initial begin
         $fsdbDumpfile({"ValMatrix_tb_", getenv("TEST_CFG"), ".fsdb"});
         $fsdbDumpvars(0,ValMatrix_tb,"+all");
+        $display({"[Info] Division test: %d"}, DIV_TEST);
         sim_pass = 0;
         sim_stop = 0;
         time_out = 0;
