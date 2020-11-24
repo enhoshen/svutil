@@ -178,14 +178,10 @@ class SVgen(SVutil):
             return x
         return new_func
     def Blk(orig):
+
         @wraps(orig)
         def new_func(*arg, **kwargs):
-            ind = kwargs.get('ind')
-            ind = arg[0].cur_ind.Copy() if ind is None else ind # orig must be a member function
-            kwargs['ind'] = ind
-            yield ''
-            x = orig(*arg, **kwargs) 
-            yield from x
+            return orig(*arg, **kwargs)
         return new_func
 def GenSession():
     pass

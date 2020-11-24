@@ -5,6 +5,8 @@ from SVutil.gen.SrcGen import *
 from SVutil.SVclass import *
 import itertools
 import numpy as np
+
+@SVgen.UserClass
 class RegbkGen(SrcGen):
     r"""
     This class saves you effort on reptitive but non-trivial part of your source system verilog code,
@@ -49,16 +51,6 @@ class RegbkGen(SrcGen):
                             ,'ro_cg_cond'
                             ,'arr_idx_suf'
                             ,'omitlogiclst']
-        self.userfunclst += [
-            'LoadPreset',
-            'LogicToClip',
-            'RdataToClip',
-            'WdataToClip', 
-            'IntrCombToClip',
-            'CombToClip',
-            'SeqToClip',
-            'ToFile'
-        ]
         self.addr_name = 'addr'
         self.addr_port_name = f'i_{self.addr_name}'
         self.write_name = 'i_write'
@@ -82,6 +74,8 @@ class RegbkGen(SrcGen):
                                         self.ro_cg_cond,\
                                         self.wo_cg_cond ]
         self.clr_affix = 'clr_'
+
+    @SVgen.UserMethod
     def LoadPreset(self,p):
         if p == PRESET.AHB:
             self.protocol = PRCL_PRESET.AHB
@@ -355,6 +349,8 @@ class RegbkGen(SrcGen):
         if self.protocol == PRCL_PRESET.APB3:
             s +=  f'{ind.b}//TODO\n'
         return s
+
+    @SVgen.UserMethod
     @Clip
     def LogicToClip(self, pkg=None, toclip=True, ind=None):
         w = [0,0] 
@@ -431,6 +427,8 @@ class RegbkGen(SrcGen):
         
         return s
    
+
+    @SVgen.UserMethod
     @Clip
     def RdataToClip(self, pkg=None, toclip=True, ind=None):
         r"""
@@ -510,6 +508,8 @@ class RegbkGen(SrcGen):
             s2 = [f'o_{self.rdata_name} <= {self.rdata_name}_w;']
             s += self.SeqCeStr(s1, s2, ce=self.read_cond, ind=ind)
         return s
+
+    @SVgen.UserMethod
     @Clip
     def WdataToClip(self, pkg=None, toclip=True, ind=None):
         r"""
@@ -545,6 +545,8 @@ class RegbkGen(SrcGen):
                 if not comb:
                     s += self.WdataSeqStr( reg.name, _slice, rw, ind=ind) + '\n'
         return s
+
+    @SVgen.UserMethod
     @Clip
     def IntrCombToClip(self, reg, dim=None, pkg=None, toclip=True, ind=None):
         r"""
@@ -555,6 +557,8 @@ class RegbkGen(SrcGen):
         for intr, field in zip ( self.regbk.GetType(reg.lower()), self.regbk.regfields[self.regbk.regintr_name.upper()].enumls):
             s += self.IntrCombStr( intr.name, field.name, dim=dim, ind=ind) + '\n'
         return s 
+
+    @SVgen.UserMethod
     @SVgen.Clip
     def CombToClip(self, pkg=None, toclip=True, ind=None):
         ''' Build basic combinational part including flags, states ... etc.''' 
@@ -611,6 +615,8 @@ class RegbkGen(SrcGen):
         elif self.disable_style == DISABLE_PRESET.EN_WIRE:
             s += f'{ind.b}assign {self.cg_cond} = i_en;\n'
         return s
+
+    @SVgen.UserMethod
     @Clip
     def SeqToClip(self, pkg=None, toclip=True, ind=None):
         ''' 
@@ -664,6 +670,8 @@ class RegbkGen(SrcGen):
         elif self.disable_style == DISABLE_PRESET.EN_WIRE:
             pass
         return s
+
+    @SVgen.UserMethod
     def ToFile(self, pkg=None, ind=None, toclip=False, overwrite=False):
         self.Custom()
         regbktemp = self.Swap(pkg)

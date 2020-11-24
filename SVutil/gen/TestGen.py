@@ -6,11 +6,11 @@ from SVutil.SVclass import *
 import itertools
 import numpy as np
 from functools import reduce
+@SVgen.UserClass
 class TestGen(SVgen):
     def __init__(self, ind=Ind(0), session=None):
         super().__init__(session=session)
         self.customlst += ['eventlst', 'pyeventlgclst', 'clk_domain_lst']
-        self.userfunclst += ['WriteModuleTestALL', 'ShowIns', 'ShowModPortLogic']
         self.eventlst = [   ( 'intr_ev', 'intr_any'),
                             ( 'init_ev', 'init_cond'),                         
                             ( 'resp_ev', 'resp_cond'), 
@@ -29,10 +29,13 @@ class TestGen(SVgen):
         s += '`include ' + f'"{self.incfile}.sv"\n' 
         s += f'`define {self.endcyclemacro} 100\n'  
         s += f'`define {self.hclkmacro} 5\n'  
+
         s += f'`define TEST_CFG //TODO\n'
+
         s += f'`define FSDBNAME(suffix) `"{self.fsdbname}``suffix``.fsdb`"\n'
         s = s.replace('\n',f'\n{ind.b}')
         yield s
+
     def ModBlk(self):
         ind = self.cur_ind.Copy() 
         yield ''
@@ -40,6 +43,7 @@ class TestGen(SVgen):
         yield s+self.InitialStr(ind=ind+1)
         s = '\n' + ind.b +'endmodule'
         yield s
+        
     @SVgen.Str
     def InitialStr(self, ind=None):
         ck_lst   = reduce( (lambda x,y: x+', '+f'{y[0]+"_" if y[0] != "" else ""}clk'),       self.clk_domain_lst , '')[2:]
@@ -102,6 +106,7 @@ class TestGen(SVgen):
         _s += f'{ind[1]}$finish;\n'
         _s += f'{ind.b}end\n\n'
         return s+_s
+
     @SVgen.Str
     def AnsiColorVarStr(self, ind=None):
         s  = f'\n{ind.b}string ansi_blue   = "\\033[34m";\n'
@@ -111,6 +116,7 @@ class TestGen(SVgen):
         s += f'{ind.b}string ansi_red    = "\\033[31m";\n'
         s += f'{ind.b}string ansi_reset  = "\\033[0m";\n'
         return s
+
     @SVgen.Str
     def SimFinStr (self, ind=None):
         _ck = self.clk_domain_lst[0][0]
@@ -125,12 +131,15 @@ class TestGen(SVgen):
         s += f'{ind[1]}$display({{"[Error]", ansi_red, " Simulation Failed.", ansi_reset}});\n'
         s +=  f'{ind.b}$display({{ansi_blue,"{"":=<42}", ansi_reset}});\n\n'
         return s
+
     def DeclareBlkBlk(self ):
         pass
+
     def TopBlkBlk(self , tpname ):
         ind = self.cur_ind.Copy()
         yield ''
         yield 
+
     def LogicBlk(self , module , **conf):
         ind = self.cur_ind.Copy()
         yield ''
@@ -148,6 +157,7 @@ class TestGen(SVgen):
                 s += ';\n'
             
         yield s
+
     def ParamBlk(self , module , **conf):
         ind = self.cur_ind.Copy()
         yield ''
@@ -166,12 +176,15 @@ class TestGen(SVgen):
             pmtp  = detail[pmfield.paramtype]
             s += f'{ind.b}{pmtp} {tpstr}{bwstr}{param} = {detail[pmfield.numstr]};\n'
         yield s
+
     def CommentBlkBlk(self , s  ,width=35):
         ind = self.cur_ind.Copy()
         yield ''
         yield f'{ind.b}//{"":=<{width}}\n{ind.b}//{s:^{width}}\n{ind.b}//{"":=<{width}}\n'
+
     def CommentBlkStr(self, s , ind , width=35):
         return f'{ind.b}//{"":=<{width}}\n{ind.b}//{s:^{width}}\n{ind.b}//{"":=<{width}}\n'
+
     def InsBlk(self , module , name='dut' ,  **conf):
         ind = self.cur_ind.Copy() 
         yield ''
@@ -221,6 +234,7 @@ class TestGen(SVgen):
         s += f'{ind[1]}main()\n'
         s += f'{ind.b}])'
         yield s
+
     def NicoutilImportBlk(self):
         ind = self.cur_ind.Copy()
         yield ''
@@ -236,6 +250,7 @@ class TestGen(SVgen):
         s +='Nico = NicoUtil() \n'
         s = s.replace('\n',f'\n{ind.b}') 
         yield s
+
     def NicoutilImportBlkNonPackage(self):
         ''' deprecated '''
         ind = self.cur_ind.Copy()
@@ -258,6 +273,7 @@ class TestGen(SVgen):
         ind = self.cur_ind.Copy()
         yield ''
         s = '\n'
+
         s += f'{ind.b}def BusInit():\n'
         #s += f'{ind[1]}SBC = StructBusCreator\n'
         s += f'{ind[1]}#Nico.SBC.TopTypes()\n'
@@ -290,11 +306,12 @@ class TestGen(SVgen):
                 #TODO macro....
         s += f'{ind[1]}return Busdict(dic) # access by name without quotes\n'
         yield s
-            
+
     def PYmainBlk(self):
         ind = self.cur_ind.Copy()
         yield '' 
         s = '\n'
+
         s += f'{ind.b}def main():\n'
         s += f'{ind[1]}buses = BusInit()\n'
         s += f'{ind[1]}buses.SetToN()\n'
@@ -313,13 +330,15 @@ class TestGen(SVgen):
         mod = self.ModBlk()
         pm = self.ParamBlk(module)
         lg = self.LogicBlk(module)
+
         defb = self.SVDefineBlk()
         ind = self.IndBlk()
+
         s = self.Genlist( [ (defb,) , (mod,) , [ind,pm] , [ind,lg] , [ind,ins] , mod]) 
         if (conf.get('copy')==True):
             ToClip(s)
         return s
-        
+
     def ModuleTestPY(self , module=None , **conf):
         module = self.dut if not module else module
         tb = self.TbPYBlk()
@@ -330,30 +349,45 @@ class TestGen(SVgen):
         if (conf.get('copy')==True):
             ToClip(s)
         return s
+
+    @SVgen.UserMethod
+    def ShowModuleTestPY(self, module=None , copy=True, **conf):
+        module = self.dut if not module else module
+        conf['copy'] = copy
+        self.print(self.ModuleTestPY(module, **conf))
+
+    @SVgen.UserMethod
     def WriteModuleTestALL(self, module=None , **conf):
         module = self.dut if not module else module
         conf['copy']=False
         overwrite = conf.get('overwrite')
         self.SVWrite(self.ModuleTestSV(module,**conf),overwrite=overwrite)
         self.PYWrite(self.ModuleTestPY(module,**conf),overwrite=overwrite) 
+
+    @SVgen.UserMethod
     def ShowIns(self, module=None):
         module = self.dut if not module else module
         ins = self.InsBlk(module)
         s =  self.Genlist( [(ins,)]) 
         ToClip(s)
         self.print(s)
+
+    @SVgen.UserMethod
     def ShowModPortLogic(self, module=None):
         module = self.dut if not module else module
         ins = self.LogicBlk(module)
         s =  self.Genlist( [(ins,)]) 
         ToClip(s)
         self.print(s)
+
     def SVWrite(self , text, **conf ):
         p = self.TbWrite(text,'sv', **conf) 
         self.print ( "SV testbench written to " , p )
+
     def PYWrite(self , text, **conf ):
         p = self.TbWrite(text,'py', **conf)
         self.print ( "PY testbench written to " , p )
+
     def TbWrite(self , text , suf, **conf): 
         overwrite = conf.get('overwrite')
         self.print('overwriting:',overwrite)

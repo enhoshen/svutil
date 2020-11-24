@@ -6,6 +6,8 @@ from SVutil.SVclass import *
 from itertools import zip_longest
 import numpy as np
 import re
+
+@SVgen.UserClass
 class ConnectGen(SrcGen):
     r""" 
     This class saves you effor writing a top module connecting numbers of 
@@ -16,7 +18,6 @@ class ConnectGen(SrcGen):
         super().__init__(session=session)
         self.customlst += [  'group_dft'
                             ,'logic_group_dft']
-        self.userfunclst += ['ShowIns']
         self.group_dft = 'short'
         self.logic_group_dft = 'short'
     # TODO
@@ -106,6 +107,9 @@ class ConnectGen(SrcGen):
     def InstanceName(self, s):
         name_split = re.split(rf'([A-Z][^A-Z]+)|([A-Z]*(?=[A-Z][^A-Z]*))', s)
         return '_'.join([ x.lower() for x in name_split if x != '' and x is not None])
+
+
+    @SVgen.UserMethod
     @SVgen.Clip
     def ShowIns(self, module=[], short=[], group=[], toclip=True, ind=None):
         '''

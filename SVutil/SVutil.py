@@ -131,10 +131,37 @@ class SVutil():
     def __svcompleterfmt__(self, attr, match):
         if hasattr(self, 'customlst') and attr in self.customlst:
             return f'{SVutil.cyellow}{match}{SVutil.creset}'        
-        elif hasattr(self, 'userfunclst') and attr in self.userfunclst:
+        if hasattr(super(), 'customlst') and attr in super().customlst:
+            return f'{SVutil.cyellow}{match}{SVutil.creset}'        
+        if hasattr(self, 'userfunclst') and attr in self.userfunclst:
             return f'{SVutil.cgreen}{match}{SVutil.creset}'        
-        else:
-            return f'{match}'        
+        if hasattr(self.__class__, 'userfunclst') and attr in self.__class__.userfunclst:
+            return f'{SVutil.cgreen}{match}{SVutil.creset}'        
+
+        return f'{match}'        
+    # decorator class
+    def UserClass(cls):
+        if not cls.__dict__.get('customlst'):
+            cls.customlst = []
+
+        if not cls.__dict__.get('userfunclst'):
+            cls.userfunclst = []
+
+        for name, method in cls.__dict__.items():
+            if hasattr(method, '__svutil_custom__'):
+                cls.customlst += [name]
+            if hasattr(method, '__svutil_userfunc__'):
+                cls.userfunclst += [name]
+        return cls
+
+    def UserCustom(orig):
+        orig.__svutil_custom__ = True
+        return orig 
+
+    def UserMethod(orig):
+        orig.__svutil_userfunc__ = True
+        return orig 
+
 class SVcvar():
     ''' 
         SVcvar marks customizable variables;

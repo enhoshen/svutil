@@ -6,6 +6,7 @@ from SVutil.SVclass import *
 import itertools
 import numpy as np
 
+@SVgen.UserClass
 class BlockDiagramGen(DrawioGen):
     def __init__(self, ind= Ind(0), session =None):
         super().__init__(ind=ind, session = session)
@@ -16,7 +17,6 @@ class BlockDiagramGen(DrawioGen):
             ,'block_ratio'
             ,'block_ygap'
         ]
-        self.userfunclst += ['BlockDiagramToClip']
         self.hier_lvl = 3
         self.top = self.incfile.split('/')[-1]
         self.top = self.session.hiers[self.top+'_sv']
@@ -86,6 +86,7 @@ class BlockDiagramGen(DrawioGen):
         self.print(s)
         return s
             
+    @SVgen.UserMethod
     @SVgen.Clip 
     def BlockDiagramToClip(self, module=None, toclip=True, ind=None):
         '''

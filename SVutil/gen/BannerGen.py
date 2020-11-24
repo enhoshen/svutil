@@ -7,18 +7,21 @@ from SVutil.SVclass import *
 import itertools
 import numpy as np
 import time
+
+@SVgen.UserClass
 class BannerGen(SVgen):
     def __init__(self, ind=Ind(0)):
         self.V_(VERBOSE)
         self.cur_ind = ind 
         self.genpath = './'
         self.customlst = ['name', 'email', 'genpath', 'yyyy', 'mm', 'dd', 'time']
-        self.userfunclst = ['UserReg', 'UserEmpty', 'FileReg', 'TimeReg']
         self.name = []
         self.email = []
         _time = time.localtime()
         self.yyyy, self.mm, self.dd = _time.tm_year, _time.tm_mon, _time.tm_mday
         self.time = lambda : f'{self.yyyy}' 
+
+    @SVgen.UserMethod
     def UserReg (self, nmtuplelst):
         ''' 
             customzie your name and email 
@@ -30,21 +33,28 @@ class BannerGen(SVgen):
             print(n,e)
             self.name += [n]
             self.email += [f'<{e}>']
+
+    @SVgen.UserMethod
     def UserEmpty(self):
         self.name, self.email = [], [] 
+
+    @SVgen.UserMethod
     def FileReg (self, f):
         self.filepath = f
         _f = f.split('/')[-1].rsplit('.',1)
         self.filename = _f[0]
         _f = _f[-1] if len(_f) != 1 else ''
         self.filesuf = _f
+
+    @SVgen.UserMethod
     def TimeReg (self, yyyy, mm, dd):
         self.yyyy, self.mm, self.dd = yyyy, mm, dd 
+
+@SVgen.UserClass
 class GanzinBanner(BannerGen):
     def __init__(self, ind=Ind(0)):
         super().__init__()
         self.customlst += ['svcopyrightstr', 'svstatementstr']
-        self.userfunclst += ['FolderBanWrite', 'FolderBanIncWrite', 'BanWrite', 'BanIncWrite']
         self.svcopyrightstr = f'// Copyright (C) Ganzin Technology - All Rights Reserved\n'
         self.svstatementstr = \
               f'// ---------------------------\n'\
@@ -106,6 +116,8 @@ class GanzinBanner(BannerGen):
             return None
         s = self.Genlist( [(ban,), (incg,), fstr, incg] )
         return s
+
+    @SVgen.UserMethod
     def BanWrite(self, fr=None, overwrite=False):
         '''
             Write Banner at the start of the file
@@ -116,6 +128,8 @@ class GanzinBanner(BannerGen):
         fpath = self.Write(self.BannerStr, fr, overwrite)
         if os.path.isfile(fpath) or not os.path.exists(fpath):
             self.print ( "Banner attached to ", fpath)
+
+    @SVgen.UserMethod
     def BanIncWrite(self, fr=None, overwrite=False):
         fpath = self.Write(self.BannerIncguardStr, fr, overwrite)
         if os.path.isfile(fpath) or not os.path.exists(fpath):
@@ -148,6 +162,8 @@ class GanzinBanner(BannerGen):
             f = open( fpath, 'w')
             f.write(s)
         return fpath
+
+    @SVgen.UserMethod
     def FolderBanWrite(self, _dir='.', overwrite=False):
         '''
             Write Banner to every files of provided folder _dir
@@ -158,6 +174,8 @@ class GanzinBanner(BannerGen):
         assert self.name != [] and self.email != [] , "specify name and email"
         for f in os.listdir(_dir):
             self.BanWrite(_dir+'/'+f, overwrite)
+
+    @SVgen.UserMethod
     def FolderBanIncWrite(self, _dir='.', overwrite=False):
         '''
             Write Banner and include guard to every files of the provided folder _dir

@@ -4,6 +4,7 @@ import sys
 from SVutil.gen.XLGen import *
 import xlsxwriter as xl
 
+@SVgen.UserClass
 class MemmapGen(XLGen):
     def __init__(self, session=None):
         super().__init__(session=session)
@@ -112,13 +113,7 @@ class MemmapGen(XLGen):
         for i,v in enumerate(self.colwid_lst):
             col = self.col_start+i
             self.cur_sh.set_column(col, col, v)
-    def AllRegbk(self):
-        for i,v in self.session.package.items():
-            if re.match(rf'\w*(?i)Regbk', i):
-                regbk = SVRegbk(v)
-                if regbk.addrs:
-                    self.AddRegbk(regbk)
-        self.wb.close()
+
     def AddRegbk(self, regbk):
         self.print(regbk.name)
         self.cur_sh = self.wb.add_worksheet(re.sub(rf'(?i)Regbk|(?i)Regbank', '', regbk.name))
@@ -238,6 +233,15 @@ class MemmapGen(XLGen):
             ,None
             ,None
             ,{'level': lvl, 'hidden':True})
+
+    @SVgen.UserMethod
+    def AllRegbk(self):
+        for i,v in self.session.package.items():
+            if re.match(rf'\w*(?i)Regbk', i):
+                regbk = SVRegbk(v)
+                if regbk.addrs:
+                    self.AddRegbk(regbk)
+        self.wb.close()
 
 
         

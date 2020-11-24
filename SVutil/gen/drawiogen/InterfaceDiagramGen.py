@@ -6,10 +6,10 @@ from SVutil.SVclass import *
 import itertools
 import numpy as np
 
+@SVgen.UserClass
 class InterfaceDiagramGen(DrawioGen):
     def __init__(self, ind= Ind(0), session =None):
         super().__init__(ind=ind, session = session)
-        self.userfunclst += ['ToClip', 'ToClipTwoSide', 'ToFileTwoSide', 'ToFile']
     def Config(self, *arg, **kwargs):
         pass
     def ModuleBlockStr(self, module, parent, flip, ind):
@@ -124,9 +124,13 @@ class InterfaceDiagramGen(DrawioGen):
         port = self.Str2Blk ( self.ModulePortArrowStr, module, '1', flip)
         modblk = self.Str2Blk( self.ModuleBlockStr , module, '1', flip)
         return self.Genlist( [ (mxg,rt) , [indblk,port] , [indblk,modblk], rt, mxg] )
+        
+    @SVgen.Str
     def ToClip ( self, module=None, flip=False):
         m = self.dut if not module else module
         ToClip(self.InterfaceDiagramGen(m,flip))
+        
+    @SVgen.Str
     def ToClipTwoSide ( self, module =None ):
         m = self.dut if not module else module
         indblk = self.IndBlk()
@@ -141,10 +145,14 @@ class InterfaceDiagramGen(DrawioGen):
         s += self.Genlist( [  [indblk,portflip], [indblk,modblkflip], rt, mxg] )
         ToClip(s)
         return s
+        
+    @SVgen.Str
     def ToFileTwoSide(self, path, module=None):
         f = open( path, 'w')
         s = self.ToClipTwoSide(module) 
         f.write(s)
+        
+    @SVgen.Str
     def ToFile (self, path, module=None, flip=False):
         f = open( path, 'w')
         s = self.InterfaceDiagramGen(module,flip) 

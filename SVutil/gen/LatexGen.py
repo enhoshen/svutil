@@ -6,18 +6,14 @@ from SVutil.SVclass import *
 import itertools
 import numpy as np
 import re
+
+@SVgen.UserClass
 class LatexGen(SVgen):
     # TODO $clog2 in latex
     def __init__(self, session=None, regbk=None, dut=None):
         super().__init__(session=session)
         self.customlst = [   'default_input_delay'
                             ,'struct_lvl']
-        self.userfunclst = [
-            'SignalDesp',
-            'ParameterDesp',
-            'RegMemMapDesp',
-            'RegFieldDesp'
-        ]
         self.default_input_delay = 30
         self.struct_lvl = 2
         if regbk and type(regbk)==str:
@@ -248,6 +244,8 @@ class LatexGen(SVgen):
             desp += f'{ind[2]}{l}({n}):\\\\\n'
         desp = desp[:-3]+'\n'
         return desp
+
+    @SVgen.UserMethod
     def SignalDesp( self, module=None, sel=None):
         module = self.dut if not module else module
         self.cur_module = module
@@ -272,6 +270,8 @@ class LatexGen(SVgen):
                 clk = name.replace('_','\_')
         ToClip(s)
         return s
+
+    @SVgen.UserMethod
     def ParameterDesp(self, module=None, local=True):
         module = self.dut if not module else module
         self.cur_module = module
@@ -283,6 +283,8 @@ class LatexGen(SVgen):
                 s += self.ParameterStr(p)
         ToClip(s)
         return s
+
+    @SVgen.UserMethod
     def RegMemMapDesp(self, pkg=None):
         s = ''
         regbk = SVRegbk(pkg) if pkg and type(pkg)==str else self.regbk
@@ -324,6 +326,8 @@ class LatexGen(SVgen):
                 s += f'{Ind(1).b}\\ganzinmergerowbold{{1.2}}{{5}}{{\\centering \\textbf{{{last_gp}}}}}\n' 
         ToClip(s)
         return s
+
+    @SVgen.UserMethod
     def RegFieldDesp(self, pkg=None):
         s = ''
         regbk = SVRegbk(pkg) if pkg and type(pkg)==str else self.regbk
