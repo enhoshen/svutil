@@ -15,16 +15,11 @@ setup(
     ,author='En-Ho Shen'
     ,author_email='enhoshen@media.ee.ntu.edu.tw'
     ,url='https://github.com/enhoshen/SVutil'
-    ,packages=[
-         'SVutil'
-         ,'SVutil.gen'
-             ,'SVutil.gen.srcgen'
-             ,'SVutil.gen.drawiogen'
-             ,'SVutil.gen.xlgen'
-         ,'SVutil.sim']
+    ,packages=setuptools.find_packages()
     ,install_requires=[
          'colorama'
         ,'xlsxwriter'
+        ,'nicotb @ git+https://github.com/johnjohnlin/nicotb'
         ]
     ,package_dir={
          'SVutil': 'SVutil'
