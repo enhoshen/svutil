@@ -215,8 +215,8 @@ class RegbkMaster(SVutil):
         self.rdata= rdata
         from nicotb.protocol import TwoWire
         from nicotb.protocol import OneWire 
-        from protocol import Apb
-        from protocol import Ahb
+        from gzsim.protocol import Apb
+        from gzsim.protocol import Ahb
         self.proto_it_dict = { 
              TwoWire.Master: self.RegWriteAddrIt
             ,OneWire.Master: self.RegWriteAddrIt
