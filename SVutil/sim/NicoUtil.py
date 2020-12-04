@@ -236,7 +236,7 @@ class RegbkMaster(SVutil):
         self.write= write 
         self.wdata= wdata
         self.rdata= rdata
-        self.proto_it = self.RegReadWriteIt if proto_it is None else proto_it
+        self.proto_it = RegbkMaster.RegReadWriteIt if proto_it is None else proto_it
         self.ac= f'{colorama.Fore.YELLOW}' # attribute color
         self.cr= f'{colorama.Style.RESET_ALL}' # color reset
         self.regfieldfmt = lambda f, endl=f'\n{"":>8}': f'{endl}{self.ac}Reg fields: {self.cr}{f.__str__()}{endl}' if f else '' 
@@ -262,10 +262,10 @@ class RegbkMaster(SVutil):
     def SendIter(self, regseq, rwseq, dataseq):
         assert self.master, "Specify the protocol master"
         it = self.proto_it
-        yield from self.master.SendIter(it(regseq, rwseq, dataseq))
+        yield from self.master.SendIter(it(self, regseq, rwseq, dataseq))
     def IssueCommands(self, regseq, rwseq, dataseq):
-        it = self.proto_it_dict[type(self.master)]
-        yield from self.master.IssueCommands(it(regseq, rwseq, dataseq))
+        it = self.proto_it
+        yield from self.master.IssueCommands(it(self, regseq, rwseq, dataseq))
     def RegReadWriteIt (self, regseq, rwseq, dataseq):
         '''
             Generate an iterable to loop through a sequence of register bank's
@@ -347,7 +347,7 @@ class RegbkMaster(SVutil):
             self.write.Write()
             self.wdata.Write()
             yield self.addr.value
-    def AhbRegReadWriteIt ( self, regseq, rwseq, dataseq):
+    def AhbRegReadWriteIt (self, regseq, rwseq, dataseq):
         for addr, wdata, rw in self.RegReadWriteIt(regseq, rwseq, dataseq):
             yield (rw, addr, wdata)
 class ThreadCreator(SVutil):
