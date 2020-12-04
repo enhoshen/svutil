@@ -437,7 +437,7 @@ class SVparse(SVutil):
             path = f'{SVparse.session.include_path}{path}.sv'
         path = os.path.normpath(path)
         self.print(f'{"":>{SVparse.session.path_level*4}}{path}', trace=2, level=True, verbose=2)
-        self.f = open(path , 'r')
+        self.f = open(path , 'r', encoding='utf-8')
         self.cur_path = path
         self.lines = iter(self.f.readlines())
         self.cur_s , self.cur_cmt = self.Rdline(self.lines)

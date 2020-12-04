@@ -204,8 +204,31 @@ class Busdict (EAdict):
         [ [i.SetTo(n) if self.IsSB(i) else busfill(i) for i in self.Flatten(x)] if type(x) == list\
             else  x.SetTo(n) if self.IsSB(x) else busfill(x) for x in self.dic.values() ]
 class RegbkMaster(SVutil):
-    ''' Wrapper for register bank controller '''
-    def __init__ (self, regbk:SVRegbk, addr:Bus = None, write:Bus = None, wdata:Bus = None, rdata:Bus = None, master=None):
+    ''' Wrapper for register bank controller 
+        The class convert more readible register sequence format to all number sequence.
+            regbk: SVRegbk object providing control register information
+            addr: bus of the control register address port
+            wdata: bus of the control register write data port
+            rdata: bus of the control register read data port
+            master: a nicotb protocol module that drive register sequence to the register bank dut
+            proto_it: a RegbkMaster method to convert register sequence to corresponding data
+                Iterable sender (i.e nicotb.protocol.TwoWire.Master.SendIter).
+                Here is a table of protocol module' corresponding iterable function
+                nicotb.protocol.TwoWire: RegbkMaster.RegReadWriteAddrIt
+                nicotb.protocol.OneWire: RegbkMaster.RegReadWriteAddrIt
+                gzsim.protocol.Apb: RegbkMaster.RegReadWriteIt 
+                gzsim.protocol.Ahb: RegbkMaster.AhbRegReadWriteIt 
+    '''
+    def __init__ (
+         self
+        ,regbk:SVRegbk
+        ,addr:Bus = None
+        ,write:Bus = None
+        ,wdata:Bus = None
+        ,rdata:Bus = None
+        ,master=None
+        ,proto_it=None):
+
         self.verbose = V_(VERBOSE) 
         self.master = master 
         self.regbk = regbk
@@ -213,15 +236,7 @@ class RegbkMaster(SVutil):
         self.write= write 
         self.wdata= wdata
         self.rdata= rdata
-        from nicotb.protocol import TwoWire
-        from nicotb.protocol import OneWire 
-        from gzsim.protocol import Apb
-        from gzsim.protocol import Ahb
-        self.proto_it_dict = { 
-             TwoWire.Master: self.RegWriteAddrIt
-            ,OneWire.Master: self.RegWriteAddrIt
-            ,Apb.Master: self.RegWriteIt
-            ,Ahb.Master: self.AhbRegWriteIt}
+        self.proto_it = self.RegReadWriteIt if proto_it is None else proto_it
         self.ac= f'{colorama.Fore.YELLOW}' # attribute color
         self.cr= f'{colorama.Style.RESET_ALL}' # color reset
         self.regfieldfmt = lambda f, endl=f'\n{"":>8}': f'{endl}{self.ac}Reg fields: {self.cr}{f.__str__()}{endl}' if f else '' 
@@ -246,12 +261,12 @@ class RegbkMaster(SVutil):
         self.rdata.Read()
     def SendIter(self, regseq, rwseq, dataseq):
         assert self.master, "Specify the protocol master"
-        it = self.proto_it_dict[type(self.master)]
+        it = self.proto_it
         yield from self.master.SendIter(it(regseq, rwseq, dataseq))
     def IssueCommands(self, regseq, rwseq, dataseq):
         it = self.proto_it_dict[type(self.master)]
         yield from self.master.IssueCommands(it(regseq, rwseq, dataseq))
-    def RegWriteIt (self, regseq, rwseq, dataseq):
+    def RegReadWriteIt (self, regseq, rwseq, dataseq):
         '''
             Generate an iterable to loop through a sequence of register bank's
             address, read/write, and data.
@@ -316,7 +331,7 @@ class RegbkMaster(SVutil):
             self.master.callbacks = [MsgCb] + orig_cb
             yield (addr, wdata, rw)
             self.master.callbacks = orig_cb
-    def RegWriteAddrIt (self, regseq, rwseq, dataseq):
+    def RegReadWriteAddrIt (self, regseq, rwseq, dataseq):
         '''
             Used by nico protocol SendIter() thread without addr bus. This thread is 
             a workaround by yielding the address and manually Write() data and write buses.
@@ -325,15 +340,15 @@ class RegbkMaster(SVutil):
                 ...
                 regbus.SendIter(RegbkMasterObjec.RegwriteAddrIt(regseq, rwseq, dataseq))
         '''
-        for addr, wdata, rw in self.RegWriteIt(regseq, rwseq, dataseq):
+        for addr, wdata, rw in self.RegReadWriteIt(regseq, rwseq, dataseq):
             self.write.value = rw 
             self.addr.value = addr 
             self.wdata.value = wdata
             self.write.Write()
             self.wdata.Write()
             yield self.addr.value
-    def AhbRegWriteIt ( self, regseq, rwseq, dataseq):
-        for addr, wdata, rw in self.RegWriteIt(regseq, rwseq, dataseq):
+    def AhbRegReadWriteIt ( self, regseq, rwseq, dataseq):
+        for addr, wdata, rw in self.RegReadWriteIt(regseq, rwseq, dataseq):
             yield (rw, addr, wdata)
 class ThreadCreator(SVutil):
     ''' Helper class for creating simulation threads. '''
