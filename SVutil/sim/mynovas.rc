@@ -272,12 +272,12 @@ QwQuestionMsgDlg = 444,366,324,110
 ActiveFileDialog = 1693,1475,693,272
 saveSigDlg = 1763,1422,551,386
 restoreSigDlg = 1763,1396,551,438
-QwWarnMsgDlg = 385,1011,600,250
-CreateBusDialog = 1645,1260,788,709
 SetWindowTimeUnitDialog = 1822,1572,433,86
 QwUserAskDlg = 3212,973,324,134
-openFileDlg = 863,691,1374,484
-qWaveSignalDialog = 848,503,1404,860
+QwWarnMsgDlg = 385,1011,600,250
+openFileDlg = 1353,1369,1374,484
+CreateBusDialog = 1646,1257,788,709
+qWaveSignalDialog = 1338,1181,1404,860
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile1]
 shortcut = 
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile3]
@@ -489,8 +489,8 @@ PointStyle = FALSE
 SetDefaultRadix = TRUE
 FilterTextField = FALSE
 anaAuto100VertFit = FALSE
-getSignalForm = 848 503 1404 860 343 762 815 185
-viewPort = 2652 971 3261 1072 344 127
+getSignalForm = 1338 1181 1404 860 343 762 815 185
+viewPort = 1080 1103 1920 1017 344 127
 signalSpacing = 5
 digitalSignalHeight = 15
 analogSignalHeight = 98
