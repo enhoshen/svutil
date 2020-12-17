@@ -277,9 +277,9 @@ class TestGen(SVgen):
         s += "from itertools import repeat\n"
         s += "from nicotb.primitives import JoinableFork\n"
         s += "from SVutil.SVparse import SVparse,EAdict\n"
-        s += "from SVutil.sim.NicoUtil import *\n\n"
+        s += "from SVutil.sim import NicoUtil\n\n"
         s += "TEST_CFG= os.environ.get('TEST_CFG',None)\n"
-        s += "Nico = NicoUtil() \n"
+        s += "Nico = NicoUtil.NicoUtil()\n"
         s = s.replace("\n", f"\n{ind.b}")
         yield s
 
@@ -336,7 +336,7 @@ class TestGen(SVgen):
                 s += f"= Nico.SBC.Get('{p.tp+_q:<{w[1]+1}}, '{p.name+_q}, dim={dim})\n"
 
                 # TODO macro....
-        s += f"{ind[1]}return Busdict(dic) # access by name without quotes\n"
+        s += f"{ind[1]}return NicoUtil.Busdict(dic) # access by name without quotes\n"
         yield s
 
     def PYmainBlk(self):
