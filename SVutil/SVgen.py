@@ -210,7 +210,14 @@ class SVgen(SVutil):
     def Blk(orig):
         @wraps(orig)
         def new_func(*arg, **kwargs):
-            return orig(*arg, **kwargs)
+            ind = kwargs.get("ind")
+            ind = (
+                arg[0].cur_ind.Copy() if ind is None else ind
+            )  # orig must be a member function
+            kwargs["ind"] = ind
+            yield ''
+            x = orig(*arg, **kwargs)
+            yield from x
 
         return new_func
 
