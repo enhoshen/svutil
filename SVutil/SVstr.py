@@ -24,8 +24,8 @@ class SVsysfunc:
 
 
 class SVstr(SVutil):
-    sp_chars = ["=", "{", "}", "[", "]", "::", ";", ",", "(", ")", "#"]
-    op_chars = ["+", "-", "*", "/", "(", ")"]
+    sp_chars = ['=', '{', '}', '[', ']', '::', ';', ',', '(', ')', '#']
+    op_chars = ['+', '-', '*', '/', '(', ')', '<<', '>>']
     verbose = V_(VERBOSE)
 
     def __init__(self, s):
@@ -220,7 +220,6 @@ class SVstr(SVutil):
         _s = _s.replace("$", "SVsysfunc.")
         _s = re.sub(rf"SVsysfunc.bits\((\w*)\)", r'SVsysfunc.bits("\1", cur_hier)', _s)
         _s_no_op = SVstr(_s).ReplaceSplit(self.op_chars + [",", "'", "{", "}"])
-        # TODO package import :: symbol  , white spaces around '::' not handled
         for w in _s_no_op:
             if "::" in w:
                 _pkg, _param = w.split("::")

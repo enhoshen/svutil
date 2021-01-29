@@ -51,6 +51,7 @@ class TestGen(SVgen):
 
     @SVgen.Str
     def InitialStr(self, ind=None):
+        # clock, reset and clock count
         ck_lst = reduce(
             (lambda x, y: x + ", " + f'{y[0]+"_" if y[0] != "" else ""}clk'),
             self.clk_domain_lst,
@@ -73,6 +74,8 @@ class TestGen(SVgen):
             _aff = ck[0] + "_" if ck[0] != "" else ""
             s += f"{ind.b}`Pos({_aff}rst_out, {_aff}rst{ck[1]})\n"
             s += f"{ind.b}`PosIf({_aff}ck_ev , {_aff}clk, {_aff}rst{ck[1]})\n"
+
+        # events
         ev_lst = reduce(
             (lambda x, y: x + ", " + str(y[1])), self.eventlst + [("", "")], ""
         )[2:-2]
@@ -82,6 +85,10 @@ class TestGen(SVgen):
         for ev in self.eventlst:
             s += f'{ind.b}`PosIf({ev[0]+", "+ev[1]+",":<{w}} {self.rststr}_n)//TODO modify reset logic\n'
 
+        # dummy
+        s += f'{ind.b}logic dummy; // general purpose dummy logic'
+
+        # initial block
         s += f"{ind.b}`WithFinish\n\n"
         for i, ck in enumerate(self.clk_domain_lst):
             _aff = ck[0] + "_" if ck[0] != "" else ""
@@ -276,9 +283,8 @@ class TestGen(SVgen):
         s += "import os\n"
         s += "from itertools import repeat\n"
         s += "from nicotb.primitives import JoinableFork\n"
-        s += "from SVutil.SVparse import SVparse,EAdict\n"
+        s += "from SVutil.SVparse import GBV, EAdict\n"
         s += "from SVutil.sim import NicoUtil\n\n"
-        s += "TEST_CFG= os.environ.get('TEST_CFG',None)\n"
         s += "Nico = NicoUtil.NicoUtil()\n"
         s = s.replace("\n", f"\n{ind.b}")
         yield s

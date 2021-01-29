@@ -214,7 +214,6 @@ class StructBusCreator:
             return self.CreateStructBus(signalName, hier, DIM, dtype=dtype)
         else:
             for d in range(DIM[0]):
-                print(d)
                 buses.append(
                     self.MDACreateStructBus(
                         signalName + f"[{d}]", hier, DIM[1:], dtype=dtype

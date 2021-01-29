@@ -103,7 +103,7 @@ class SVhier:
     enumlfield = enumlfield
     macrofield = macrofield
 
-    def __init__(self, name, scope, tp=None):
+    def __init__(self, name=None, scope=None, tp=None):
         self.hier = (
             name  # this is fucking ambiguous, but str method use it so it remains
         )
