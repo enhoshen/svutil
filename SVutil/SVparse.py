@@ -587,7 +587,7 @@ class SVparse(SVutil):
         self.print(s, verbose=3)
         s.lstrip()
         sign = s.SignParse()
-        bw = s.BracketParse()
+        bw = s.bracket_parse()
         bw = SVstr("" if bw == () else bw[0])
         n, d = s.IDDIMarrParse()
         tp = ("signed " if sign == True else "") + "logic"
@@ -607,18 +607,18 @@ class SVparse(SVutil):
         return lst
 
     def ArrayParse(self, s, lines):
-        dim = s.BracketParse()
+        dim = s.bracket_parse()
         name = s.IDParse()
         return (name, "", self.Tuple2num(dim), "")
 
     def ParamParse(self, s, lines):
         # TODO type parse (in SVstr) , array parameter
         tp = s.TypeParse(self.cur_hier.AllTypeKeys.union(self.gb_hier.SelfTypeKeys))
-        bw = s.BracketParse()
+        bw = s.bracket_parse()
         bwstr = self.Tuple2str(bw)
         bw = 32 if tp == "int" and bw == () else self.Bw2num(bw)
         name = s.IDParse()
-        dim = s.BracketParse()
+        dim = s.bracket_parse()
         dimstr = self.Tuple2str(dim)
         if "{" in s:
             while "}" not in s:
@@ -645,13 +645,13 @@ class SVparse(SVutil):
         return name, num
 
     def PortParse(self, s, lines):
-        # bw = s.BracketParse()
+        # bw = s.bracket_parse()
         tp = s.TypeParse(self.cur_hier.AllTypeKeys.union(self.gb_hier.SelfTypeKeys))
         tp = "logic" if tp == "" else tp
         sign = s.SignParse()
         if sign and tp == "logic":
             tp = "logic signed"
-        bw = s.BracketParse()
+        bw = s.bracket_parse()
         name = s.IDParse()
         self.print(name, verbose=4)
         if self.cur_cmt != "":
@@ -660,10 +660,10 @@ class SVparse(SVutil):
                     self.cur_hier.regs[name] = "N/A"
         bwstr = self.Tuple2str(bw)
         bw = SVstr("" if bw == () else bw[0]).Slice2num(self.cur_hier)
-        dim = s.BracketParse()
+        dim = s.bracket_parse()
         dimstrtuple = dim
         dimstr = self.Tuple2str(dim)
-        # dim = self.Tuple2num(s.BracketParse())
+        # dim = self.Tuple2num(s.bracket_parse())
         dim = self.Tuple2num(dim)
         group = [s.lstrip() for s in self.last_pure_cmt]
         self.cur_hier.ports.append(
@@ -689,7 +689,7 @@ class SVparse(SVutil):
 
         if "logic" in s:
             s.lsplit()
-        bw = s.BracketParse()
+        bw = s.bracket_parse()
         bw = SVstr("" if bw == () else bw[0])
         cmt = self.cur_cmt
         cmts = []
@@ -851,7 +851,7 @@ class SVparse(SVutil):
                     bw = np.sum([x[1] for x in self.cur_hier.AllType[tp]])
                 n, d = _s.IDDIMarrParse()
                 # _n = _s.IDParse()
-                # dim = _s.BracketParse()
+                # dim = _s.bracket_parse()
                 # dimstr = self.Tuple2str(dim)
                 # dim = self.Tuple2num(dim)
                 attrlist += [
@@ -1115,7 +1115,7 @@ class SVparse(SVutil):
         for e, c, g in zip(enum, cmt, group):
             _s = SVstr(e)
             _name = _s.IDParse()
-            bw = _s.BracketParse()
+            bw = _s.bracket_parse()
             bw = (
                 SVstr(bw[0]).Slice2TwoNum(self.cur_hier)
                 if bw
@@ -1264,7 +1264,7 @@ if __name__ == "__main__":
     # sv = SVparse('SVparse',None)
     # print (sv.gb_hier.child)
     # ss = SVstr
-    # print(ss('[3]').BracketParse() )
+    # print(ss('[3]').bracket_parse() )
     # print(sv.ParamParse(ss('DW  =4;'))  )
     # print(ss(' happy=4;').IDParse())
     # print(sv.parameter)

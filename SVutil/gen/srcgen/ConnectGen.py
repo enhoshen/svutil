@@ -24,7 +24,7 @@ class ConnectGen(SrcGen):
 
     # TODO
     @SVgen.Blk
-    def LogicBlk(self, module, short=None, group=None, ind=None):
+    def logic_block(self, module, short=None, group=None, ind=None):
         s = f"{ind.b}// {module.name}\n"
         pfield = SVhier.portfield
 
@@ -46,7 +46,7 @@ class ConnectGen(SrcGen):
                 cur_group_name = next(group, self.logic_group_dft)
                 cur_group = p.group
             _c = "" if short is None and cur_group_name == "short" else cur_group_name
-            connect = self.ConnectName(_c, short, p)
+            connect = self.connect_name(_c, short, p)
             if p.tp == "logic" or p.tp == "signed logic":
                 s += f'{ind.b}{p.tp+" "+p.bwstr:<{w}} {connect}'
             else:
@@ -59,7 +59,7 @@ class ConnectGen(SrcGen):
         yield s
 
     @SVgen.Blk
-    def InsBlk(self, module, short=None, group=None, ind=None):
+    def instance_block(self, module, short=None, group=None, ind=None):
         """
         Generates sub modules connection codes.
         Arguments:
@@ -79,7 +79,7 @@ class ConnectGen(SrcGen):
                 s_param += f"{ind[1]},.{param:<{w[0]}}({param})\n"
         s_param = s_param.replace(f"{ind[1]},", ind[1] + " ", 1)
 
-        ins_name = self.InstanceName(module.name) if short is None else short
+        ins_name = self.instance_name(module.name) if short is None else short
         short = "" if short is None else short
         sb = f"{ind.b}) u_{ins_name} (\n"
         s_port = ""
@@ -94,21 +94,19 @@ class ConnectGen(SrcGen):
             if cur_group != p.group and group is not None:
                 cur_group_name = next(group, self.group_dft)
                 cur_group = p.group
-            connect = self.ConnectName(cur_group_name, short, p)
+            connect = self.connect_name(cur_group_name, short, p)
             # if 'clk' in n:
             #    s_port += ind[1] + ',.' + f'{p.name:<{w[0]}}' + f'({self.clk_name})\n'
             # elif 'rst' in n:
             #    s_port += ind[1] + ',.' + f'{p.name:<{w[0]}}' + f'({self.rst_name})\n'
             # else:
-            s_port += f"{ind[1]},.{p.name:<{w[0]}}" + (
-                f"({connect})\n" if p.dim == () else f"({{ >>{{{connect}}} }})\n"
-            )
+            s_port += f"{ind[1]},.{p.name:<{w[0]}}" + f"({connect})\n"
 
         s_port = s_port.replace(f"{ind[1]},", ind[1] + " ", 1)
         s += s_param + sb + s_port + ind.base + ");\n"
         yield s
 
-    def ConnectName(self, group, short, port):
+    def connect_name(self, group, short, port):
         name = [x for x in re.split(rf"^i_|^o_", port.name) if x != ""][0]
         gname = group + "_" if group is not "" else ""
         if group == "io":
@@ -119,7 +117,7 @@ class ConnectGen(SrcGen):
             connect = f"{gname}{name}"
         return connect
 
-    def InstanceName(self, s):
+    def instance_name(self, s):
         name_split = re.split(rf"([A-Z][^A-Z]+)|([A-Z]*(?=[A-Z][^A-Z]*))", s)
         return "_".join([x.lower() for x in name_split if x != "" and x is not None])
 
@@ -141,16 +139,17 @@ class ConnectGen(SrcGen):
                     on its port direction.
         """
         banw = 20
-        module = [self.dut] if not module else module
+        module = [module] if isinstance(module, SVhier) else module 
+
         logicban = (1,) + (self.Line3BannerBlk(banw, "//", "Logic"),)
         logic = tuple(
-            self.LogicBlk(m, short=s, group=g)
+            self.logic_block(m, short=s, group=g)
             for m, s, g in zip_longest(module, short, group)
         )
         logic = (1,) + logic
         combban = (1,) + (self.Line3BannerBlk(banw, "//", "Combinational"),)
         ins = tuple(
-            self.InsBlk(m, short=s, group=g)
+            self.instance_block(m, short=s, group=g)
             for m, s, g in zip_longest(module, short, group)
         )
         ins = (1,) + ins

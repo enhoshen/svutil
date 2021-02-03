@@ -24,6 +24,9 @@ class SVsysfunc:
 
 
 class SVstr(SVutil):
+    """ String wrapper for parsing systemverilog code
+    Note that *_parse methods will parse and change the string in-place
+    """
     sp_chars = ['=', '{', '}', '[', ']', '::', ';', ',', '(', ')', '#']
     op_chars = ['+', '-', '*', '/', '(', ')', '<<', '>>']
     verbose = V_(VERBOSE)
@@ -131,15 +134,13 @@ class SVstr(SVutil):
         d = []
         name = self.IDParse()
         n.append(name)
-        dim = self.BracketParse()
+        dim = self.bracket_parse()
         d.append(dim)
-        if self.End():
-            return n, d
-        while self.s[0] == ",":
+        while not self.End() and self.s[0] == ",":
             self.s = self.s[1:]
             name = self.IDParse()
             n.append(name)
-            dim = self.BracketParse()
+            dim = self.bracket_parse()
             d.append(dim)
         return n, d
 
@@ -151,12 +152,17 @@ class SVstr(SVutil):
         else:
             return False
 
-    def BracketParse(self, bracket="[]"):
-        # find and convert every brackets at the start of the string
+    def bracket_parse(self, bracket="[]"):
+        """find and convert every brackets at the start of the string
+        Parameters
+            bracket: a string containing square bracket pairs and starting with [ 
+        Returns
+            tuple(num): a tuple of string in each of the bracket pairs
+        """
         self.s = self.s.lstrip()
         num = []
         while 1:
-            self.print(self.s, verbose="BracketParse")
+            self.print(self.s, verbose="bracket_parse")
             if self.End() or self.s[0] != bracket[0]:
                 break
             rbrack = self.s.find(bracket[1])

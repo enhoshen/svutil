@@ -2,63 +2,7 @@ import os
 import inspect
 import logging
 
-try:
-    import colorama
-except:
-    # For fuck sake just python -m pip install --user colorama
-    """
-    Copyright Jonathan Hartley 2013. BSD 3-Clause license, see LICENSE file.
-    This module generates ANSI character codes to printing colors to terminals.
-    See: http://en.wikipedia.org/wiki/ANSI_escape_code
-    """
-    CSI = "\033["
-    OSC = "\033]"
-    BEL = "\a"
-
-    def code_to_chars(code):
-        return CSI + str(code) + "m"
-
-    class AnsiCodes(object):
-        def __init__(self):
-            # the subclasses declare class attributes which are numbers.
-            # Upon instantiation we define instance attributes, which are the same
-            # as the class attributes but wrapped with the ANSI escape sequence
-            for name in dir(self):
-                if not name.startswith("_"):
-                    value = getattr(self, name)
-                    setattr(self, name, code_to_chars(value))
-
-    class AnsiFore(AnsiCodes):
-        BLACK = 30
-        RED = 31
-        GREEN = 32
-        YELLOW = 33
-        BLUE = 34
-        MAGENTA = 35
-        CYAN = 36
-        WHITE = 37
-        RESET = 39
-
-        # These are fairly well supported, but not part of the standard.
-        LIGHTBLACK_EX = 90
-        LIGHTRED_EX = 91
-        LIGHTGREEN_EX = 92
-        LIGHTYELLOW_EX = 93
-        LIGHTBLUE_EX = 94
-        LIGHTMAGENTA_EX = 95
-        LIGHTCYAN_EX = 96
-        LIGHTWHITE_EX = 97
-
-    class AnsiStyle(AnsiCodes):
-        BRIGHT = 1
-        DIM = 2
-        NORMAL = 22
-        RESET_ALL = 0
-
-    class colorama:
-        Fore = AnsiFore()
-        Style = AnsiStyle()
-
+import colorama
 
 class SVutil:
     trace_format_width = 0

@@ -239,7 +239,7 @@ class TestGen(SVgen):
                     ind[1]
                     + ",."
                     + f"{n:<{w[0]}}"
-                    + ((f"({n})\n") if dim == () else (f"({{ >>{{{n}}} }})\n"))
+                    + f"({n})\n" 
                 )
 
         s_port = s_port.replace(f"{ind[1]},", ind[1] + " ", 1)
