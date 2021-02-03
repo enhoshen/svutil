@@ -1,5 +1,5 @@
 
-`include "common/P2PRegbk.sv"
+`include "common/TestRegbk.sv"
 `define TM 8
 typedef struct packed{
     logic e;

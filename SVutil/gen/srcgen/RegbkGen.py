@@ -1,11 +1,18 @@
 import os
 import sys
+import itertools
+
+import numpy as np
+from dataclasses import dataclass
+
+
 from SVutil.SVparse import *
 from SVutil.gen.SrcGen import *
 from SVutil.SVclass import *
-import itertools
-import numpy as np
 
+@dataclass
+class Customlst:
+    pass
 
 @SVgen.UserClass
 class RegbkGen(SrcGen):
@@ -55,7 +62,11 @@ class RegbkGen(SrcGen):
             "cg_cond",
             "wo_cg_cond",
             "ro_cg_cond",
+            "arr_sel_minuend",
+            "arr_sel",
+            "arr_sel_suf",
             "arr_idx_suf",
+            "output_all",
             "omitlogiclst",
         ]
         self.addr_name = "addr"
@@ -72,7 +83,14 @@ class RegbkGen(SrcGen):
         self.cg_cond = "ce"
         self.wo_cg_cond = "wo_ce"
         self.ro_cg_cond = "ro_ce"
+
+        self.arr_sel_minuend = "arr_sel_minuend"
+        self.arr_sel_suf = "_sel"
+        self.arr_sel = "arr_sel"
         self.arr_idx_suf = "arr_idx"
+
+        self.output_all = True
+
         self.protocol = None
         self.wrdata_style = None
         self.disable_style = None
@@ -157,6 +175,8 @@ class RegbkGen(SrcGen):
             s += (
                 f'{ind[1]}{",output "+self.regbk.regintr_name:<{w}} {self.ointr_name}\n'
             )
+        if self.output_all:
+            s += self.output_all_register_block(ind=ind+1)
         s += f"{ind.b});\n"
         yield s
         yield ""
@@ -193,14 +213,14 @@ class RegbkGen(SrcGen):
         s += f'{pad:<{w[1]}} ,{logic}}};{"//TODO" if const else ""}\n'
         return s
 
+
     @SVgen.Str
     def RdataArrStr(self, reg, ifelse, w, rw=None, comb=False, const=False, ind=None):
         if rw and rw == "WO":
             return ""
         addr_r = ""
         pad = f"{self.regbk.regbw_name}-{reg}{self.regbk.bw_suf}"
-        s = f'{ind.b}{ifelse+" (":<9}{self.addr_port_name}{self.addr_slice} >= {reg} &&\n'
-        s += f'{ind.b}{"":<9}{self.addr_port_name}{self.addr_slice} < {reg}+{reg}{self.regbk.arr_num_suf}) begin\n'
+        s = f'{ind.b}{ifelse}({reg.lower()}{self.arr_sel_suf}) begin\n'
         if (
             self.wrdata_style == WRDATA_PRESET.INSTANT
             and self.protocol == PRCL_PRESET.VALID
@@ -211,18 +231,59 @@ class RegbkGen(SrcGen):
         pad = "{{" + f"{pad}" + "{1'b0}}"
         logic = f"{reg.lower()}" if comb else f"{reg.lower()}_r"
         logic = "" if const else logic
-        s += f'{pad:<{w[1]}} ,{logic}[{reg.lower()}_{self.arr_idx_suf}]}};{"//TODO" if const else ""}\n'
+        s += f'{pad:<{w[1]}} ,{logic}[{self.arr_sel}[{reg.upper()}_NUM_BW-1:0]]}};{"//TODO" if const else ""}\n'
         s += f"{ind.b}end\n"
         return s
+    @SVgen.Str
+    def rdata_arr_slice_bw (self, reg, ind=None):
+        """
+        """
+        s = f"{ind.b}localparam {reg.upper()}_NUM_BW = $clog2({reg.upper()}_NUM);\n"
+        return s
+    
+    @SVgen.Str
+    def rdata_arr_slice_param_block (self, arr_reg, ind=None):
+        s = f"{ind.b}// rdata array selection slice bw"
+        for v in arr_reg:
+            s += self.rdata_arr_slice_bw (v[0].name, ind=ind)
+        return s+'\n'
+
 
     @SVgen.Str
     def RdataArrIdxLogic(self, reg, ind=None):
+        """deprecated"""
         s = f"{ind.b}logic [$clog2({reg.upper()}_NUM)-1:0] {reg.lower()}_{self.arr_idx_suf};\n"
         return s
 
     @SVgen.Str
     def RdataArrIdxComb(self, reg, ind=None):
+        """deprecated"""
         s = f"{ind.b}assign {reg.lower()}_{self.arr_idx_suf} = {self.addr_port_name}{self.addr_slice}-{reg};\n"
+        return s
+
+    @SVgen.Str
+    def rdata_sel_minuend_comb(self, reg, ifelse, ind=None):
+        s = f"{ind.b}{ifelse}({reg.lower()}{self.arr_sel_suf}) begin\n"
+        s += f"{ind[1]}{self.arr_sel_minuend} = {reg};\n" 
+        s += f"{ind.b}end\n"
+        return s
+
+    @SVgen.Str
+    def rdata_sel_minuend_comb_block(self, arr_reg, ind=None):
+        s = f"{ind.b}assign {self.arr_sel} = {self.addr_port_name}{self.addr_slice}-{self.arr_sel_minuend};\n"
+        s += f"{ind.b}always_comb begin\n"
+        ifelse_dic = {0:'unique if', len(arr_reg)-1:'else'}
+        for i,v in enumerate(arr_reg):
+            ifelse = ifelse_dic.get(i, 'else if')
+            s += self.rdata_sel_minuend_comb(v[0].name, ifelse, ind=ind+1)
+        s += f"{ind.b}end\n"
+        return s
+
+    @SVgen.Str
+    def rdata_address_condition_comb(self, reg, ind=None):
+        s = f'{ind.b}assign {reg.lower()}{self.arr_sel_suf} = '
+        s += f'{self.addr_port_name}{self.addr_slice} >= {reg}\n'
+        s += f'{ind[1]}&& {self.addr_port_name}{self.addr_slice} < {reg}+{reg}{self.regbk.arr_num_suf};\n'
         return s
 
     @SVgen.Str
@@ -356,6 +417,101 @@ class RegbkGen(SrcGen):
                     s += f"{ind[2]}//TODO\n"
             s += f"{ind[1]}end\n{ind.b}end\n"
         return s
+    def reg_format_width(self):
+        """String format width tuple
+        """
+        w = [0,0]
+        for reg in self.regbk.addrs.enumls:
+            bw, tp = self.get_tpbw(reg)
+            width, rw, arr, *_ = self.regbk.GetAddrCmt(reg.name)
+            bwstr = "" if bw == 1 else f"[{bw}-1:0] "
+            w[0] = max(w[0], len(f'{tp+" "+bwstr}'))
+            dim = "" if arr == "" else " [" + reg.name + self.regbk.arr_num_suf + "]"
+            w[1] = max(w[1], len(reg.name + dim) + 2)
+        return w
+    @SVgen.Str
+    def assign_output_all_block (self, ind=None):
+        s = f"{ind.b}// direct control register to output\n"
+        for reg in self.regbk.addrs.enumls:
+            s += f"{ind.b} assign r_{reg.name.lower()} = {reg.name.lower()}_r;\n"
+        return s+'\n'
+
+    @SVgen.Str
+    def output_all_register_block (self, ind=None):
+        """
+        """
+        w = self.reg_format_width()
+        s = f'{ind.b}// control register output\n'
+        for reg in self.regbk.addrs.enumls:
+            bw, tp = self.get_tpbw(reg)
+            width, rw, arr, omit, comb, *_ = self.regbk.GetAddrCmt(reg.name)
+            if reg.name in self.omitlogiclst or omit:
+                pass
+            else:
+                dim = ""
+                if arr and arr != "":
+                    dim = f" [{reg.name.upper()}{self.regbk.arr_num_suf}]"
+                s += self.port_logic(w, reg.name.lower(), bw, tp, dim, 'ro',ind=ind)
+        return s
+
+    @SVgen.Str
+    def control_reg_logic_block(self, ind=None):
+        """Control register logic
+        Parameters
+            w: width tuple
+            ind: current indent object
+        """
+        s = f"{ind.b}// control register\n"
+        w = self.reg_format_width()
+        for reg in self.regbk.addrs.enumls:
+            bw, tp = self.get_tpbw(reg)
+            width, rw, arr, omit, comb, *_ = self.regbk.GetAddrCmt(reg.name)
+            if reg.name in self.omitlogiclst or omit:
+                pass
+            else:
+                s += self.LogicStr( w, reg.name.lower(), bw, tp, arr=arr, comb=comb, ind=ind)
+        s += "\n"
+        return s
+    @SVgen.Str
+    def rdata_address_condition_logic_block(self, ind=None):
+        """deprecated"""
+        s = f"{ind.b}// read data address selection condtion\n"
+        for reg in self.regbk.addrs.enumls:
+            bw, tp = self.get_tpbw(reg)
+            width, rw, arr, omit, comb, *_ = self.regbk.GetAddrCmt(reg.name)
+            if reg.name in self.omitlogiclst or omit:
+                pass
+            else:
+                if arr:
+                    s += self.LogicStr(
+                        (0,0), reg.name.lower()+self.arr_sel_suf, 1, 'logic', arr=None, comb=True, ind=ind
+                    )
+        s += "\n"
+        return s
+
+    @SVgen.Str
+    def rdata_arr_sel_logic_block(self, ind=None):
+        """
+        """
+        s = f"{ind.b}// read data address selection\n"
+        s += self.LogicStr(
+            (0,0), self.arr_sel,
+            bw = self.regbk.regaddrbw_name,
+            tp = 'logic',
+            arr=None,
+            comb=True,
+            ind=ind
+        )
+        s += self.LogicStr(
+            (0,0), self.arr_sel_minuend,
+            bw = self.arr_sel_minuend.upper()+'_BW',
+            tp = 'logic',
+            arr=None,
+            comb=True,
+            ind=ind
+        )
+        s += "\n"
+        return s
 
     @SVgen.Str
     def IntrCombStr(self, intr_logic, intr_field, dim=None, ind=None):
@@ -405,46 +561,34 @@ class RegbkGen(SrcGen):
             s += f"{ind.b}//TODO\n"
         return s
 
+    def get_tpbw(self, reg):
+        tp = self.regbk.GetType(reg.name.lower())
+        bw = self.regbk.GetBWStr(reg.name)
+        try:
+            bw = int(bw)
+        except:
+            pass
+        bw = reg.name + self.regbk.bw_suf if not bw == 1 else 1
+        bw = 1 if tp else bw
+        tp = reg.name.lower() if tp else "logic"
+        return bw, tp
+
     @SVgen.UserMethod
     @Clip
     def LogicToClip(self, pkg=None, toclip=True, ind=None):
         w = [0, 0]
         s = ""
 
-        def gettpbw(reg):
-            tp = self.regbk.GetType(reg.name.lower())
-            bw = self.regbk.GetBWStr(reg.name)
-            try:
-                bw = int(bw)
-            except:
-                pass
-            bw = reg.name + self.regbk.bw_suf if not bw == 1 else 1
-            bw = 1 if tp else bw
-            tp = reg.name.lower() if tp else "logic"
-            return bw, tp
-
         s += self.ProtocolLogicStr(ind=ind)
         s += self.DataAddrLogicStr(
             self.regbk.regaddrbw_name, self.regbk.regbw_name, ind=ind
         )
-        s += f"{ind.b}// control register\n"
-        for reg in self.regbk.addrs.enumls:
-            bw, tp = gettpbw(reg)
-            width, rw, arr, *_ = self.regbk.GetAddrCmt(reg.name)
-            bwstr = "" if bw == 1 else f"[{bw}-1:0] "
-            w[0] = max(w[0], len(f'{tp+" "+bwstr}'))
-            dim = "" if arr == "" else " [" + reg.name + self.regbk.arr_num_suf + "]"
-            w[1] = max(w[1], len(reg.name + dim) + 2)
-        for reg in self.regbk.addrs.enumls:
-            bw, tp = gettpbw(reg)
-            width, rw, arr, omit, comb, *_ = self.regbk.GetAddrCmt(reg.name)
-            if reg.name in self.omitlogiclst or omit:
-                pass
-            else:
-                s += self.LogicStr(
-                    w, reg.name.lower(), bw, tp, arr=arr, comb=comb, ind=ind
-                )
-        s += "\n"
+
+        s += self.control_reg_logic_block(ind=ind)
+
+        s += self.rdata_address_condition_logic_block(ind=ind)
+
+        s += self.rdata_arr_sel_logic_block(ind=ind)
 
         s += f"{ind.b}// interrupt clear\n"
         intr = self.regbk.raw_intr_stat
@@ -507,12 +651,24 @@ class RegbkGen(SrcGen):
                 arr_reg.append((i, width, rw, arr, omit, comb))
             else:
                 nonarr_reg.append((i, width, rw, arr, omit, comb))
+
+        if self.output_all:
+            s += self.assign_output_all_block(ind=ind)
+
         if arr_reg != []:
             s += f"{ind.b}// array register read data index\n"
+            #for i in arr_reg:
+            #    s += self.RdataArrIdxLogic(i[0].name, ind=ind)
+            #for i in arr_reg:
+            #    s += self.RdataArrIdxComb(i[0].name, ind=ind)
             for i in arr_reg:
-                s += self.RdataArrIdxLogic(i[0].name, ind=ind)
-            for i in arr_reg:
-                s += self.RdataArrIdxComb(i[0].name, ind=ind)
+                s += self.rdata_address_condition_comb(i[0].name, ind=ind)
+            s += f"\n"
+            s += self.rdata_arr_slice_param_block(arr_reg, ind=ind)
+            s += self.rdata_sel_minuend_comb_block(arr_reg, ind=ind)
+
+            s += f"\n"
+
 
         s += f"\n"
         s += f"{ind.b}always_comb begin\n"

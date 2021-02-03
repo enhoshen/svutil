@@ -54,6 +54,12 @@ class SrcGen(SVgen):
         self.rst_name = "i_rst_n"
 
     @SVgen.Str
+    def port_logic(self, w, reg, bw, tp, dim, io, ind=None):
+        bwstr = "" if bw == 1 else f"[{bw}-1:0] "
+        inout = {'i':'input', 'o':'output', 'ro':'input', 'ro':'output'}.get(io)
+        return f'{ind.b},{inout} {tp+" "+bwstr:<{w[0]}}{io[0]}_{reg+dim}\n'
+
+    @SVgen.Str
     def RegLogicStr(self, w, reg, bw, tp, dim, ind=None):
         bwstr = "" if bw == 1 else f"[{bw}-1:0] "
         return f'{ind.b}{tp+" "+bwstr:<{w[0]}}{reg+"_r"+dim:<{w[1]}} ,{reg}_w{dim};\n'

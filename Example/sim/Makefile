@@ -24,8 +24,9 @@ all:
 	make TEST_CFG=4 target 
 gentest:
 	ARGS="+define+TEST_PAT0" \
-	INC=ValMatrix_include \
-	python -i -m SVutil.Gen
+	INC=Test_include \
+	REGBK=TestRegbk \
+	Gen.py
 
 valtest:
 	make ValMatrix ARGS="+define+TIMEOUTCYCLE=3000+TEST_PAT0" \

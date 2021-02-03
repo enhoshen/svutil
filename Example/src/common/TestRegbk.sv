@@ -1,5 +1,5 @@
 `include "common/IntrDefines.sv"
-package P2PRegbk;
+package TestRegbk;
     import Intr::*;
     parameter REG_ADDR_BW = 6;
     parameter REG_BSIZE = 4;
@@ -14,6 +14,7 @@ package P2PRegbk;
 
     parameter SLV_PAIR_NUM = 8;
     parameter ARR_TEST_NUM= 5;
+    parameter ARR_SEL_MINUEND_BW = $clog2(SLV_PAIR_NUM);
 
     `define T 3
     parameter MACRO = `T;
