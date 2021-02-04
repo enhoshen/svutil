@@ -3,7 +3,8 @@ import sys
 import itertools
 
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import *
 
 
 from SVutil.SVparse import *
@@ -12,7 +13,33 @@ from SVutil.SVclass import *
 
 @dataclass
 class Customlst:
-    pass
+    protocol: PRCL_PRESET= None
+    wrdata_style: WRDATA_PRESET = None
+    disable_style: DISABLE_PRESET= None
+    omitlogiclst: List[str]= field(default_factory=["VERSION"])
+
+    addr_name: str= "addr"
+    addr_port_name: str= f"i_{addr_name}"
+    write_name: str= "i_write"
+    wdata_name: str= "i_wdata"
+    rdata_name: str= "rdata"
+    ointr_name: str= "o_intr"
+    addr_slice: str= "REG_ADDR_BW-1:REG_BSIZE_BW"
+    #"[{self.regbk.regaddrbw_name}-1:{(self.regbk.regbsizebw_name)}]"
+    
+    write_cond: str = "write_valid"
+    read_cond: str = "read_valid"
+    cg_cond: str = "ce"
+    wo_cg_cond: str = "wo_ce"
+    ro_cg_cond: str = "ro_ce"
+
+    arr_sel_subtrahend: str= "arr_sel_subtrahend"
+    arr_sel_suf: str= "_sel"
+    arr_sel: str= "arr_sel"
+    arr_idx_suf: str= "arr_idx"
+
+    output_all: bool= True
+    
 
 @SVgen.UserClass
 class RegbkGen(SrcGen):
@@ -62,13 +89,18 @@ class RegbkGen(SrcGen):
             "cg_cond",
             "wo_cg_cond",
             "ro_cg_cond",
-            "arr_sel_minuend",
+            "arr_sel_subtrahend",
             "arr_sel",
             "arr_sel_suf",
             "arr_idx_suf",
             "output_all",
             "omitlogiclst",
         ]
+        self.protocol = None
+        self.wrdata_style = None
+        self.disable_style = None
+        self.omitlogiclst = ["VERSION"]
+
         self.addr_name = "addr"
         self.addr_port_name = f"i_{self.addr_name}"
         self.write_name = "i_write"
@@ -84,17 +116,14 @@ class RegbkGen(SrcGen):
         self.wo_cg_cond = "wo_ce"
         self.ro_cg_cond = "ro_ce"
 
-        self.arr_sel_minuend = "arr_sel_minuend"
+        self.arr_sel_subtrahend = "arr_sel_subtrahend"
         self.arr_sel_suf = "_sel"
         self.arr_sel = "arr_sel"
         self.arr_idx_suf = "arr_idx"
 
         self.output_all = True
 
-        self.protocol = None
-        self.wrdata_style = None
-        self.disable_style = None
-        self.omitlogiclst = ["VERSION"]
+
         self.flag_logic_lst = [
             self.write_cond,
             self.read_cond,
@@ -243,7 +272,7 @@ class RegbkGen(SrcGen):
     
     @SVgen.Str
     def rdata_arr_slice_param_block (self, arr_reg, ind=None):
-        s = f"{ind.b}// rdata array selection slice bw"
+        s = f"{ind.b}// rdata array selection slice bw\n"
         for v in arr_reg:
             s += self.rdata_arr_slice_bw (v[0].name, ind=ind)
         return s+'\n'
@@ -262,20 +291,20 @@ class RegbkGen(SrcGen):
         return s
 
     @SVgen.Str
-    def rdata_sel_minuend_comb(self, reg, ifelse, ind=None):
+    def rdata_sel_subtrahend_comb(self, reg, ifelse, ind=None):
         s = f"{ind.b}{ifelse}({reg.lower()}{self.arr_sel_suf}) begin\n"
-        s += f"{ind[1]}{self.arr_sel_minuend} = {reg};\n" 
+        s += f"{ind[1]}{self.arr_sel_subtrahend} = {reg};\n" 
         s += f"{ind.b}end\n"
         return s
 
     @SVgen.Str
-    def rdata_sel_minuend_comb_block(self, arr_reg, ind=None):
-        s = f"{ind.b}assign {self.arr_sel} = {self.addr_port_name}{self.addr_slice}-{self.arr_sel_minuend};\n"
+    def rdata_sel_subtrahend_comb_block(self, arr_reg, ind=None):
+        s = f"{ind.b}assign {self.arr_sel} = {self.addr_port_name}{self.addr_slice}-{self.arr_sel_subtrahend};\n"
         s += f"{ind.b}always_comb begin\n"
         ifelse_dic = {0:'unique if', len(arr_reg)-1:'else'}
         for i,v in enumerate(arr_reg):
             ifelse = ifelse_dic.get(i, 'else if')
-            s += self.rdata_sel_minuend_comb(v[0].name, ifelse, ind=ind+1)
+            s += self.rdata_sel_subtrahend_comb(v[0].name, ifelse, ind=ind+1)
         s += f"{ind.b}end\n"
         return s
 
@@ -503,8 +532,8 @@ class RegbkGen(SrcGen):
             ind=ind
         )
         s += self.LogicStr(
-            (0,0), self.arr_sel_minuend,
-            bw = self.arr_sel_minuend.upper()+'_BW',
+            (0,0), self.arr_sel_subtrahend,
+            bw = self.arr_sel_subtrahend.upper()+'_BW',
             tp = 'logic',
             arr=None,
             comb=True,
@@ -665,7 +694,7 @@ class RegbkGen(SrcGen):
                 s += self.rdata_address_condition_comb(i[0].name, ind=ind)
             s += f"\n"
             s += self.rdata_arr_slice_param_block(arr_reg, ind=ind)
-            s += self.rdata_sel_minuend_comb_block(arr_reg, ind=ind)
+            s += self.rdata_sel_subtrahend_comb_block(arr_reg, ind=ind)
 
             s += f"\n"
 

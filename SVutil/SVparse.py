@@ -513,31 +513,33 @@ class SVparse(SVutil):
             level=True,
             verbose=2,
         )
-        self.f = open(path, "r", encoding="utf-8")
-        self.cur_path = path
-        self.lines = iter(self.f.readlines())
-        self.cur_s, self.cur_cmt = self.Rdline(self.lines)
-        while 1:
-            self.print(self.cur_s, verbose=5)
-            _w = ""
-            if self.cur_s == None:
-                return
-            if self.cur_s.End():
-                _cmt = self.cur_cmt
-                self.cur_s, self.cur_cmt = self.Rdline(self.lines)
-                self.cur_cmt = _cmt + self.cur_cmt if self.cur_s == "" else self.cur_cmt
-                continue
-            _w = self.cur_s.lsplit()
-            _catch = None
-            if _w in self.parselist:
-                self.cur_key = _w
-                if (
-                    SVparse.session.path_level == self.inclvl
-                    and self.cur_key == "`include"
-                ):
+        with open(path, "r", encoding="utf-8") as f:
+            self.f = f
+            self.cur_path = path
+            self.lines = iter(self.f.readlines())
+            self.cur_s, self.cur_cmt = self.Rdline(self.lines)
+            while 1:
+                self.print(self.cur_s, verbose=5)
+                _w = ""
+                if self.cur_s == None:
+                    return
+                if self.cur_s.End():
+                    _cmt = self.cur_cmt
+                    self.cur_s, self.cur_cmt = self.Rdline(self.lines)
+                    self.cur_cmt = _cmt + self.cur_cmt if self.cur_s == "" else self.cur_cmt
                     continue
-                if self.flag_parse or _w in self.alwaysparselist:
-                    _catch = self.keyword[_w](self.cur_s, self.lines)
+                _w = self.cur_s.lsplit()
+                _catch = None
+                if _w in self.parselist:
+                    self.cur_key = _w
+                    if (
+                        SVparse.session.path_level == self.inclvl
+                        and self.cur_key == "`include"
+                    ):
+                        continue
+                    if self.flag_parse or _w in self.alwaysparselist:
+                        _catch = self.keyword[_w](self.cur_s, self.lines)
+            self.f = None
 
     def IncludeRead(self, s, lines):
         SVparse.session.path_level += 1
@@ -1209,11 +1211,11 @@ class SVparseSession(SVutil):
         self.gb_hier.types = {"integer": None, "int": None, "logic": None}
 
     def ShowFile(n, start=0, end=None):
-        f = open(self.paths[n], "r")
-        l = f.readlines()
-        end = start + 40 if end == None else end
-        for i, v in enumerate([x + start for x in range(end - start)]):
-            print(f"{i+start:<4}|", l[v], end="")
+        with open(self.paths[n], "r") as f:
+            l = f.readlines()
+            end = start + 40 if end == None else end
+            for i, v in enumerate([x + start for x in range(end - start)]):
+                print(f"{i+start:<4}|", l[v], end="")
 
     def ShowPaths(self):
         for i, v in enumerate(self.paths):

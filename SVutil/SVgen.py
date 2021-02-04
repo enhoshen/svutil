@@ -142,8 +142,8 @@ class SVgen(SVutil):
             fpath = self.genpath + fpath + "_" + time.strftime("%m%d%H") + "." + suf
         else:
             fpath = self.genpath + fpath + "." + suf
-        f = open(fpath, "w")
-        f.write(text)
+        with open(fpath, "w") as f:
+            f.write(text)
         return fpath
 
     def Line3BannerBlk(self, w, cmtc, text):

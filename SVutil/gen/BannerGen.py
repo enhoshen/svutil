@@ -106,26 +106,26 @@ class GanzinBanner(BannerGen):
         yield f"\n{ind.b}`endif // {self.IncGuardStr()}"
 
     def BannerStr(self, fr, suf="sv"):
-        fr = open(fr, "r")
-        ban = self.BannerBlk(suf)
-        try:
-            fstr = fr.read()
-        except:
-            self.print("file read not supported")
-            return None
-        s = self.Genlist([(ban,), fstr])
+        with open(fr, "r") as fr:
+            ban = self.BannerBlk(suf)
+            try:
+                fstr = fr.read()
+            except:
+                self.print("file read not supported")
+                return None
+            s = self.Genlist([(ban,), fstr])
         return s
 
     def BannerIncguardStr(self, fr, suf="sv"):
-        fr = open(fr, "r")
-        ban = self.BannerBlk(suf)
-        incg = self.IncGuardBlk()
-        try:
-            fstr = fr.read()
-        except:
-            self.print("file read not supported")
-            return None
-        s = self.Genlist([(ban,), (incg,), fstr, incg])
+        with open(fr, "r") as fr:
+            ban = self.BannerBlk(suf)
+            incg = self.IncGuardBlk()
+            try:
+                fstr = fr.read()
+            except:
+                self.print("file read not supported")
+                return None
+            s = self.Genlist([(ban,), (incg,), fstr, incg])
         return s
 
     @SVgen.UserMethod
@@ -171,8 +171,8 @@ class GanzinBanner(BannerGen):
             if s is None or t is None:
                 self.print("un-supported files or something went wrong")
                 return ""
-            f = open(fpath, "w")
-            f.write(s)
+            with open(fpath, "w") as f:
+                f.write(s)
         return fpath
 
     @SVgen.UserMethod

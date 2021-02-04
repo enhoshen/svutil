@@ -206,16 +206,16 @@ class InterfaceDiagramGen(DrawioGen):
 
     @SVgen.Str
     def ToFileTwoSide(self, path, module=None):
-        f = open(path, "w")
-        s = self.ToClipTwoSide(module)
-        f.write(s)
+        with open(path, "w") as f:
+            s = self.ToClipTwoSide(module)
+            f.write(s)
 
     @SVgen.Str
     def ToFile(self, path, module=None, flip=False):
-        f = open(path, "w")
-        s = self.InterfaceDiagramGen(module, flip)
-        ToClip(s)
-        f.write(s)
+        with open(path, "w") as f:
+            s = self.InterfaceDiagramGen(module, flip)
+            ToClip(s)
+            f.write(s)
 
 
 if __name__ == "__main__":
