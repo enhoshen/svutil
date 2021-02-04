@@ -223,12 +223,20 @@ class RegbkGen(SrcGen):
         else:
             return self.RegLogicStr(w, reg, bw, tp, dim, ind=ind)
 
+    def rdata_basic_string(self, reg, comb, const):
+        pad = f"{self.regbk.regbw_name}-{reg}{self.regbk.bw_suf}"
+        pad = "{{" + f"{pad}" + "{1'b0}}"
+        logic = f"{reg.lower()}" if comb else f"{reg.lower()}_r"
+        logic = "" if const else logic
+        sel = f"[{self.arr_sel}[{reg.upper()}_NUM_BW-1:0]]"
+        const_cmt = f'{"//TODO" if const else ""}'
+        return pad, logic, sel, const_cmt
+
     @SVgen.Str
-    def RdataStr(self, reg, _slice, w, rw=None, comb=False, const=False, ind=None):
+    def rdata_vector_comb(self, reg, _slice, w, rw=None, comb=False, const=False, ind=None):
         # TODO slice dependent, now it only pad the MSB and it's usually the case
         if rw and rw == "WO":
             return ""
-        pad = f"{self.regbk.regbw_name}-{reg}{self.regbk.bw_suf}"
         if (
             self.wrdata_style == WRDATA_PRESET.INSTANT
             and self.protocol == PRCL_PRESET.VALID
@@ -236,19 +244,19 @@ class RegbkGen(SrcGen):
             s = f"{ind.b}{reg:<{w[0]}}: o_{self.rdata_name} = "
         else:
             s = f"{ind.b}{reg:<{w[0]}}: {self.rdata_name}_w = "
-        pad = "{{" + f"{pad}" + "{1'b0}}"
-        logic = f"{reg.lower()}" if comb else f"{reg.lower()}_r"
-        logic = "" if const else logic
-        s += f'{pad:<{w[1]}} ,{logic}}};{"//TODO" if const else ""}\n'
+        pad, logic, sel, const_cmt = self.rdata_basic_string(reg, comb, const)
+        # concatenate style
+        #s += f'{pad:<{w[1]}} ,{logic}}};{const_cmt}\n'
+        s += f"{self.regbk.regbw_name}'({logic});{const_cmt}\n"
+        # casting style
         return s
 
 
     @SVgen.Str
-    def RdataArrStr(self, reg, ifelse, w, rw=None, comb=False, const=False, ind=None):
+    def rdata_arr_comb(self, reg, ifelse, w, rw=None, comb=False, const=False, ind=None):
         if rw and rw == "WO":
             return ""
         addr_r = ""
-        pad = f"{self.regbk.regbw_name}-{reg}{self.regbk.bw_suf}"
         s = f'{ind.b}{ifelse}({reg.lower()}{self.arr_sel_suf}) begin\n'
         if (
             self.wrdata_style == WRDATA_PRESET.INSTANT
@@ -257,10 +265,11 @@ class RegbkGen(SrcGen):
             s += f"{ind[1]}o_{self.rdata_name} = "
         else:
             s += f"{ind[1]}{self.rdata_name}_w = "
-        pad = "{{" + f"{pad}" + "{1'b0}}"
-        logic = f"{reg.lower()}" if comb else f"{reg.lower()}_r"
-        logic = "" if const else logic
-        s += f'{pad:<{w[1]}} ,{logic}[{self.arr_sel}[{reg.upper()}_NUM_BW-1:0]]}};{"//TODO" if const else ""}\n'
+        pad, logic, sel, const_cmt = self.rdata_basic_string(reg, comb, const)
+        # concatenate style
+        #s += f'{pad:<{w[1]}} ,{logic}{sel}}};{const_cmt}\n'
+        # casting style 
+        s += f"{self.regbk.regbw_name}'({logic}{sel});{const_cmt}\n"
         s += f"{ind.b}end\n"
         return s
     @SVgen.Str
@@ -724,11 +733,11 @@ class RegbkGen(SrcGen):
             reg = reg.name
             const = True if reg in self.omitlogiclst or omit else False
             if i == 0:
-                s += self.RdataArrStr(
+                s += self.rdata_arr_comb(
                     reg, "unique if", w, rw, comb=comb, const=const, ind=ind + 2
                 )
             else:
-                s += self.RdataArrStr(
+                s += self.rdata_arr_comb(
                     reg, "else if", w, rw, comb=comb, const=const, ind=ind + 2
                 )
 
@@ -740,7 +749,7 @@ class RegbkGen(SrcGen):
             _slice = self.regbk.regslices.get(reg.name)
             reg = reg.name
             const = True if reg in self.omitlogiclst or omit else False
-            s += self.RdataStr(
+            s += self.rdata_vector_comb(
                 reg, _slice, w, rw, comb=comb, const=const, ind=ind + case_ind + 1
             )
         s += f"{ind[case_ind+1]}default: {self.rdata_name}_w = '0;\n"
