@@ -86,7 +86,7 @@ class TestGen(SVgen):
             s += f'{ind.b}`PosIf({ev[0]+", "+ev[1]+",":<{w}} {self.rststr}_n)//TODO modify reset logic\n'
 
         # dummy
-        s += f'{ind.b}logic dummy; // general purpose dummy logic'
+        s += f'{ind.b}logic dummy; // general purpose dummy logic\n'
 
         # initial block
         s += f"{ind.b}`WithFinish\n\n"

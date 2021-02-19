@@ -610,6 +610,7 @@ class SVparse(SVutil):
 
     def ArrayParse(self, s, lines):
         dim = s.bracket_parse()
+        print(self.Tuple2num(dim))
         name = s.IDParse()
         return (name, "", self.Tuple2num(dim), "")
 
@@ -1094,7 +1095,14 @@ class SVparse(SVutil):
         return (_s.rstrip(), cmt)
 
     def Tuple2num(self, t):
-        return tuple(map(lambda x: SVstr(x).NumParse(self.cur_hier, self.package), t))
+        _t = []
+        for i in t:
+            if ':' in i:
+                _t.append(SVstr(i).Slice2num(self.cur_hier, self.package))
+            else:
+                _t.append(SVstr(i).NumParse(self.cur_hier, self.package))
+        return tuple(_t)
+        #return tuple(map(lambda x: SVstr(x).NumParse(self.cur_hier, self.package), t))
         # NumParse(params=self.cur_hier.Params, macros=self.cur_hier.AllMacro, package=self.package)
 
     def Tuple2str(self, t):

@@ -189,6 +189,7 @@ class StructBusCreator:
         if not attrs:
             return CreateBus(((hier, signalName, DIM, dtype),))
         else:
+            print(attrs)
             for n, bw, dim, t, *_ in attrs:
                 if t in self.basic_sv_type:
                     if dtype is None:

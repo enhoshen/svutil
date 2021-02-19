@@ -304,19 +304,19 @@ class SVstr(SVutil):
             )
             return [self.s]
 
-    def Slice2num(self, cur_hier):
+    def Slice2num(self, cur_hier, package=None):
         if self.s == "":
             return 1
         _temp = self.s.replace("::", "  ")
         _idx = _temp.find(":")
         _s, _e = self.s[0:_idx], self.s[_idx + 1 :]
         try:
-            return SVstr(_s).NumParse(cur_hier) - SVstr(_e).NumParse(cur_hier) + 1
+            return SVstr(_s).NumParse(cur_hier, package) - SVstr(_e).NumParse(cur_hier, package) + 1
         except (TypeError):
             self.print("Slice2num fail, TypeError", verbose=2)
             self.print(self.s, verbose="Slice2Num")
 
-    def Slice2TwoNum(self, cur_hier):
+    def Slice2TwoNum(self, cur_hier, package=None):
         if self.s == "":
             return 1
         _temp = self.s.replace("::", "  ")
@@ -324,7 +324,7 @@ class SVstr(SVutil):
         self.print(_idx, verbose="Slice2TwoNum")
         _s, _e = self.s[0:_idx] if _idx != -1 else "", self.s[_idx + 1 :]
         self.print(_s, _e, verbose="Slice2TwoNum")
-        return (SVstr(_s).NumParse(cur_hier), SVstr(_e).NumParse(cur_hier))
+        return (SVstr(_s).NumParse(cur_hier, package), SVstr(_e).NumParse(cur_hier, package))
 
     def SimpleMacroExpand(self, macros):
         """
