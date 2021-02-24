@@ -409,7 +409,7 @@ class SVparse(SVutil):
             "logic": self.LogicParse,
             "parameter": self.ParamParse,
             "localparam": self.ParamParse,
-            "typedef": self.TypedefParse,
+            "typedef": self.typedef_parse,
             "struct": self.StructParse,
             "package": self.HierParse,
             "enum": self.EnumParse,
@@ -608,9 +608,9 @@ class SVparse(SVutil):
         self.print(lst, verbose=3)
         return lst
 
-    def ArrayParse(self, s, lines):
+    def array_parse(self, s, lines):
+        """ parse an identifier with packed dimension specified"""
         dim = s.bracket_parse()
-        print(self.Tuple2num(dim))
         name = s.IDParse()
         return (name, "", self.Tuple2num(dim), "")
 
@@ -862,7 +862,8 @@ class SVparse(SVutil):
                     for _n, _d in zip(n, d)
                 ]
 
-    def TypedefParse(self, s, lines):
+    def typedef_parse(self, s, lines):
+        """ when keyword typedef is met """
         _w = s.lsplit()
         types = self.cur_hier.AllTypeKeys
         tp = SVstr(_w).TypeParse(types)
@@ -874,10 +875,17 @@ class SVparse(SVutil):
                 pass
         _m = self.keyword.get(_w)
         _catch = ()
+
+        # if typedef is followed by types (EX: logic, struct or user defined types)
+        # use the keyword parsing function, otherwise treats the remaining string like 
+        # regular logic identifier using array_parse; regular logic identifier takes 
+        # the format of [type][packed array dimension] {identifier}
+       
         if _m != None:
             _catch = _m(s, lines)
         else:
-            _catch = self.ArrayParse(s, lines)
+            _catch = self.array_parse(s, lines)
+            # (identifier, bandwidth ,packed dimension, type) 
             _catch = (
                 _catch[0],
                 int(np.multiply.reduce(_catch[2]) * self.cur_hier.types[_w][0][1]),

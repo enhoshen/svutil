@@ -1,5 +1,6 @@
 from SVutil.SVutil import *
 import re
+from dataclasses import dataclass, field
 
 VERBOSE = os.environ.get("VERBOSE", 0)
 
