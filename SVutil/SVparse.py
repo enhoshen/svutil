@@ -608,7 +608,7 @@ class SVparse(SVutil):
         self.print(lst, verbose=3)
         return lst
 
-    def array_parse(self, s, lines):
+    def vector_parse(self, s, lines):
         """ parse an identifier with packed dimension specified"""
         dim = s.bracket_parse()
         name = s.IDParse()
@@ -878,13 +878,13 @@ class SVparse(SVutil):
 
         # if typedef is followed by types (EX: logic, struct or user defined types)
         # use the keyword parsing function, otherwise treats the remaining string like 
-        # regular logic identifier using array_parse; regular logic identifier takes 
+        # regular logic identifier using vector_parse; regular logic identifier takes 
         # the format of [type][packed array dimension] {identifier}
        
         if _m != None:
             _catch = _m(s, lines)
         else:
-            _catch = self.array_parse(s, lines)
+            _catch = self.vector_parse(s, lines)
             # (identifier, bandwidth ,packed dimension, type) 
             _catch = (
                 _catch[0],

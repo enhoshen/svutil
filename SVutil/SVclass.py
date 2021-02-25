@@ -252,13 +252,13 @@ class SVRegbk(SVutil):
         self.bw_suf = "_BW"
         self.arr_num_suf = "_NUM"
         self.reserved_name = "RESERVED"
-        self.regaddr_name = "regaddr"
-        self.regaddr_arr_name = "regaddr_arr"
+        self.regaddr_name = "RegAddr"
+        self.regaddr_arr_name = "RegAddrArr"
         self.regbw_name = "REG_BW"
         self.regaddrbw_name = "REG_ADDR_BW"
         self.regbsize_name = "REG_BSIZE"
         self.regbsizebw_name = "REG_BSIZE_BW"
-        self.regintr_name = "raw_intr_stat"
+        self.regintr_name = "RawIntrStat"
 
         self.name = pkg.name
         self.verbose = V_(VERBOSE)
