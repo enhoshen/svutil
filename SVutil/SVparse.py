@@ -616,6 +616,7 @@ class SVparse(SVutil):
 
     def ParamParse(self, s, lines):
         # TODO type parse (in SVstr) , array parameter
+        sign = s.SignParse()
         tp = s.TypeParse(self.cur_hier.AllTypeKeys.union(self.gb_hier.SelfTypeKeys))
         bw = s.bracket_parse()
         bwstr = self.Tuple2str(bw)
@@ -763,8 +764,9 @@ class SVparse(SVutil):
             s += _s
         s = s.split(";")[0]
         for _s in s.split(","):
-            if "::" in _s:
-                _pkg, _param = _s.lstrip().rstrip().split("::")
+            search = re.search(rf"\s*::\s*", _s)
+            if search:
+                _pkg, _param = _s.lstrip().rstrip().split(search.group())
             else:
                 self.print("only support importing packages")
                 return

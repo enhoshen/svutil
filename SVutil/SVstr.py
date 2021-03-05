@@ -9,15 +9,24 @@ from SVutil.SVclass import *
 VERBOSE = os.environ.get("VERBOSE", 0)
 # verilog system function implementation
 # S2num can evaulate the functions directly
-class SVsysfunc:
+class SVsysfunc (SVutil):
     # current SVhier
-    def clog2(s):
-        return int(np.ceil((np.log2(s))))
+    def __init__(self, cur_hier, package):
+        super().__init__()
+        self.package = package
+        self.cur_hier = cur_hier
 
-    def bits(s, cur_hier):
-        if cur_hier.types.get(s):
+    def clog2(self, s):
+        if isinstance(s, str):
+            num = self.cur_hier.params[s] 
+        else:
+            num = s
+        return int(np.ceil((np.log2(num))))
+
+    def bits(self, s):
+        if self.cur_hier.types.get(s):
             bits = 0
-            for i in cur_hier.types.get(s):
+            for i in self.cur_hier.types.get(s):
                 i = SVType(i)
                 bits += i.bw
             return bits
@@ -146,11 +155,13 @@ class SVstr(SVutil):
 
     def SignParse(self):
         self.lstrip()
-        if "signed" in self.s:
-            self.s = self.s.replace("signed", "")
-            return True
+        if "unsigned" in self.s:
+            self.s = self.s.replace("unsigned", "")
         else:
-            return False
+            if "signed" in self.s:
+                self.s = self.s.replace("unsigned", "")
+                return True
+        return False
 
     def bracket_parse(self, bracket="[]"):
         """find and convert every brackets at the start of the string
@@ -223,8 +234,9 @@ class SVstr(SVutil):
         # if '$clog2' in _s:
         #    _temp = self.s.split('(')[1].split(')')[0]
         #    _s = _s.replace( _s[_s.find('$'):_s.find(')')+1] , 'int(np.log2('+ _temp + '))')
-        _s = _s.replace("$", "SVsysfunc.")
-        _s = re.sub(rf"SVsysfunc.bits\((\w*)\)", r'SVsysfunc.bits("\1", cur_hier)', _s)
+        sysfunc = SVsysfunc(cur_hier, package)
+        _s = _s.replace("$", "sysfunc.")
+        _s = re.sub(rf"(sysfunc.\w*\s*)\((\w*)\)", r'\1("\2")', _s)
         _s_no_op = SVstr(_s).ReplaceSplit(self.op_chars + [",", "'", "{", "}"])
         for w in _s_no_op:
             if "::" in w:
