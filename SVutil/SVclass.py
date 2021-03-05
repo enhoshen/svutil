@@ -1,5 +1,6 @@
 from SVutil.SVutil import *
 import re
+
 from dataclasses import dataclass, field
 
 VERBOSE = os.environ.get("VERBOSE", 0)
@@ -224,6 +225,22 @@ class SVEnuml(SVclass):
     def __str__(self):
         return f"<SVEnuml: {self.name}>"
 
+@dataclass
+class RegbkCustom ():
+    regfield_suf:str = "_regfield"
+    default_suf:str = "_DEFAULT"
+    bw_suf:str = "_BW"
+    arr_num_suf:str = "_NUM"
+    reserved_name:str = "RESERVED"
+    regaddr_name:str = "RegAddr"
+    regaddr_arr_name:str = "RegAddrArr"
+    regbw_name:str = "REG_BW"
+    regaddrbw_name:str = "REG_ADDR_BW"
+    regbsize_name:str = "REG_BSIZE"
+    regbsizebw_name:str = "REG_BSIZE_BW"
+    regintr_name:str = "RawIntrStat"
+
+
 
 class SVRegbk(SVutil):
     """
@@ -231,7 +248,7 @@ class SVRegbk(SVutil):
         regfields: SVEnums
     """
 
-    def __init__(self, pkg):
+    def __init__(self, pkg, custom=None):
         self.customlst = [
             "regfield_suf",
             "default_suf",
@@ -247,18 +264,8 @@ class SVRegbk(SVutil):
             "regintr_name",
         ]
         self.userfunclst = ["ShowAddr"]
-        self.regfield_suf = "_regfield"
-        self.default_suf = "_DEFAULT"
-        self.bw_suf = "_BW"
-        self.arr_num_suf = "_NUM"
-        self.reserved_name = "RESERVED"
-        self.regaddr_name = "RegAddr"
-        self.regaddr_arr_name = "RegAddrArr"
-        self.regbw_name = "REG_BW"
-        self.regaddrbw_name = "REG_ADDR_BW"
-        self.regbsize_name = "REG_BSIZE"
-        self.regbsizebw_name = "REG_BSIZE_BW"
-        self.regintr_name = "RawIntrStat"
+
+        self.custom = RegbkCustom() if custom is None else custom
 
         self.name = pkg.name
         self.verbose = V_(VERBOSE)
@@ -289,6 +296,15 @@ class SVRegbk(SVutil):
         self.regbws = {}
         self.params = {}
         self.raw_intr_stat = self.GetType(self.regintr_name)
+
+        self.parse_parameter(pkg)
+        self.parse_regfield(pkg)
+        self.parse_register_type(pkg)
+
+        # self.regfields = pkg. TODO reg fields, defaults etc...
+
+    def parse_parameter(self, pkg):
+        """ get register bandwidth and default parameters """
         for i, v in pkg.paramsdetail.items():
             _v = SVParam(v)
             self.params[i] = _v
@@ -298,8 +314,23 @@ class SVRegbk(SVutil):
             _s = i.split(self.bw_suf)
             if len(_s) == 2:
                 self.regbws[_s[0]] = _v
+
+    def parse_regfield(self, pkg):
         for i, v in pkg.enums.items():
             self.EnumToRegfield(i, v)
+
+    def parse_register_type(self, pkg):
+        """ 
+        parse user defined type for register if any
+
+        Packed struct can be handy to specify register field. EX:
+        typedef struct packed {
+            logic [3:0] b;
+            logic [1:0] a;
+        } RegA;
+        now RegA[5:2] = b; RegA[1:0] = b; In register bank implementation this
+        can be useful.
+        """
         for i, v in pkg.types.items():
             while True:
                 _v = v[0]
@@ -308,16 +339,22 @@ class SVRegbk(SVutil):
                     v = subt
                 else:
                     break
+            # get struct
             _v = [SVType(vv) for vv in v]
             tt = [self.GetType(vv.tp) for vv in _v]
-            self.regtypes[i.upper()] = _v
-            self.regmembtypes[i.upper()] = tt
+
+            self.regtypes[self.type_to_reg(i)] = _v
+            self.regmembtypes[self.type_to_reg(i)] = tt
+
         if self.addrsdict:
             for k in self.addrsdict.keys():
                 tp = self.regtypes.get(k)
                 if type(tp) == list and k not in self.regslices:
                     self.StructToRegfield(k, tp)
-        # self.regfields = pkg. TODO reg fields, defaults etc...
+        
+
+    def __getattr__(self, n):
+        return self.custom.__dict__[n]
 
     def GetDefaultsStr(self, name, lst=False):
         reg = self.regaddrsdict.get(name)
@@ -351,6 +388,10 @@ class SVRegbk(SVutil):
     def GetType(self, tp):
         tp = self.pkg.AllType.get(tp)
         return [SVType(t) for t in tp] if tp else None
+
+    def type_to_reg(self, t):
+        """ pascal to upper snake case"""
+        return re.sub(rf'(?!^)([A-Z])', rf'_\1', t).upper()
 
     def EnumToRegfield(self, name, enum):
         _v = SVEnums(enum)

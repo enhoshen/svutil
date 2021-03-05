@@ -15,6 +15,7 @@ __all__ = ["SVutilCompleter"]
 CYAN = colorama.Fore.CYAN
 CRESET = colorama.Style.RESET_ALL
 
+# refer to python source rlcompleter.py
 
 class SVutilCompleter(rlcompleter.Completer):
     def __init__(self):
@@ -167,6 +168,20 @@ class SVutilCompleter(rlcompleter.Completer):
         return hasattr(obj, "__svcompleterfmt__")
 
     def SV_display_hook(self, substitution, matches, longest_match_length):
+        """ 
+        SVutil display hook
+
+        if an SVtypeFmt computes true for an object, use the object's
+        __svcompleterfmt__ to display the matches.
+
+        Parameter
+        ---------
+        substitution: unknown
+        matches: 
+        longest_match_length: the string length of the longest match in matches, useful for formatting
+        """
+
+        # get terminal width, see how many largest match string can it fit.
         # rows, columns = subprocess.check_output(['stty', 'size']).split()
         # columns = subprocess.check_output(['tput', 'cols']).split()
         columns, row = shutil.get_terminal_size((80, 20))
@@ -180,11 +195,13 @@ class SVutilCompleter(rlcompleter.Completer):
         cur_col = 0
         for i, match in enumerate(matches):
             _match = match.split(".")[-1]
+            # use customized completer display formator
             if self.SVtypeFmt(self.cur_object):
                 attr = _match[:-1] if _match[-1] == "(" else _match
                 print(self.cur_object.__svcompleterfmt__(attr, f"{match:<{w}}"), end="")
             else:
                 print(f"{match:<{w}}", end="")
+            # the screen doesn't fit, goes to next line
             if (
                 cur_col % cols == cols - 1
                 or cur_col % self.max_match_cols == self.max_match_cols - 1
@@ -195,6 +212,7 @@ class SVutilCompleter(rlcompleter.Completer):
                 cur_col += 1
         if cur_col != 0:
             print()
+        # re-print the terminal prompt
         print(f"{self.prompt} ", readline.get_line_buffer(), sep="", end="")
         sys.stdout.flush()
         return
