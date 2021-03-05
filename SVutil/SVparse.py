@@ -576,6 +576,8 @@ class SVparse(SVutil):
                         verbose=2,
                     )
         SVparse.session.path_level -= 1
+        for k in SVparse.session.cur_parse.cur_hier.macros:
+            last_parse.keyword['`' + k] = self.MacroParse
         SVparse.session.cur_parse = last_parse
         return
 

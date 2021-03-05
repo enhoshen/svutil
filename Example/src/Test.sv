@@ -1,6 +1,8 @@
 
+`include "common/Defines.sv"
 `include "common/TestRegbk.sv"
 `define TM 8
+
 typedef struct packed{
     logic e;
     logic f;
@@ -12,11 +14,11 @@ typedef struct packed{
     type2 c;
     poopee d;
 } type1;
-module ValMatrix
-    //import P2PRegbk::*;
-    import P2PRegbk::REG_ADDR_BW
-    ,P2PRegbk::REG_BSIZE
-    ,P2PRegbk::SLV_PAIR;
+module TestModule 
+    //import TestRegbk::*;
+    import TestRegbk::REG_ADDR_BW
+    ,TestRegbk::REG_BSIZE
+    ,TestRegbk::SLV_PAIR;
     import Intr::*;
 #(
      localparam ADDR_BW = REG_ADDR_BW
@@ -38,5 +40,10 @@ module ValMatrix
     ,input logic onebit [DIM3][5]
 );
     parameter SHIFT = 3 >>1 ;
-    import P2PRegbk::intr_ctrl; 
+    parameter WS = 32;     // size of a vector (similar to CUDA GPU warp)
+	     `p_C(WS);
+	    `p_C1(WS);
+	   `p_C1C(WS);
+
+    import TestRegbk::intr_ctrl; 
 endmodule
