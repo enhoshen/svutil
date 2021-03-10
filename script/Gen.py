@@ -3,22 +3,19 @@ if __name__ == "__main__":
     from SVutil.SVparse import *
     import sys
     import SVutil.SVutilCompleter
-    from SVutil.gen.SrcGen import *
-    from SVutil.gen.TestGen import TestGen
-    from SVutil.gen.srcgen.RegbkGen import RegbkGen 
-    from SVutil.gen.srcgen.ConnectGen import ConnectGen
-    from SVutil.gen.drawiogen.InterfaceDiagramGen import InterfaceDiagramGen 
-    from SVutil.gen.drawiogen.BlockDiagramGen import BlockDiagramGen 
-    from SVutil.gen.LatexGen import LatexGen
-    from SVutil.gen.BannerGen import GanzinBanner
-    from SVutil.gen.xlgen.MemmapGen import MemmapGen
     session = SVparseSession(V_(VERBOSE))
     session.FileParse(paths=None)
     hiers = EAdict(session.hiers)
+
+    from SVutil.gen.tbgen import *
     try:
-        gTest = TestGen(session=session)
+        gTestSv = TbSvGen(session=session)
+        gTestPy = TbPyGen(session=session)
     except:
         SVutil().print('TestGen initialization failed') 
+
+    from SVutil.gen.SrcGen import *
+    from SVutil.gen.srcgen import *
     try:
         gRegbk = RegbkGen(session=session)
     except:
@@ -27,6 +24,8 @@ if __name__ == "__main__":
         gConnect= ConnectGen(session=session)
     except:
         SVutil().print('ConnectGen initialization failed') 
+
+    from SVutil.gen.drawiogen import * 
     try:
         gIFgen = InterfaceDiagramGen(session=session)
     except:
@@ -35,11 +34,18 @@ if __name__ == "__main__":
         gBLgen = BlockDiagramGen(session=session)
     except:
         SVutil().print('BlockGen initialization failed') 
+
+    from SVutil.gen.LatexGen import LatexGen
     try:
         gLatex = LatexGen(session=session)
     except:
         SVutil().print('LatexGen initialization failed') 
+
+    from SVutil.gen.BannerGen import GanzinBanner
     gBanner = GanzinBanner()
+
+
+    from SVutil.gen.xlgen import * 
     try:
         gmemmapxl = MemmapGen(session=session)
     except:

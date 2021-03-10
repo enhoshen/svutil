@@ -1,6 +1,7 @@
 import os
 import inspect
 import logging
+from functools import wraps
 
 import colorama
 
@@ -98,12 +99,13 @@ class SVutil:
             return f"{SVutil.cyellow}{match}{SVutil.creset}"
         if hasattr(super(), "customlst") and attr in super().customlst:
             return f"{SVutil.cyellow}{match}{SVutil.creset}"
-        if hasattr(self, "userfunclst") and attr in self.userfunclst:
-            return f"{SVutil.cgreen}{match}{SVutil.creset}"
         if (
             hasattr(self.__class__, "userfunclst")
             and attr in self.__class__.userfunclst
         ):
+            return f"{SVutil.cgreen}{match}{SVutil.creset}"
+
+        if hasattr(self, "userfunclst") and attr in self.userfunclst:
             return f"{SVutil.cgreen}{match}{SVutil.creset}"
 
         return f"{match}"
@@ -121,6 +123,13 @@ class SVutil:
                 cls.customlst += [name]
             if hasattr(method, "__svutil_userfunc__"):
                 cls.userfunclst += [name]
+
+        for c in cls.__mro__:
+            if hasattr(c, "customlst"):
+                cls.customlst += c.customlst
+            if hasattr(c, "userfunclst"):
+                cls.userfunclst += c.userfunclst
+
         return cls
 
     def UserCustom(orig):
@@ -129,7 +138,7 @@ class SVutil:
 
     def UserMethod(orig):
         orig.__svutil_userfunc__ = True
-        return orig
+        return orig 
 
 
 class SVcvar:

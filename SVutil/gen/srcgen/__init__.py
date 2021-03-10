@@ -1,2 +1,2 @@
-from . import ConnectGen
-from . import RegbkGen
+from .ConnectGen import ConnectGen
+from .RegbkGen import RegbkGen

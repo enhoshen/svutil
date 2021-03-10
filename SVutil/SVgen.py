@@ -1,7 +1,8 @@
-from SVutil.SVparse import *
 import os
 from functools import wraps
 
+from SVutil.SVparse import *
+from SVutil.SVutil import SVutil
 
 class Ind:
     def __init__(self, n):
@@ -78,17 +79,43 @@ class SVgen(SVutil):
             yield ind.b + "\n"
 
     def Genlist(self, structure):
+        """
+        Generate texts based on a simple structure description list.
+        
+        SVgen building blocks are **generators** generating strings accessed by
+        next() built-in function. Users can choose desirable block and
+        combine them into a file description list:  
+        `EX`: genlist([ (A,B) , A , (C,) , [1, D , E], (2, F, G), A])
+        generates a file structure of such
+
+        ```
+        A
+        B
+        A'
+        C
+          D
+            E
+            E'
+          D'
+            F
+            G
+        A''
+        ```
+
+        * naked block structure generates a string once
+        * tuple initializes and generates once of its contents
+        * nested list will initialize, generates strings and expands its
+        content in a hierarchical structure
+        * integer will add up to the current indent level
+
+        """
+
         o = ""
         _ind = self.cur_ind.Copy()
         for strt in structure:
-            prev_ind = self.cur_ind.Copy()
-            try:
-                if type(strt[0]) == int:
-                    self.cur_ind += strt[0]
-                    strt = strt[1:]
-            except:
-                pass
-            if type(strt) == list:
+            if isinstance(strt, int):
+                self.cur_ind += strt
+            elif type(strt) == list:
                 for v in strt:
                     next(v)  # initialize
                     o += self.Nextblk(v)
@@ -98,14 +125,19 @@ class SVgen(SVutil):
                     o += self.Nextblk(v)
                     self.cur_ind -= 1
             elif type(strt) == tuple:
+                prev_ind = self.cur_ind.Copy()
                 for i in strt:
+                    if isinstance(i, int):
+                        self.cur_ind += i 
+                        continue
                     self.Nextblk(i)
                     o += self.Nextblk(i)
+                self.cur_ind = prev_ind
             elif type(strt) == str:
                 o += strt
             else:
                 o += self.Nextblk(strt)
-            self.cur_ind = prev_ind
+
         self.cur_ind = _ind.Copy()
         return o
 

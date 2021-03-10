@@ -1,1 +1,1 @@
-from . import MemmapGen
+from .MemmapGen import MemmapGen

@@ -173,7 +173,7 @@ ports, declaring parameters, creating buses for Nicotb and so on in py and sv fi
 SVgen building blocks are **generators** generating strings accessed by
 next() built-in function. Users can choose desirable block and
 combine them into a file description list:  
-`EX`: [ (A,B) , A , (C,) , [ind , D , E] , A]  
+`EX`: genlist([ (A,B) , A , (C,) , [1, D , E], (2, F, G), A])
 generates a file structure of such
 
 ```
@@ -185,6 +185,8 @@ C
     E
     E'
   D'
+    F
+    G
 A''
 ```
 
@@ -192,6 +194,7 @@ A''
 * tuple initializes and generates once of its contents
 * nested list will initialize, generates strings and expands its
 content in a hierarchical structure
+* integer will add up to the current indent level
 
 ### Building Block
 
