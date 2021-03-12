@@ -255,6 +255,8 @@ class SVstr(SVutil):
             _s.replace("'{", " [ ")
             .replace("{", " [ ")
             .replace("}", " ] ")
+            .replace("(", " ( ")
+            .replace(")", " ) ")
             .replace(",", " , ")
         )
         _s = re.sub(rf"/([^/])", rf"//\1", _s)
