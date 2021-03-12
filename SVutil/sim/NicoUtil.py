@@ -118,7 +118,7 @@ class StructBus:
 
 class StructBusCreator:
     structlist = {}
-    basic_sv_type = {"logic": np.uint32, "signed logic": np.int32, "bit": np.bool}
+    basic_sv_type = {"logic": np.uint32, "unsigned logic": np.uint32, "signed logic": np.int32, "bit": np.bool}
 
     def __init__(self, structName, attrs):
         if attrs:

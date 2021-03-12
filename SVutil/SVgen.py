@@ -178,17 +178,7 @@ class SVgen(SVutil):
             f.write(text)
         return fpath
 
-    def Line3BannerBlk(self, w, cmtc, text):
-        """
-        w: banner width; cmtc: language specified comment character
-        text: banner text
-        """
-        ind = self.cur_ind.Copy()
-        yield ""
-        s = f'{ind.b}{cmtc}{"":=^{w}}\n'
-        s += f"{ind.b}{cmtc}{text:^{w}}\n"
-        s += f'{ind.b}{cmtc}{"":=^{w}}\n'
-        yield s
+
 
     def FindFormatWidth(self, lst):
         """
@@ -253,6 +243,36 @@ class SVgen(SVutil):
 
         return new_func
 
+    @Blk
+    def Line3BannerBlk(self, w, cmtc, text, ind=None):
+        """
+        w: banner width; 
+        cmtc: language specified comment character
+        text: banner text
+        EX:
+        //============
+        //   logic
+        //============
+        """
+        s = f'{ind.b}{cmtc}{"":=^{w}}\n'
+        s += f"{ind.b}{cmtc}{text:^{w}}\n"
+        s += f'{ind.b}{cmtc}{"":=^{w}}\n'
+        yield s
+
+    @Blk
+    def one_line_banner_blk(self, w=None, cmtc='//', text='', ind=None):
+        """
+        w: banner width; 
+        cmtc: language specified comment character
+        text: banner text
+        EX: //-- logic --//
+        """
+        if isinstance(w, int):
+            text = f' {text} '
+            s = f"{ind.b}{cmtc}{text:-^{w}}{cmtc}\n"
+        else:
+            s = f"{ind.b}{cmtc}-- {text} --{cmtc}\n"
+        yield s
 
 def GenSession():
     pass

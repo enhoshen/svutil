@@ -91,9 +91,12 @@ class ConnectGen(SrcGen):
         )
         for p in module.ports:
             p = SVPort(p)
-            if cur_group != p.group and group is not None:
-                cur_group_name = next(group, self.group_dft)
+            self.print(cur_group, p.group)
+            if cur_group != p.group:
+                s_port += '\n'
                 cur_group = p.group
+                if group is not None:
+                    cur_group_name = next(group, self.group_dft)
             connect = self.connect_name(cur_group_name, short, p)
             # if 'clk' in n:
             #    s_port += ind[1] + ',.' + f'{p.name:<{w[0]}}' + f'({self.clk_name})\n'
@@ -141,13 +144,13 @@ class ConnectGen(SrcGen):
         banw = 20
         module = [module] if isinstance(module, SVhier) else module 
 
-        logicban = (1,) + (self.Line3BannerBlk(banw, "//", "Logic"),)
+        logicban = (1,) + (self.one_line_banner_blk(cmtc="//", text="Logic"),)
         logic = tuple(
             self.logic_block(m, short=s, group=g)
             for m, s, g in zip_longest(module, short, group)
         )
         logic = (1,) + logic
-        combban = (1,) + (self.Line3BannerBlk(banw, "//", "Combinational"),)
+        combban = (1,) + (self.one_line_banner_blk(cmtc="//", text="Combinational"),)
         ins = tuple(
             self.instance_block(m, short=s, group=g)
             for m, s, g in zip_longest(module, short, group)
