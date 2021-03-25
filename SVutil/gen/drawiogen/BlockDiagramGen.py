@@ -29,7 +29,7 @@ class BlockDiagramGen(DrawioGen):
     def Config(self, *arg, **kwargs):
         pass
 
-    @SVgen.Str
+    @SVgen.str
     def RectangleStr(self, value, shape, parent, color, ind=None):
         """
         Draw a rectangle with a text box
@@ -61,7 +61,7 @@ class BlockDiagramGen(DrawioGen):
         s += self.TextStr(value, txt_sh, textstyle.Str, _p, ind + 1)
         return s
 
-    @SVgen.Str
+    @SVgen.str
     def ModuleBlocklistStr(self, module, shape, parent, lvl=1, ind=None):
         """
         Append sub-module strings until lvl reduces to 1.

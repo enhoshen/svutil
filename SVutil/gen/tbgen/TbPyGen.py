@@ -16,8 +16,6 @@ class TbPyGen(TestGen):
         ind = self.cur_ind.Copy()
         yield ""
         s = "\n"
-        s += f"{ind.b}from nicotb import *\n"
-        s += f"{ind.b}import numpy as np \n"
         yield s
         s = ""
         for ck in self.clk_domain_lst:
@@ -41,19 +39,36 @@ class TbPyGen(TestGen):
         s += f"{ind.b}])"
         yield s
 
-    def NicoutilImportBlk(self):
-        ind = self.cur_ind.Copy()
-        yield ""
-        s = "\n"
-        s += "import sys\n"
-        s += "import os\n"
-        s += "from itertools import repeat\n"
-        s += "from nicotb.primitives import JoinableFork\n"
-        s += "from SVutil.SVparse import GBV, EAdict\n"
-        s += "from SVutil.sim import NicoUtil\n\n"
-        s += "Nico = NicoUtil.NicoUtil()\n"
-        s = s.replace("\n", f"\n{ind.b}")
+    @SVgen.Blk
+    def NicoutilImportBlk(self, ind=None):
+        s  = f"{ind.b}from nicotb import *\n"
+        s += f"{ind.b}import numpy as np \n\n"
         yield s
+
+        s = f"{ind.b}Nico = NicoUtil.NicoUtil()\n"
+        yield s
+    @SVgen.str
+    def builtin_import(self):
+        s  = f"import sys\n"
+        s += f"import os\n"
+        s += f"from itertools import repeat\n"
+        return s
+
+    @SVgen.str
+    def svutil_import(self):
+        s  = f"from SVutil.SVparse import GBV, EAdict\n"
+        s += f"from SVutil.sim import NicoUtil\n"
+        return s
+
+    @SVgen.str
+    def gzsim_import(self):
+        s  = f"from gzsim.nicobus.bus import *\n"
+        s += f"from gzsim.utils import *\n"
+        s += f"from gzsim.tester import *\n"
+        s += f"from gzsim.sequencer import *\n"
+        s += f"from gzsim.scoreboard import *\n"
+        s += f"from gzsim.protocol import OneWire\n"
+        return s
 
     def NicoutilImportBlkNonPackage(self):
         """ deprecated """
@@ -131,10 +146,13 @@ class TbPyGen(TestGen):
     def module_test(self, module=None, **conf):
         module = self.dut if not module else module
         tb = self.TbBlk()
+        builtin = self.builtin_import(spacing=True)
         nicoutil = self.NicoutilImportBlk()
+        gzsim = self.gzsim_import(spacing=True)
+        svutil = self.svutil_import(spacing=True)
         businit = self.businitBlk(module)
         main = self.mainBlk()
-        s = self.Genlist([(tb, nicoutil, businit, main), tb])
+        s = self.Genlist([(tb,), builtin, (nicoutil,), gzsim, svutil, nicoutil, (businit, main), tb])
         if conf.get("copy") == True:
             ToClip(s)
         return s

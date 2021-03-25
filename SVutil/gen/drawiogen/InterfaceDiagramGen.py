@@ -183,12 +183,12 @@ class InterfaceDiagramGen(DrawioGen):
         modblk = self.Str2Blk(self.ModuleBlockStr, module, "1", flip)
         return self.Genlist([(mxg, rt), [indblk, port], [indblk, modblk], rt, mxg])
 
-    @SVgen.Str
+    @SVgen.str
     def ToClip(self, module=None, flip=False):
         m = self.dut if not module else module
         ToClip(self.InterfaceDiagramGen(m, flip))
 
-    @SVgen.Str
+    @SVgen.str
     def ToClipTwoSide(self, module=None):
         m = self.dut if not module else module
         indblk = self.IndBlk()
@@ -204,13 +204,13 @@ class InterfaceDiagramGen(DrawioGen):
         ToClip(s)
         return s
 
-    @SVgen.Str
+    @SVgen.str
     def ToFileTwoSide(self, path, module=None):
         with open(path, "w") as f:
             s = self.ToClipTwoSide(module)
             f.write(s)
 
-    @SVgen.Str
+    @SVgen.str
     def ToFile(self, path, module=None, flip=False):
         with open(path, "w") as f:
             s = self.InterfaceDiagramGen(module, flip)

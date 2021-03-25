@@ -53,23 +53,23 @@ class SrcGen(SVgen):
         self.clk_name = "i_clk"
         self.rst_name = "i_rst_n"
 
-    @SVgen.Str
-    def port_logic(self, w, reg, bw, tp, dim, io, ind=None):
+    @SVgen.str
+    def port_logic(self, w, reg, bw, tp, dim, io):
         bwstr = "" if bw == 1 else f"[{bw}-1:0] "
         inout = {'i':'input', 'o':'output', 'ro':'input', 'ro':'output'}.get(io)
-        return f'{ind.b},{inout} {tp+" "+bwstr:<{w[0]}}{io[0]}_{reg+dim}\n'
+        return f',{inout} {tp+" "+bwstr:<{w[0]}}{io[0]}_{reg+dim}\n'
 
-    @SVgen.Str
-    def RegLogicStr(self, w, reg, bw, tp, dim, ind=None):
+    @SVgen.str
+    def RegLogicStr(self, w, reg, bw, tp, dim):
         bwstr = "" if bw == 1 else f"[{bw}-1:0] "
-        return f'{ind.b}{tp+" "+bwstr:<{w[0]}}{reg+"_r"+dim:<{w[1]}} ,{reg}_w{dim};\n'
+        return f'{tp+" "+bwstr:<{w[0]}}{reg+"_r"+dim:<{w[1]}} ,{reg}_w{dim};\n'
 
-    @SVgen.Str
-    def CombLogicStr(self, w, reg, bw, tp, dim, ind=None):
+    @SVgen.str
+    def CombLogicStr(self, w, reg, bw, tp, dim):
         bwstr = "" if bw == 1 else f"[{bw}-1:0] "
-        return f'{ind.b}{tp+" "+bwstr:<{w[0]}}{reg+dim:<{w[1]}};\n'
+        return f'{tp+" "+bwstr:<{w[0]}}{reg+dim:<{w[1]}};\n'
 
-    @SVgen.Str
+    @SVgen.str
     def SeqCeStr(self, s1, s2, ce=None, ind=None):
         ff_str = (
             f"always_ff @(posedge {self.clk_name} or negedge {self.rst_name}) begin"
@@ -91,103 +91,103 @@ class SrcGen(SVgen):
         return s
 
     # port list
-    @SVgen.Str
-    def ProtocolImportStr(self, ind=None):
+    @SVgen.str
+    def ProtocolImportStr(self):
         s = ""
         if self.protocol == PRCL_PRESET.AHB:
-            s = f"{ind.b}import Ahb::*;\n"
-            s += f"{ind.b}import AhbWrap::*;\n"
-            s += f"{ind.b}import Amba::amba_rwmode;\n"
+            s  = f"import Ahb::*;\n"
+            s += f"import AhbWrap::*;\n"
+            s += f"import Amba::amba_rwmode;\n"
         if self.protocol == PRCL_PRESET.APB3:
-            s = f"{ind.b}import Apb::*;\n"
-            s += f"{ind.b}import ApbWrap::*;\n"
-            s += f"{ind.b}import Amba::amba_rwmode;\n"
+            s  = f"import Apb::*;\n"
+            s += f"import ApbWrap::*;\n"
+            s += f"import Amba::amba_rwmode;\n"
         return s
 
-    @SVgen.Str
-    def ProtocolParameterPortStr(self, ind=None):
+    @SVgen.str
+    def ProtocolParameterPortStr(self):
         s = ""
         if self.protocol == PRCL_PRESET.AHB:
-            s += f"{ind.b} parameter ahb_endian SLVEND = LITTLE_END\n"
-            s += f"{ind.b},parameter ahb_wrap_mastend MASTEND = DYNAMIC_END\n"
-            s += f"{ind.b},parameter ADDR_BASE = 32'h8000_000\n"
-            s += f"{ind.b},parameter ADDR_SIZE = 32'h0800_000\n"
+            s += f" parameter ahb_endian SLVEND = LITTLE_END\n"
+            s += f",parameter ahb_wrap_mastend MASTEND = DYNAMIC_END\n"
+            s += f",parameter ADDR_BASE = 32'h8000_000\n"
+            s += f",parameter ADDR_SIZE = 32'h0800_000\n"
         return s
 
-    @SVgen.Str
-    def ProtocolDataPortStr(self, addrbw, bw, ind=None):
+    @SVgen.str
+    def ProtocolDataPortStr(self, addrbw, bw):
         """ addrbw, bw are name to the parameters """
-        s = f"{ind.b}// data and address\n"
+        s = f"// data and address\n"
         if (
             self.protocol is None
             or self.protocol == PRCL_PRESET.REQACK
             or self.protocol == PRCL_PRESET.VALID
         ):
             w = len(bw) + 5 + 7 + 8
-            s += f'{ind.b}{",input":<{w}} {self.write_name}\n'
-            s += f'{ind.b}{",input ["+addrbw+"-1:0]":<{w}} {self.addr_port_name}\n'
-            s += f'{ind.b}{",input ["+bw+"-1:0]":<{w}} {self.wdata_name}\n'
-            s += f'{ind.b}{",output logic ["+bw+"-1:0]":<{w}} o_{self.rdata_name}\n'
+            s += f'{",input":<{w}} {self.write_name}\n'
+            s += f'{",input ["+addrbw+"-1:0]":<{w}} {self.addr_port_name}\n'
+            s += f'{",input ["+bw+"-1:0]":<{w}} {self.wdata_name}\n'
+            s += f'{",output logic ["+bw+"-1:0]":<{w}} o_{self.rdata_name}\n'
         if self.protocol == PRCL_PRESET.AHB or self.protocol == PRCL_PRESET.APB3:
             w = len(bw) + 5 + 8
             p = "h" if self.protocol == PRCL_PRESET.AHB else "p"
-            s = f'{ind.b},input  logic {"["+addrbw+"-1:0]":<{w}} i_{p}addr\n'
-            s += f'{ind.b},input  logic {"["+bw+"-1:0]":<{w}} i_{p}wdata\n'
-            s += f'{ind.b},output logic {"["+bw+"-1:0]":<{w}} o_{p}rdata\n'
+            s  = f',input  logic {"["+addrbw+"-1:0]":<{w}} i_{p}addr\n'
+            s += f',input  logic {"["+bw+"-1:0]":<{w}} i_{p}wdata\n'
+            s += f',output logic {"["+bw+"-1:0]":<{w}} o_{p}rdata\n'
         return s
 
-    @SVgen.Str
-    def ProtocolPortStr(self, bw, ind=None):
+    @SVgen.str
+    def ProtocolPortStr(self, bw):
         """ bw are name to the parameters """
         # disable
         s = ""
         if self.disable_style == DISABLE_PRESET.EN_WIRE:
             w = len(bw) + 5 + 7 + 8
-            s += f"{ind.b}// enable\n"
-            s += f'{ind.b}{",input":<{w}} i_en\n'
+            s += f"// enable\n"
+            s += f'{",input":<{w}} i_en\n'
         # protocol
         w = len(bw) + 5 + 8
         if self.protocol is None:
-            s += f"{ind.b}//TODO protocol\n"
+            s += f"//TODO protocol\n"
         elif self.protocol == PRCL_PRESET.REQACK:
             w = len(bw) + 5 + 7 + 8
-            s += f'{ind.b}{",input":<{w}} i_req\n'
-            s += f'{ind.b}{",output logic":<{w}} o_ack\n'
+            s += f'{",input":<{w}} i_req\n'
+            s += f'{",output logic":<{w}} o_ack\n'
         elif self.protocol == PRCL_PRESET.VALID:
             w = len(bw) + 5 + 7 + 8
-            s += f"{ind.b},input  i_val\n"
+            s += f",input  i_val\n"
         elif self.protocol == PRCL_PRESET.AHB:
-            s += f'{ind.b},input  {"ahb_wrap_ctrl":<{w+6}} i_hctl\n'
-            s += f'{ind.b},output {"ahb_resp":<{w+6}} o_resp\n'
+            s += f',input  {"ahb_wrap_ctrl":<{w+6}} i_hctl\n'
+            s += f',output {"ahb_resp":<{w+6}} o_resp\n'
         elif self.protocol == PRCL_PRESET.APB3:
-            s += f'{ind.b},input  {"apb3_wrap_ctrl":<{w+6}} i_pctl\n'
-            s += f'{ind.b},input  {"apb3_resp":<{w+6}} o_resp\n'
+            s += f',input  {"apb3_wrap_ctrl":<{w+6}} i_pctl\n'
+            s += f',input  {"apb3_resp":<{w+6}} o_resp\n'
         return s
 
     # Logic list
-    @SVgen.Str
-    def ProtocolLogicStr(self, w=20, ind=None):
+    @SVgen.str
+    def ProtocolLogicStr(self, w=20):
         # state
         s = ""
         if self.disable_style == DISABLE_PRESET.DISABLE_REG:
-            s = f"{ind.b}// state\n"
-            s += f"{ind.b}enum logic [1:0] {{MAIN_IDLE, WORK, DISABLED}} state_main_r, state_main_w;\n"
+            s = f"// state\n"
+            s += f"enum logic [1:0] {{MAIN_IDLE, WORK, DISABLED}} state_main_r, state_main_w;\n"
         s += "\n"
         # protocol
-        s += "" if self.protocol is None else f"{ind.b}// protocol\n"
+        s += "" if self.protocol is None else f"// protocol\n"
         if self.protocol is None:
-            s += f"{ind.b}// protocol\n"
+            s += f"// protocol\n"
         elif self.protocol == PRCL_PRESET.REQACK:
-            s += f'{ind.b}{"logic":<{w}} ack_w;\n'
+            s += f'{"logic":<{w}} ack_w;\n'
         elif self.protocol == PRCL_PRESET.AHB:
-            s += f'{ind.b}{"ahb_hresp":<{w}} resp_r, resp_w;\n'
+            s += f'{"ahb_hresp":<{w}} resp_r, resp_w;\n'
         elif self.protocol == PRCL_PRESET.APB3:
-            s += f'{ind.b}{"apb3_resp":<{w}} resp_r, resp_w;\n'
+            s += f'{"apb3_resp":<{w}} resp_r, resp_w;\n'
         return s + "\n"
 
-    @SVgen.Str
-    def DataAddrLogicStr(self, addrbw, bw, ind=None):
-        s = f"{ind.b}// Data and address\n"
+    @SVgen.str
+    def DataAddrLogicStr(self, addrbw, bw):
+        s = f"// Data and address\n"
         if self.protocol == PRCL_PRESET.AHB:
             pass
         elif self.protocol == PRCL_PRESET.APB3:
@@ -195,11 +195,11 @@ class SrcGen(SVgen):
         ##
         if self.wrdata_style == WRDATA_PRESET.INSTANT:
             if self.protocol == PRCL_PRESET.REQACK:
-                s += f"{ind.b}logic [{bw}-1:0] {self.rdata_name}_w;\n"
+                s += f"logic [{bw}-1:0] {self.rdata_name}_w;\n"
             pass
         elif self.wrdata_style == WRDATA_PRESET.RD_NEXT_CYCLE:
-            s += f"{ind.b}logic [{bw}-1:0] {self.rdata_name}_w;\n"
+            s += f"logic [{bw}-1:0] {self.rdata_name}_w;\n"
         elif self.wrdata_style == WRDATA_PRESET.NEXT_CYCLE:
-            s += f"{ind.b}logic [{addrbw}-1:0] {self.addr_name}_r;\n"
-            s += f"{ind.b}logic [{bw}-1:0] {self.rdata_name}_w;\n"
+            s += f"logic [{addrbw}-1:0] {self.addr_name}_r;\n"
+            s += f"logic [{bw}-1:0] {self.rdata_name}_w;\n"
         return s + "\n"

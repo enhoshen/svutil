@@ -9,9 +9,11 @@ from SVutil.SVparse import *
 from SVutil.SVgen import *
 from SVutil.SVclass import *
 from SVutil.gen.TestGen import TestGen
+from SVutil.gen.SrcGen import SrcGen
+# TODO instance block can be from ConnectGen
 
 @SVgen.UserClass
-class TbSvGen(TestGen):
+class TbSvGen(TestGen, SrcGen):
 
     def DefineBlk(self):
         ind = self.cur_ind.Copy()
@@ -37,7 +39,7 @@ class TbSvGen(TestGen):
         s = "\n" + ind.b + "endmodule"
         yield s
 
-    @SVgen.Str
+    @SVgen.str
     def InitialStr(self, ind=None):
         s = self.clocking_str(ind=ind)
         s += self.event_macro_str(ind=ind)
@@ -46,8 +48,8 @@ class TbSvGen(TestGen):
         s += self.initial_block_str(ind=ind)
         return s
 
-    @SVgen.Str
-    def clocking_str(self, ind=None):
+    @SVgen.str
+    def clocking_str(self):
         # clock, reset and clock count
         ck_lst = reduce(
             (lambda x, y: x + ", " + f'{y[0]+"_" if y[0] != "" else ""}clk'),
@@ -64,29 +66,29 @@ class TbSvGen(TestGen):
             self.clk_domain_lst,
             "",
         )[2:]
-        s = f"{ind.b}logic {ck_lst};\n"
-        s += f"{ind.b}logic {rst_lst};\n"
-        s += f"{ind.b}int {ccnt_lst};\n"
+        s  = f"logic {ck_lst};\n"
+        s += f"logic {rst_lst};\n"
+        s += f"int {ccnt_lst};\n"
         for ck in self.clk_domain_lst:
             _aff = ck[0] + "_" if ck[0] != "" else ""
-            s += f"{ind.b}`Pos({_aff}rst_out, {_aff}rst{ck[1]})\n"
-            s += f"{ind.b}`PosIf({_aff}ck_ev , {_aff}clk, {_aff}rst{ck[1]})\n"
+            s += f"`Pos({_aff}rst_out, {_aff}rst{ck[1]})\n"
+            s += f"`PosIf({_aff}ck_ev , {_aff}clk, {_aff}rst{ck[1]})\n"
         return s
 
-    @SVgen.Str
-    def event_macro_str(self, ind=None):
+    @SVgen.str
+    def event_macro_str(self):
         # events
         ev_lst = reduce(
             (lambda x, y: x + ", " + str(y[1])), self.eventlst + [("", "")], ""
         )[2:-2]
-        s = f"{ind.b}logic {ev_lst}; //TODO modify event condition\n"
+        s = f"logic {ev_lst}; //TODO modify event condition\n"
 
         w = self.FindFormatWidth([i[0] + ", " + i[1] + "," for i in self.eventlst])
         for ev in self.eventlst:
-            s += f'{ind.b}`PosIf({ev[0]+", "+ev[1]+",":<{w}} {self.rststr}_n)//TODO modify reset logic\n'
+            s += f'`PosIf({ev[0]+", "+ev[1]+",":<{w}} {self.rststr}_n)//TODO modify reset logic\n'
         return s
 
-    @SVgen.Str
+    @SVgen.str
     def initial_block_str(self, ind=None):
         s = f"{ind.b}`WithFinish\n\n"
         for i, ck in enumerate(self.clk_domain_lst):
@@ -132,17 +134,17 @@ class TbSvGen(TestGen):
         _s += f"{ind.b}end\n\n"
         return s + _s
 
-    @SVgen.Str
-    def AnsiColorVarStr(self, ind=None):
-        s = f'\n{ind.b}string ansi_blue   = "\\033[34m";\n'
-        s += f'{ind.b}string ansi_cyan   = "\\033[36m";\n'
-        s += f'{ind.b}string ansi_green  = "\\033[32m";\n'
-        s += f'{ind.b}string ansi_yellow = "\\033[33m";\n'
-        s += f'{ind.b}string ansi_red    = "\\033[31m";\n'
-        s += f'{ind.b}string ansi_reset  = "\\033[0m";\n'
+    @SVgen.str
+    def AnsiColorVarStr(self):
+        s  = f'string ansi_blue   = "\\033[34m";\n'
+        s += f'string ansi_cyan   = "\\033[36m";\n'
+        s += f'string ansi_green  = "\\033[32m";\n'
+        s += f'string ansi_yellow = "\\033[33m";\n'
+        s += f'string ansi_red    = "\\033[31m";\n'
+        s += f'string ansi_reset  = "\\033[0m";\n'
         return s
 
-    @SVgen.Str
+    @SVgen.str
     def SimFinStr(self, ind=None):
         _ck = self.clk_domain_lst[0][0]
         _aff = _ck + "_" if _ck != "" else ""
@@ -170,8 +172,12 @@ class TbSvGen(TestGen):
         yield ""
         s = self.comment_banner_str("Logics", ind=ind)
         pfield = SVhier.portfield
+        cur_group = SVPort(module.ports[0]).group
         for p in module.ports:
             p = SVPort(p)
+            if cur_group != p.group:
+                s += '\n'
+                cur_group = p.group
             if p.tp == "logic" or p.tp == "signed logic":
                 s += f"{ind.b}{p.tp} {p.bwstr} {p.name}"
             else:
@@ -181,7 +187,7 @@ class TbSvGen(TestGen):
             else:
                 s += ";\n"
 
-        yield s
+        yield s+'\n'
 
     @SVgen.Blk
     def ParamBlk(self, module, ind=None, **conf):
@@ -199,17 +205,17 @@ class TbSvGen(TestGen):
             bwstr = detail[pmfield.bwstr] + " " if detail[pmfield.bwstr] != "" else ""
             pmtp = detail[pmfield.paramtype]
             s += f"{ind.b}{pmtp} {tpstr}{bwstr}{param} = {detail[pmfield.numstr]};\n"
-        yield s
+        yield s+'\n'
 
     @SVgen.Blk
     def CommentBlkBlk(self, s, width=35):
         yield f'{ind.b}//{"":=<{width}}\n{ind.b}//{s:^{width}}\n{ind.b}//{"":=<{width}}\n'
 
-    @SVgen.Str
-    def comment_banner_str(self, s, width=35, ind=None):
-        return (
-            f'{ind.b}//{"":=<{width}}\n{ind.b}//{s:^{width}}\n{ind.b}//{"":=<{width}}\n'
-        )
+    @SVgen.str
+    def comment_banner_str(self, s, width=35, ind=None, spacing=False):
+        return f'{ind.b}//{"":=<{width}}\n' \
+            + f'{ind.b}//{s:^{width}}\n' \
+            + f'{ind.b}//{"":=<{width}}\n'
 
     @SVgen.Blk
     def InsBlk(self, module, name="dut", ind=None, **conf):
@@ -226,18 +232,18 @@ class TbSvGen(TestGen):
         sb = f"{ind.b}) {name} (\n"
         s_port = ""
         w = self.FindFormatWidth([(n + " ",) for io, n, *_ in module.ports])
-        for io, n, dim, *_ in module.ports:
-            if "clk" in n:
-                s_port += ind[1] + ",." + f"{n:<{w[0]}}" + f"({self.clkstr})\n"
-            elif "rst" in n:
-                s_port += ind[1] + ",." + f"{n:<{w[0]}}" + f"({self.rststr})\n"
+        cur_group = SVPort(module.ports[0]).group
+        for p in module.ports:
+            p = SVPort(p)
+            if cur_group != p.group:
+                s_port += '\n'
+                cur_group = p.group
+            if "clk" in p.name:
+                s_port += f"{ind[1]},.{p.name:<{w[0]}}({self.clkstr})\n"
+            elif "rst" in p.name:
+                s_port += f"{ind[1]},.{p.name:<{w[0]}}({self.rststr})\n"
             else:
-                s_port += (
-                    ind[1]
-                    + ",."
-                    + f"{n:<{w[0]}}"
-                    + f"({n})\n" 
-                )
+                s_port += f"{ind[1]},.{p.name:<{w[0]}}({p.name})\n"
 
         s_port = s_port.replace(f"{ind[1]},", ind[1] + " ", 1)
         s += s_param + sb + s_port + ind.base + ");\n"

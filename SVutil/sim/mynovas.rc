@@ -168,8 +168,7 @@ nWaveRestoreRCDirHistory = "\"/home/enhoshen/research/lpAccel/sim/Address.rc\"" 
 /sim/Peripheral/RTC/apbsyncrtc.rc\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CSlave/PG.rc\"" "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/ahbmastif.rc\"" "\"/home/enho.shen/GZE200/sim/Core/ConvCore/OSConvLineBuffer/signal_0.rc\""
 nWaveOpenFsdbDirHistory = "\"/home/enhoshen/research/lpAccel/sim/loop.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072205_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_ug_072205\
 _syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest_5ns.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072206_syn_PEt\
-est.fsdb\"" "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/Gze200MemorySystem_tb_P2P.fsdb\"" "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/fsdb/Gze200MemorySystem_tb_TX.fsdb\"" "\"/home/enho.shen/GZE200/sim/Peripheral/NaneyeM\
-aster/ApbNaneyeMaster_tb_BS0.fsdb\""
+est.fsdb\"" "\"/home/enho.shen/GZE200/sim/BuildingBlock/Memory/fsdb/RegFileTpMultiLaneModel_tb_0.fsdb\""
 [Form]
 version = Verdi_Q-2020.03-SP1
 wave/unknownSave.fm = 100,100,575,275
@@ -492,7 +491,7 @@ SetDefaultRadix = TRUE
 FilterTextField = FALSE
 anaAuto100VertFit = FALSE
 getSignalForm = 1338 1181 1404 860 343 762 815 185
-viewPort = 1080 1103 1920 1017 254 131
+viewPort = 234 502 1920 1017 254 131
 signalSpacing = 5
 digitalSignalHeight = 15
 analogSignalHeight = 98
@@ -765,11 +764,11 @@ curveWindow_Drag&Drop_Mode = TRUE
 hspiceIncOpenMode = TRUE
 pcSelectMode = FALSE
 hierarchyDelimiter = /
-RecentFile1 = "\"/home/enho.shen/GZE200/sim/Peripheral/NaneyeMaster/ApbNaneyeMaster_tb_BS0.fsdb\""
-RecentFile2 = "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/fsdb/Gze200MemorySystem_tb_TX.fsdb\""
-RecentFile3 = "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/Gze200MemorySystem_tb_P2P.fsdb\""
-RecentFile4 = "\"/home/enho.shen/GZE200/sim/Core/ConvCore/OSConvLineBuffer/signal_0.rc\""
-RecentFile5 = "\"/home/enho.shen/GZE200/sim/Core/ConvCore/OSConvLineBuffer/OSConvLineBuffer_tb_0.fsdb\""
+RecentFile1 = "\"/home/enho.shen/GZE200/sim/BuildingBlock/Memory/fsdb/RegFileTpMultiLaneModel_tb_0.fsdb\""
+RecentFile2 = "\"/home/enho.shen/GZE200/sim/Peripheral/NaneyeMaster/ApbNaneyeMaster_tb_BS0.fsdb\""
+RecentFile3 = "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/fsdb/Gze200MemorySystem_tb_TX.fsdb\""
+RecentFile4 = "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/Gze200MemorySystem_tb_P2P.fsdb\""
+RecentFile5 = "\"/home/enho.shen/GZE200/sim/Core/ConvCore/OSConvLineBuffer/signal_0.rc\""
 open_file_time_range = FALSE
 value_window_aligment = Right
 signal_window_alignment = Left

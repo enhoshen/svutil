@@ -3,6 +3,7 @@ from SVutil.SVparse import *
 from SVutil.SVclass import *
 from SVutil.SVsim import *
 from SVutil.SVutil import colorama
+from SVutil.SVclass import SVType 
 import os
 import itertools
 import numpy as np
@@ -183,29 +184,43 @@ class StructBusCreator:
         cls.structlist = {}
 
     def CreateStructBus(self, signalName, hier="", DIM=(), dtype=None):
+        """
+        Return StructBus or nicotb Bus based on the type name
+        * If the type is a struct, return StructBus
+        * If the type is built-in types (EX:logic), return nicotb Bus
+        * If the type is a type alias, 
+
+        """
         # buses = {'logic' :  CreateBus( self.createTuple(signalName) )}
         buses = []
         attrs = self.structlist[self.structName].attrs
-        if not attrs:
+        if attrs is None:
             return CreateBus(((hier, signalName, DIM, dtype),))
         else:
-            for n, bw, dim, t, *_ in attrs:
-                if t in self.basic_sv_type:
-                    if dtype is None:
-                        _dtype = self.basic_sv_type[t]
-                    else:
-                        _dtype = dtype
-                    buses.append(
-                        CreateBus(((hier, signalName + "." + n, DIM + dim, _dtype),))
-                    )
-                elif t == "enum":
-                    buses.append(CreateBus(((hier, signalName, DIM + dim, dtype),)))
-                else:
-                    buses.append(
-                        self.structlist[t].CreateStructBus(
-                            signalName + "." + n, hier, DIM + dim, dtype
+            tps = [SVType(i) for i in attrs]
+            if len(tps)==1 and tps[0].name == self.structName:
+                # type aliasing (EX: typedef Type1 TypeAlias;)
+                dim = tps[0].dim
+                tp = tps[0].tp
+                return self.structlist[tp].CreateStructBus(signalName, hier, DIM+dim, dtype)
+            else:
+                for n, bw, dim, t, *_ in attrs:
+                    if t in self.basic_sv_type:
+                        if dtype is None:
+                            _dtype = self.basic_sv_type[t]
+                        else:
+                            _dtype = dtype
+                        buses.append(
+                            CreateBus(((hier, signalName + "." + n, DIM + dim, _dtype),))
                         )
-                    )
+                    elif t == "enum":
+                        buses.append(CreateBus(((hier, signalName, DIM + dim, dtype),)))
+                    else:
+                        buses.append(
+                            self.structlist[t].CreateStructBus(
+                                signalName + "." + n, hier, DIM + dim, dtype
+                            )
+                        )
         return StructBus(self.structName, signalName, attrs, buses)
 
     def MDACreateStructBus(self, signalName, hier="", DIM=(), dtype=None):

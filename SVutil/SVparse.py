@@ -6,27 +6,38 @@ from collections import namedtuple
 from collections import deque
 from subprocess import Popen, PIPE
 from functools import reduce
+from dataclasses import dataclass
+
 from SVutil.SVutil import SVutil, V_
 from SVutil.SVclass import *
 from SVutil.SVstr import *
 
-
+@dataclass
 class GBV(SVutil):
+    """
+    Just wrapper for environment variables
+    The variables can be easily inspected via dataclass
+    generated __repr__(): print(GBV())
+    """
     # Nico makefile specified
-    ARGS = os.environ.get("ARGS", "")
-    TOPMODULE = os.environ.get("TOPMODULE", "")
-    TEST = os.environ.get("TEST", "")
-    TEST_CFG = os.environ.get("TEST_CFG", "")
+    ARGS :str= os.environ.get("ARGS", "")
+    TOPMODULE :str= os.environ.get("TOPMODULE", "")
+    TEST :str= os.environ.get("TEST", "")
+    TEST_CFG :str= os.environ.get("TEST_CFG", "")
+    TEST_ID :str= os.environ.get("TEST_ID", "")
     # SVutil optional specified
-    SVutilenv = os.environ.get("SVutil", "")
-    TESTMODULE = os.environ.get("TESTMODULE", "")
-    SV = os.environ.get("SV", "")
-    TOPSV = os.environ.get("TOPSV", "")
-    INC = os.environ.get("INC", "")
-    HIER = os.environ.get("HIER", "")
-    REGBK = os.environ.get("REGBK", "")
-    PROJECT_PATH = os.environ.get("PROJECT_PATH", "")
-    VERBOSE = os.environ.get("VERBOSE", 0)
+    SVutilenv :str= os.environ.get("SVutil", "")
+    TESTMODULE :str= os.environ.get("TESTMODULE", "")
+    SV :str= os.environ.get("SV", "")
+    TOPSV :str= os.environ.get("TOPSV", "")
+    INC :str= os.environ.get("INC", "")
+    HIER :str= os.environ.get("HIER", "")
+    REGBK :str= os.environ.get("REGBK", "")
+    PROJECT_PATH :str= os.environ.get("PROJECT_PATH", "")
+    VERBOSE :str= os.environ.get("VERBOSE", 0)
+
+    def show():
+        print(GBV().__str__().replace(',','\n'))
 
 
 def ToClip(s):
@@ -591,8 +602,8 @@ class SVparse(SVutil):
         self.print(s, verbose=3)
         s.lstrip()
         sign = s.SignParse()
-        bw = s.bracket_parse()
-        bw = SVstr("" if bw == () else bw[0])
+        packed_dim = s.bracket_parse()
+        bw = SVstr("" if packed_dim == () else packed_dim[-1])
         n, d = s.IDDIMarrParse()
         tp = ("signed " if sign == True else "") + "logic"
         cmts = [""] if not self.cur_cmt else self.cur_cmt
@@ -600,7 +611,7 @@ class SVparse(SVutil):
             (
                 _n,
                 bw.Slice2num(self.cur_hier),
-                self.Tuple2num(_d),
+                self.Tuple2num(_d)+self.Tuple2num(packed_dim[:-1]),
                 tp,
                 [],  # enumliteral, not used , this fucking needs refactor
                 cmts,

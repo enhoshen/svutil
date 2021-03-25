@@ -212,7 +212,7 @@ class RegbkGen(SrcGen):
         s = "\n" + ind.b + "endmodule"
         yield s
 
-    @SVgen.Str
+    @SVgen.str
     def LogicStr(self, w, reg, bw, tp, arr=None, dim=None, comb=None, ind=None):
         if arr and arr != "":
             dim = f" [{reg.upper()}{self.regbk.arr_num_suf}]"
@@ -232,7 +232,7 @@ class RegbkGen(SrcGen):
         const_cmt = f'{"//TODO" if const else ""}'
         return pad, logic, sel, const_cmt
 
-    @SVgen.Str
+    @SVgen.str
     def rdata_vector_comb(self, reg, _slice, w, rw=None, comb=False, const=False, ind=None):
         # TODO slice dependent, now it only pad the MSB and it's usually the case
         if rw and rw == "WO":
@@ -252,7 +252,7 @@ class RegbkGen(SrcGen):
         return s
 
 
-    @SVgen.Str
+    @SVgen.str
     def rdata_arr_comb(self, reg, ifelse, w, rw=None, comb=False, const=False, ind=None):
         if rw and rw == "WO":
             return ""
@@ -272,14 +272,14 @@ class RegbkGen(SrcGen):
         s += f"{self.regbk.regbw_name}'({logic}{sel});{const_cmt}\n"
         s += f"{ind.b}end\n"
         return s
-    @SVgen.Str
-    def rdata_arr_slice_bw (self, reg, ind=None):
+    @SVgen.str
+    def rdata_arr_slice_bw (self, reg):
         """
         """
-        s = f"{ind.b}localparam {reg.upper()}_NUM_BW = $clog2({reg.upper()}_NUM);\n"
+        s = f"localparam {reg.upper()}_NUM_BW = $clog2({reg.upper()}_NUM);\n"
         return s
     
-    @SVgen.Str
+    @SVgen.str
     def rdata_arr_slice_param_block (self, arr_reg, ind=None):
         s = f"{ind.b}// rdata array selection slice bw\n"
         for v in arr_reg:
@@ -287,26 +287,26 @@ class RegbkGen(SrcGen):
         return s+'\n'
 
 
-    @SVgen.Str
-    def RdataArrIdxLogic(self, reg, ind=None):
+    @SVgen.str
+    def RdataArrIdxLogic(self, reg):
         """deprecated"""
-        s = f"{ind.b}logic [$clog2({reg.upper()}_NUM)-1:0] {reg.lower()}_{self.arr_idx_suf};\n"
+        s = f"logic [$clog2({reg.upper()}_NUM)-1:0] {reg.lower()}_{self.arr_idx_suf};\n"
         return s
 
-    @SVgen.Str
-    def RdataArrIdxComb(self, reg, ind=None):
+    @SVgen.str
+    def RdataArrIdxComb(self, reg):
         """deprecated"""
-        s = f"{ind.b}assign {reg.lower()}_{self.arr_idx_suf} = {self.addr_port_name}{self.addr_slice}-{reg};\n"
+        s = f"assign {reg.lower()}_{self.arr_idx_suf} = {self.addr_port_name}{self.addr_slice}-{reg};\n"
         return s
 
-    @SVgen.Str
+    @SVgen.str
     def rdata_sel_subtrahend_comb(self, reg, ifelse, ind=None):
         s = f"{ind.b}{ifelse}({reg.lower()}{self.arr_sel_suf}) begin\n"
         s += f"{ind[1]}{self.arr_sel_subtrahend} = {reg};\n" 
         s += f"{ind.b}end\n"
         return s
 
-    @SVgen.Str
+    @SVgen.str
     def rdata_sel_subtrahend_comb_block(self, arr_reg, ind=None):
         s = f"{ind.b}assign {self.arr_sel} = {self.addr_port_name}{self.addr_slice}-{self.arr_sel_subtrahend};\n"
         s += f"{ind.b}always_comb begin\n"
@@ -317,14 +317,14 @@ class RegbkGen(SrcGen):
         s += f"{ind.b}end\n"
         return s
 
-    @SVgen.Str
+    @SVgen.str
     def rdata_address_condition_comb(self, reg, ind=None):
         s = f'{ind.b}assign {reg.lower()}{self.arr_sel_suf} = '
         s += f'{self.addr_port_name}{self.addr_slice} >= {reg}\n'
         s += f'{ind[1]}&& {self.addr_port_name}{self.addr_slice} < {reg}+{reg}{self.regbk.arr_num_suf};\n'
         return s
 
-    @SVgen.Str
+    @SVgen.str
     def WdataSeqStr(self, reg, _slice, rw=None, dim=None, ind=None):
         # TODO slice dependent, now it only pad the MSB and it's usually the case
         disable_reg = False
@@ -360,7 +360,7 @@ class RegbkGen(SrcGen):
         s += f"{ind.b}end\n"
         return s
 
-    @SVgen.Str
+    @SVgen.str
     def WdataCombStr(self, reg, _slice, rw=None, dim=None, comb=None, ind=None):
         # TODO slice dependent, now it only pad the MSB and it's usually the case
         disable_reg = False
@@ -411,7 +411,7 @@ class RegbkGen(SrcGen):
             s += f"{ind[1]}end\n{ind.b}end\n"
         return s
 
-    @SVgen.Str
+    @SVgen.str
     def WdataCombArrStr(self, reg, rw=None, dim=None, comb=None, ind=None):
         # TODO slice dependent, now it only pad the MSB and it's usually the case
         dim = "" if not dim else dim
@@ -467,14 +467,14 @@ class RegbkGen(SrcGen):
             dim = "" if arr == "" else " [" + reg.name + self.regbk.arr_num_suf + "]"
             w[1] = max(w[1], len(reg.name + dim) + 2)
         return w
-    @SVgen.Str
+    @SVgen.str
     def assign_output_all_block (self, ind=None):
         s = f"{ind.b}// direct control register to output\n"
         for reg in self.regbk.addrs.enumls:
             s += f"{ind.b} assign r_{reg.name.lower()} = {reg.name.lower()}_r;\n"
         return s+'\n'
 
-    @SVgen.Str
+    @SVgen.str
     def output_all_register_block (self, ind=None):
         """
         """
@@ -492,7 +492,7 @@ class RegbkGen(SrcGen):
                 s += self.port_logic(w, reg.name.lower(), bw, tp, dim, 'ro',ind=ind)
         return s
 
-    @SVgen.Str
+    @SVgen.str
     def control_reg_logic_block(self, ind=None):
         """Control register logic
         Parameters
@@ -510,7 +510,7 @@ class RegbkGen(SrcGen):
                 s += self.LogicStr( w, reg.name.lower(), bw, tp, arr=arr, comb=comb, ind=ind)
         s += "\n"
         return s
-    @SVgen.Str
+    @SVgen.str
     def rdata_address_condition_logic_block(self, ind=None):
         """deprecated"""
         s = f"{ind.b}// read data address selection condtion\n"
@@ -527,7 +527,7 @@ class RegbkGen(SrcGen):
         s += "\n"
         return s
 
-    @SVgen.Str
+    @SVgen.str
     def rdata_arr_sel_logic_block(self, ind=None):
         """
         """
@@ -551,7 +551,7 @@ class RegbkGen(SrcGen):
         s += "\n"
         return s
 
-    @SVgen.Str
+    @SVgen.str
     def IntrCombStr(self, intr_logic, intr_field, dim=None, ind=None):
         dim = "" if dim is None else f"[{dim}]"
         s = f"{ind.b}if ({self.clr_affix}{intr_logic}_r{dim}) {self.regbk.regintr_name}_w{dim}.{intr_logic} = '0;\n"
@@ -560,7 +560,7 @@ class RegbkGen(SrcGen):
         s += f"{ind.b}end\n"
         return s
 
-    @SVgen.Str
+    @SVgen.str
     def IntrSigGenStr(self, ind=None):
         s = "\n"
         s += f"{ind.b}// interrupt\n"
@@ -581,7 +581,7 @@ class RegbkGen(SrcGen):
         s += f"{ind.b}endgenerate\n"
         return s + "\n"
 
-    @SVgen.Str
+    @SVgen.str
     def WRCondLogicStr(self, ind=None):
         s = ""
         if self.protocol is None:
@@ -849,7 +849,7 @@ class RegbkGen(SrcGen):
             s += self.IntrSigGenStr(ind=ind)
         return s
 
-    @SVgen.Str
+    @SVgen.str
     def ReqAckCombStr(self, ind=None):
         s = ""
         if self.wrdata_style == WRDATA_PRESET.INSTANT:
@@ -914,7 +914,7 @@ class RegbkGen(SrcGen):
             s += self.SeqCeStr(s1, s2, ce="", ind=ind)
         return s
 
-    @SVgen.Str
+    @SVgen.str
     def ReqAckSeqStr(self, ind=None):
         s = ""
         if self.wrdata_style == WRDATA_PRESET.INSTANT:
