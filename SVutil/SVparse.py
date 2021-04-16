@@ -629,6 +629,8 @@ class SVparse(SVutil):
 
     def ParamParse(self, s, lines):
         # TODO type parse (in SVstr) , array parameter
+        # TODO multi-line statement, it has to know if it's parameter port... where
+        # the end of the statement is not indicated by ;
         sign = s.SignParse()
         tp = s.TypeParse(self.cur_hier.AllTypeKeys.union(self.gb_hier.SelfTypeKeys))
         bw = s.bracket_parse()
@@ -639,6 +641,10 @@ class SVparse(SVutil):
         dimstr = self.Tuple2str(dim)
         if "{" in s:
             while "}" not in s:
+                _s, cmt = self.Rdline(lines)
+                s += _s
+        if self.flag_port != 'pport':
+            while ";" not in s:
                 _s, cmt = self.Rdline(lines)
                 s += _s
         numstr = s.rstrip().rstrip(";").rstrip(",").s.lstrip("=").lstrip()
@@ -1080,7 +1086,14 @@ class SVparse(SVutil):
         self.flag_elsif_parsed = False
 
     def PortFlag(self, w, s=None):
-        """ w+' '+s is the whole string being processed """
+        """
+        flag indicating in what stage the processing is
+        pport: parameter port
+        port: port
+        end: inside module
+
+        """
+        # w+' '+s is the whole string being processed
         _s = w + " " + s
         if re.match(r"module[\w\W]*;", _s) and self.flag_port == "":
             self.flag_port = "end"
