@@ -21,15 +21,15 @@ class TbPyGen(TestGen):
         for ck in self.clk_domain_lst:
             _aff = ck[0] + "_" if ck[0] != "" else ""
             s += f'{ind.b}{_aff}rst_out, {_aff}ck_ev = CreateEvents(["{_aff}rst_out", "{_aff}ck_ev"])\n'
-        self.print(self.eventlst, verbose=3)
-        ev_lst = reduce(lambda x, y: x + ", " + y[0], self.eventlst + [("", "")], "")[
+        self.print(self.nico_eventlst, verbose=3)
+        ev_lst = reduce(lambda x, y: x + ", " + y[0], self.nico_eventlst + [("", "")], "")[
             2:-2
         ]
         self.print(ev_lst, verbose=3)
         ev_lst_str = (
-            f'{ind[1]} "{self.eventlst[0][0]}"\n'
+            f'{ind[1]} "{self.nico_eventlst[0][0]}"\n'
             + reduce(
-                (lambda x, y: x + f'{ind[1]},"{str(y[0])}"\n'), self.eventlst[1:], ""
+                (lambda x, y: x + f'{ind[1]},"{str(y[0])}"\n'), self.nico_eventlst[1:], ""
             )[:-1]
         )
         self.print(ev_lst_str, verbose=3)

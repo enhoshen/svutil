@@ -13,7 +13,11 @@ from SVutil.SVclass import *
 class TestGen(SVgen):
     def __init__(self, ind=Ind(0), session=None):
         super().__init__(session=session)
-        self.customlst += ["eventlst", "py_logic_eventlst", "clk_domain_lst"]
+        self.customlst += [
+            "eventlst", 
+            "py_logic_eventlst",
+            "genpath",
+            "clk_domain_lst"]
         self.nico_eventlst = [
             ("intr_ev", "intr_any"),
             ("init_ev", "init_cond"),
@@ -30,16 +34,15 @@ class TestGen(SVgen):
         self.clk_domain_lst = [("", "_n")]
         self.userfunclst = []
 
+
     def Refresh(self):
         super().Refresh()
         self.test = GBV.TEST
         self.testname = GBV.TEST.rsplit("_tb")[0]
         self.fsdbname = self.testname + "_tb"  # TODO
         self.topfile = GBV.SV.rstrip(".sv")
-        self.incfile = GBV.INC
-        self.dutname = GBV.TESTMODULE
-        self.dut = self.session.hiers.get(self.dutname)
-        self.dutfile = self.session.hiers.get(self.dutname + "_sv")
+
+        self.genpath = "./"
 
 
     @SVgen.UserMethod

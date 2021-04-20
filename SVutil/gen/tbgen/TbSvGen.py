@@ -30,7 +30,7 @@ def initial_block(orig):
 class TbSvGen(TestGen, SrcGen):
     def __init__(self, ind=Ind(0), session=None):
         super().__init__(ind=ind, session=session)
-        self.customlst = [
+        self.customlst += [
             "hclkmacro",
             "endcyclemacro",
             "clkstr",
