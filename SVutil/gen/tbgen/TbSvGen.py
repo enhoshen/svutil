@@ -30,12 +30,11 @@ def initial_block(orig):
 class TbSvGen(TestGen, SrcGen):
     def __init__(self, ind=Ind(0), session=None):
         super().__init__(ind=ind, session=session)
-        self.customlst = [
+        self.customlst += [
             "hclkmacro",
             "endcyclemacro",
             "clkstr",
             "rststr",
-            "genpath",
             "endcycle",
             "clk_domain_lst"
             "nicoinit_delay"
@@ -46,7 +45,6 @@ class TbSvGen(TestGen, SrcGen):
         self.endcyclemacro = "TIMEOUTCYCLE"
         self.clkstr = "clk"
         self.rststr = "rst"
-        self.genpath = "./"
         self.endcycle = 10000
 
         self.clk_domain_lst = [('tb', '_n')]
