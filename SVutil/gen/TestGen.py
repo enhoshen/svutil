@@ -13,18 +13,34 @@ from SVutil.SVclass import *
 class TestGen(SVgen):
     def __init__(self, ind=Ind(0), session=None):
         super().__init__(session=session)
-        self.customlst += ["eventlst", "pyeventlgclst", "clk_domain_lst"]
-        self.eventlst = [
+        self.customlst += ["eventlst", "py_logic_eventlst", "clk_domain_lst"]
+        self.nico_eventlst = [
             ("intr_ev", "intr_any"),
             ("init_ev", "init_cond"),
             ("resp_ev", "resp_cond"),
             ("fin_ev", "fin_cond"),
             ("sim_stop_ev", "sim_stop"),
             ("sim_pass_ev", "sim_pass"),
+            ("sim_fail_ev", "sim_fail"),
+            ("sim_abort_ev", "sim_abort"),
             ("time_out_ev", "time_out"),
         ]
-        self.pyeventlgclst = ["sim_pass", "sim_stop", "time_out"]
+        self.sv_eventlst = ["exit"]
+        self.py_logic_eventlst = ["sim_pass", "sim_stop", "time_out"]
         self.clk_domain_lst = [("", "_n")]
+        self.userfunclst = []
+
+    def Refresh(self):
+        super().Refresh()
+        self.test = GBV.TEST
+        self.testname = GBV.TEST.rsplit("_tb")[0]
+        self.fsdbname = self.testname + "_tb"  # TODO
+        self.topfile = GBV.SV.rstrip(".sv")
+        self.incfile = GBV.INC
+        self.dutname = GBV.TESTMODULE
+        self.dut = self.session.hiers.get(self.dutname)
+        self.dutfile = self.session.hiers.get(self.dutname + "_sv")
+
 
     @SVgen.UserMethod
     def write_module_test(self, module=None, **conf):

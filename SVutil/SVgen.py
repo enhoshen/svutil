@@ -40,33 +40,12 @@ class SVgen(SVutil):
         else:
             self.session = session
         self.genlist = {}
-        self.customlst = [
-            "hclkmacro",
-            "endcyclemacro",
-            "clkstr",
-            "rststr",
-            "genpath",
-            "endcycle",
-        ]
+        self.customlst = []
         self.userfunclst = []
 
-        self.hclkmacro = "HCYCLE"
-        self.endcyclemacro = "TIMEOUTCYCLE"
-        self.clkstr = "clk"
-        self.rststr = "rst"
-        self.genpath = "./"
-        self.endcycle = 10000
         self.Refresh()
 
     def Refresh(self):
-        self.test = GBV.TEST
-        self.testname = GBV.TEST.rsplit("_tb")[0]
-        self.fsdbname = self.testname + "_tb"  # TODO
-        self.topfile = GBV.SV.rstrip(".sv")
-        self.incfile = GBV.INC
-        self.dutname = GBV.TESTMODULE
-        self.dut = self.session.hiers.get(self.dutname)
-        self.dutfile = self.session.hiers.get(self.dutname + "_sv")
         self.hier = self.session.hiers.get(GBV.HIER)
         self.regbkstr = GBV.REGBK
         self.regbk = self.session.hiers.get(GBV.REGBK)
@@ -205,6 +184,7 @@ class SVgen(SVutil):
     # decorators
     def str(orig):
         sig = inspect.signature(orig)
+
         @wraps(orig)
         def new_func(*arg, **kwargs):
             # for each kwargs, check if it's existing argument, if so, don't do post
