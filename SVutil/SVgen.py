@@ -46,6 +46,10 @@ class SVgen(SVutil):
         self.Refresh()
 
     def Refresh(self):
+        self.dutname = GBV.TESTMODULE
+        self.dut = self.session.hiers.get(self.dutname)
+        self.dutfile = self.session.hiers.get(self.dutname + "_sv")
+        self.incfile = GBV.INC
         self.hier = self.session.hiers.get(GBV.HIER)
         self.regbkstr = GBV.REGBK
         self.regbk = self.session.hiers.get(GBV.REGBK)

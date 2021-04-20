@@ -36,10 +36,6 @@ class TestGen(SVgen):
         self.testname = GBV.TEST.rsplit("_tb")[0]
         self.fsdbname = self.testname + "_tb"  # TODO
         self.topfile = GBV.SV.rstrip(".sv")
-        self.incfile = GBV.INC
-        self.dutname = GBV.TESTMODULE
-        self.dut = self.session.hiers.get(self.dutname)
-        self.dutfile = self.session.hiers.get(self.dutname + "_sv")
 
 
     @SVgen.UserMethod
