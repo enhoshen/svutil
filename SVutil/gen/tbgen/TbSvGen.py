@@ -47,11 +47,37 @@ class TbSvGen(TestGen, SrcGen):
         self.rststr = "rst"
         self.endcycle = 10000
 
+        #EX: a clock domain tuple ('ahb', '_n') will result in several signals:
+        #```
+        #   logic ahb_clk;
+        #   logic ahb_rst_n;
+        #   int ahb_clk_cnt;
+        #```
         self.clk_domain_lst = [('tb', '_n')]
 
         self.nicoinit_delay = 1
         self.pre_reset_delay = 10
         self.mid_reset_delay = 10
+
+        self.clocking_list()
+
+    def clocking_list(self):
+        #self.clk_lst = reduce(
+        #    (lambda x, y: x + ", " + f'{y[0]+"_" if y[0] != "" else ""}clk'),
+        #    self.clk_domain_lst,
+        #    "",)[2:]
+        #self.rst_lst = reduce(
+        #    (lambda x, y: x + ", " + f'{y[0]+"_" if y[0] != "" else ""}rst{y[1]}'),
+        #    self.clk_domain_lst,
+        #    "",)[2:]
+        #self.ccnt_lst = reduce(
+        #    (lambda x, y: x + ", " + f'{y[0]+"_" if y[0] != "" else ""}clk_cnt'),
+        #    self.clk_domain_lst,
+        #    "",)[2:]
+        self.clk_lst = [f"{i[0] if i[0] != '' else ''}_clk" for i in self.clk_domain_lst]
+        self.rst_lst = [f"{i[0] if i[0] != '' else ''}_rst{i[1]}" for i in self.clk_domain_lst]
+        self.ccnt_lst = [f"{i[0] if i[0] != '' else ''}_clk_cnt" for i in self.clk_domain_lst]
+        return self.clk_lst, self.rst_lst, self.ccnt_lst
 
     @SVgen.str
     def include_str(self, paths=[], ind=None):
@@ -80,6 +106,7 @@ class TbSvGen(TestGen, SrcGen):
         s = "\n" + ind.b + "endmodule"
         yield s
 
+
     @SVgen.str
     def declare_logic(self, ind=None):
         s  = self.comment_banner_str("Signal Declaration", ind=ind)
@@ -92,24 +119,26 @@ class TbSvGen(TestGen, SrcGen):
     @SVgen.str
     def clocking_logic(self, ind=None):
         # clock, reset and clock count
-        ck_lst = reduce(
-            (lambda x, y: x + ", " + f'{y[0]+"_" if y[0] != "" else ""}clk'),
-            self.clk_domain_lst,
-            "",
-        )[2:]
-        rst_lst = reduce(
-            (lambda x, y: x + ", " + f'{y[0]+"_" if y[0] != "" else ""}rst{y[1]}'),
-            self.clk_domain_lst,
-            "",
-        )[2:]
-        ccnt_lst = reduce(
-            (lambda x, y: x + ", " + f'{y[0]+"_" if y[0] != "" else ""}clk_cnt'),
-            self.clk_domain_lst,
-            "",
-        )[2:]
-        s  = f"{ind.b}logic {ck_lst};\n"
-        s += f"{ind.b}logic {rst_lst};\n"
-        s += f"{ind.b}int {ccnt_lst};\n"
+        #self.clk_lst = reduce(
+        #    (lambda x, y: x + ", " + f'{y[0]+"_" if y[0] != "" else ""}clk'),
+        #    self.clk_domain_lst,
+        #    "",)[2:]
+        #self.rst_lst = reduce(
+        #    (lambda x, y: x + ", " + f'{y[0]+"_" if y[0] != "" else ""}rst{y[1]}'),
+        #    self.clk_domain_lst,
+        #    "",)[2:]
+        #self.ccnt_lst = reduce(
+        #    (lambda x, y: x + ", " + f'{y[0]+"_" if y[0] != "" else ""}clk_cnt'),
+        #    self.clk_domain_lst,
+        #    "",)[2:]
+        #s  = f"{ind.b}logic {self.clk_lst};\n"
+        #s += f"{ind.b}logic {self.rst_lst};\n"
+        #s += f"{ind.b}int {self.ccnt_lst};\n"
+        s = ""
+        for ck, rst, ccnt in zip(*self.clocking_list()):
+            s += f"{ind.b}logic {ck};\n"
+            s += f"{ind.b}logic {rst};\n"
+            s += f"{ind.b}int {ccnt};\n"
         for ck in self.clk_domain_lst:
             _aff = ck[0] + "_" if ck[0] != "" else ""
             s += f"{ind.b}`Pos({_aff}rst_out, {_aff}rst{ck[1]})\n"
@@ -128,7 +157,7 @@ class TbSvGen(TestGen, SrcGen):
 
         w = self.FindFormatWidth([i[0] + ", " + i[1] + "," for i in self.nico_eventlst])
         for ev in self.nico_eventlst:
-            s += f'{ind.b}`PosIf({ev[0]+", "+ev[1]+",":<{w}} {self.rststr}_n)//TODO modify reset logic\n'
+            s += f'{ind.b}`PosIf({ev[0]+", "+ev[1]+",":<{w}} {self.rst_lst[0]})//TODO modify reset logic\n'
         s += '\n'
         for ev in self.sv_eventlst:
             s += f'{ind.b}event event_{ev};\n'
@@ -183,7 +212,8 @@ class TbSvGen(TestGen, SrcGen):
             _aff = ck[0] + "_" if ck[0] != "" else ""
             rst = _aff + "rst" + ck[1]
             s += f"{ind[1]}{rst} = {1 if ck[1] == '_n' else 0};\n"
-            s += f"{ind[1]}{_aff}clk_cnt = 0;"
+            s += f"{ind[1]}{_aff}clk_cnt = 0;\n"
+        s = s[:-1] if s[-1] == '\n' else s
         return s
 
     @initial_block
@@ -329,8 +359,7 @@ class TbSvGen(TestGen, SrcGen):
         s += ind.base + module.hier + " #(\n"
         s_param = ""
         w = self.FindFormatWidth(
-            [(param + " ",) for param, v in module.paramports.items()]
-        )
+            [(param + " ",) for param, v in module.paramports.items()])
         for param, v in module.paramports.items():
             if module.paramsdetail[param][SVhier.paramfield.paramtype] == "parameter":
                 s_param += f"{ind[1]},.{param:<{w[0]}}({param})\n"
@@ -345,9 +374,9 @@ class TbSvGen(TestGen, SrcGen):
                 s_port += '\n'
                 cur_group = p.group
             if "clk" in p.name:
-                s_port += f"{ind[1]},.{p.name:<{w[0]}}({self.clkstr})\n"
+                s_port += f"{ind[1]},.{p.name:<{w[0]}}({self.clk_lst[0]})\n"
             elif "rst" in p.name:
-                s_port += f"{ind[1]},.{p.name:<{w[0]}}({self.rststr})\n"
+                s_port += f"{ind[1]},.{p.name:<{w[0]}}({self.rst_lst[0]})\n"
             else:
                 s_port += f"{ind[1]},.{p.name:<{w[0]}}({p.name})\n"
 

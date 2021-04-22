@@ -44,6 +44,10 @@ class TestGen(SVgen):
 
         self.genpath = "./"
 
+    def module_test(self):
+        """ pure virtual """
+        raise NotImplementedError("Overide module_test in subclass")
+
 
     @SVgen.UserMethod
     def write_module_test(self, module=None, **conf):
