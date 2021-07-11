@@ -30,7 +30,7 @@ class TestGen(SVgen):
             ("time_out_ev", "time_out"),
         ]
         self.sv_eventlst = ["exit"]
-        self.py_logic_eventlst = ["sim_pass", "sim_stop", "time_out"]
+        self.py_logic_eventlst = ["fin_cond", "sim_pass", "sim_fail", "sim_stop", "time_out"]
         self.clk_domain_lst = [("", "_n")]
         self.userfunclst = []
 

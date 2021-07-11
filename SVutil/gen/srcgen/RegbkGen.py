@@ -219,9 +219,9 @@ class RegbkGen(SrcGen):
         else:
             dim = "" if dim is None else dim
         if comb:
-            return self.CombLogicStr(w, reg, bw, tp, dim, ind=ind)
+            return self.CombLogicStr(w, reg, bw, tp, dim, ind=ind, spacing=False)
         else:
-            return self.RegLogicStr(w, reg, bw, tp, dim, ind=ind)
+            return self.RegLogicStr(w, reg, bw, tp, dim, ind=ind, spacing=False)
 
     def rdata_basic_string(self, reg, comb, const):
         pad = f"{self.regbk.regbw_name}-{reg}{self.regbk.bw_suf}"
@@ -233,7 +233,7 @@ class RegbkGen(SrcGen):
         return pad, logic, sel, const_cmt
 
     @SVgen.str
-    def rdata_vector_comb(self, reg, _slice, w, rw=None, comb=False, const=False, ind=None):
+    def rdata_vector_comb(self, reg, _slice, w, rw=None, comb=False, const=False, ind=None, spacing=False):
         # TODO slice dependent, now it only pad the MSB and it's usually the case
         if rw and rw == "WO":
             return ""
@@ -508,7 +508,6 @@ class RegbkGen(SrcGen):
                 pass
             else:
                 s += self.LogicStr( w, reg.name.lower(), bw, tp, arr=arr, comb=comb, ind=ind)
-        s += "\n"
         return s
     @SVgen.str
     def rdata_address_condition_logic_block(self, ind=None):
@@ -807,7 +806,7 @@ class RegbkGen(SrcGen):
             else:
                 s += self.WdataCombStr(reg.name, _slice, rw, comb=comb, ind=ind)
                 if not comb:
-                    s += self.WdataSeqStr(reg.name, _slice, rw, ind=ind) + "\n"
+                    s += self.WdataSeqStr(reg.name, _slice, rw, ind=ind)
         return s
 
     @SVgen.UserMethod

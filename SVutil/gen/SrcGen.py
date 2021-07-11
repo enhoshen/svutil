@@ -57,17 +57,17 @@ class SrcGen(SVgen):
     def port_logic(self, w, reg, bw, tp, dim, io):
         bwstr = "" if bw == 1 else f"[{bw}-1:0] "
         inout = {'i':'input', 'o':'output', 'ro':'input', 'ro':'output'}.get(io)
-        return f',{inout} {tp+" "+bwstr:<{w[0]}}{io[0]}_{reg+dim}\n'
+        return f',{inout} {tp+" "+bwstr:<{w[0]}}{io[0]}_{reg+dim}'
 
     @SVgen.str
     def RegLogicStr(self, w, reg, bw, tp, dim):
         bwstr = "" if bw == 1 else f"[{bw}-1:0] "
-        return f'{tp+" "+bwstr:<{w[0]}}{reg+"_r"+dim:<{w[1]}} ,{reg}_w{dim};\n'
+        return f'{tp+" "+bwstr:<{w[0]}}{reg+"_r"+dim:<{w[1]}} ,{reg}_w{dim};'
 
     @SVgen.str
     def CombLogicStr(self, w, reg, bw, tp, dim):
         bwstr = "" if bw == 1 else f"[{bw}-1:0] "
-        return f'{tp+" "+bwstr:<{w[0]}}{reg+dim:<{w[1]}};\n'
+        return f'{tp+" "+bwstr:<{w[0]}}{reg+dim:<{w[1]}};'
 
     @SVgen.str
     def SeqCeStr(self, s1, s2, ce=None, ind=None):

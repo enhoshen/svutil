@@ -166,10 +166,10 @@ StickSet-TextColor = black
 Orientation = Landscape
 [FileBrowser]
 nWaveRestoreRCDirHistory = "\"/home/enhoshen/research/lpAccel/sim/Address.rc\"" "\"/home/enhoshen/research/lpAccel/sim/novas.rc\"" "\"/home/enhoshen/research/lpAccel/sim/Controls.rc\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/I2cMaster_test1.rc\"" "\"/home/enho.shen/GZE200\
-/sim/Peripheral/RTC/apbsyncrtc.rc\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CSlave/PG.rc\"" "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/ahbmastif.rc\"" "\"/home/enho.shen/GZE200/sim/Core/ConvCore/OSConvLineBuffer/signal_0.rc\""
+/sim/Peripheral/RTC/apbsyncrtc.rc\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CSlave/PG.rc\"" "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/ahbmastif.rc\""
 nWaveOpenFsdbDirHistory = "\"/home/enhoshen/research/lpAccel/sim/loop.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072205_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_ug_072205\
 _syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest_5ns.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072206_syn_PEt\
-est.fsdb\"" "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/NormStage_tb_0.fsdb\"" "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/SvmHogStage_tb_0.fsdb\""
+est.fsdb\"" "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/NormStage_tb_0.fsdb\""
 [Form]
 version = Verdi_Q-2020.03-SP1
 wave/unknownSave.fm = 100,100,575,275
@@ -265,21 +265,21 @@ Mask_Non_Active_Time_on_Wave = FALSE
 Show_Cycle_Info = TRUE
 [QtDialog]
 aboutVerdiDialog = 221,85,773,641
-VirtualFileEditorDialog = 297,235,637,403
 QwShortcutDialog = 1731,1217,800,600
 gridOptionsDialog = 1829,1477,421,269
 QwQuestionMsgDlg = 444,366,324,110
-ActiveFileDialog = 1693,1475,693,272
 SetWindowTimeUnitDialog = 1822,1572,433,86
-QwInfoMsgDlg = 1667,1236,750,250
-restoreSigDlg = 1764,1392,551,438
 usrMarkerDialog = 1640,1461,800,300
+QwInfoMsgDlg = 1667,1236,750,250
+VirtualFileEditorDialog = 1721,1410,637,403
 saveSigDlg = 1764,1418,551,386
-CreateBusDialog = 1646,1257,788,709
-QwWarnMsgDlg = 385,1011,600,250
+restoreSigDlg = 2567,1220,551,438
+CreateBusDialog = 2459,950,788,709
+ActiveFileDialog = 2506,1169,747,272
 QwUserAskDlg = 1270,1293,324,134
-openFileDlg = 1353,1369,1374,484
-qWaveSignalDialog = 1358,1193,1398,782
+QwWarnMsgDlg = 385,1011,600,250
+openFileDlg = 1907,1225,1374,484
+qWaveSignalDialog = 1121,813,1398,968
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile1]
 shortcut = 
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile3]
@@ -491,8 +491,8 @@ PointStyle = FALSE
 SetDefaultRadix = TRUE
 FilterTextField = FALSE
 anaAuto100VertFit = FALSE
-getSignalForm = 1358 1193 1398 782 341 684 811 165
-viewPort = 1080 1103 1920 1017 451 131
+getSignalForm = 1121 813 1398 968 341 870 811 212
+viewPort = 1906 768 1920 1354 254 131
 signalSpacing = 5
 digitalSignalHeight = 15
 analogSignalHeight = 98
@@ -737,7 +737,7 @@ maskIsolation = TRUE
 maskRetention = TRUE
 maskDrivingPowerOff = TRUE
 maskToggle = TRUE
-autoBackupSignals = off 5 "\"/home/enho.shen/Slave-wrapper/sim/vcs/nWaveLog\"" "\"novas_autosave_sig\""
+autoBackupSignals = off 5 "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/nWaveLog\"" "\"novas_autosave_sig\""
 signal_rc_attribute = 65535
 signal_rc_alias_attribute = 0
 ConvertAttr1 = -inc FALSE
@@ -765,11 +765,11 @@ curveWindow_Drag&Drop_Mode = TRUE
 hspiceIncOpenMode = TRUE
 pcSelectMode = FALSE
 hierarchyDelimiter = /
-RecentFile1 = "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/SvmHogStage_tb_0.fsdb\""
-RecentFile2 = "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/NormStage_tb_0.fsdb\""
-RecentFile3 = "\"/home/enho.shen/GZE200/sim/Top/SimBvh/fsdb/Gze200Chip_test_iics_basic.bsim.fsdb\""
-RecentFile4 = "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/HistogramStage_tb_0.fsdb\""
-RecentFile5 = "\"/home/enho.shen/GZE200/sim/Peripheral/I2CSlave/fsdb/I2cSlave_tb_DBA.fsdb\""
+RecentFile1 = "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/NormStage_tb_0.fsdb\""
+RecentFile2 = "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/HogStage_tb_0.fsdb\""
+RecentFile3 = "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/PupilProposalCore_tb_0.fsdb\""
+RecentFile4 = "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/fsdb/AHBRWH_gold.fsdb\""
+RecentFile5 = "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/fsdb/Gze200MemorySystem_old_tb_AHBRWH.fsdb\""
 open_file_time_range = FALSE
 value_window_aligment = Right
 signal_window_alignment = Left

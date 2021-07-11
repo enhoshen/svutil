@@ -84,7 +84,7 @@ class TbSvGen(TestGen, SrcGen):
         s  = f'{ind.b}import "DPI-C" function string getenv(input string env_name);\n'
         s += f"{ind.b}`include " + f'"{self.incfile}.sv"\n'
         for p in paths:
-            s += f"{ind.b}`include \"p\"\n"
+            s += f"{ind.b}`include \"{p}\"\n"
         return s
 
     @SVgen.str

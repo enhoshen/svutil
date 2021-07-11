@@ -42,6 +42,7 @@ class SVgen(SVutil):
         self.genlist = {}
         self.customlst = []
         self.userfunclst = []
+        self.genpath = './'
 
         self.Refresh()
 
@@ -204,7 +205,7 @@ class SVgen(SVutil):
 
             if sig.parameters.get('spacing') is None:
                 spacing = kwargs.pop('spacing', None)
-                post['spacing'] = True
+                post['spacing'] = True if spacing is None else spacing
 
             x = orig(*arg, **kwargs)
 
