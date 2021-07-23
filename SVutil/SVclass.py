@@ -76,7 +76,7 @@ class SVclass(SVutil):
         return self.data[self.field.dic[n]]
 
     @property
-    def ShowData(self):
+    def show_data(self):
         s = ""
         for f in self.field.dic:
             try:
@@ -86,11 +86,11 @@ class SVclass(SVutil):
         return s + "\n"
 
     @property
-    def ShowLine(self):
+    def show_line(self):
         return f'{"":{self.linechar}<{len(self.field.dic)*self.w}}\n'
 
     @property
-    def ShowField(self):
+    def show_field(self):
         s = ""
         for f in self.field.dic:
             s += f"{f:<{self.w}}"
@@ -99,12 +99,12 @@ class SVclass(SVutil):
     @property
     def Show(self):
         s = ""
-        s += self.ShowField
-        s += self.ShowLine
-        s += self.ShowData
+        s += self.show_field
+        s += self.show_line
+        s += self.show_data
         return s
 
-    def ShowDataCb(self, cblst):
+    def show_data_cb(self, cblst):
         """
         cblst:callback list; applied to each field
         Ex: ShowDataCb([hex,bin]) would print hex(field0), bin(field1)
@@ -149,11 +149,11 @@ class SVStruct(SVclass):
         self.linechar = "="
         self.datas = [SVType(t) for t in tp]
 
-    def IsAlias(self):
+    def is_alias(self):
         pass
 
     @property
-    def ShowData(self):
+    def show_data(self):
         for d in self.datas:
             d.ShowData
 
@@ -173,7 +173,7 @@ class SVType(SVclass):
         return f"<{module}.{qualname} {self.name} at {hex(id(self))}>"
 
     @property
-    def ShowData(self):
+    def show_data(self):
         s = ""
         for d in self.data:
             s += d.ShowData
@@ -263,7 +263,7 @@ class SVRegbk(SVutil):
             "regbsizebw_name",
             "regintr_name",
         ]
-        self.userfunclst = ["ShowAddr"]
+        self.userfunclst = ["show_addr"]
 
         self.custom = RegbkCustom() if custom is None else custom
 
@@ -295,7 +295,7 @@ class SVRegbk(SVutil):
         self.regdefaults = {}
         self.regbws = {}
         self.params = {}
-        self.raw_intr_stat = self.GetType(self.regintr_name)
+        self.raw_intr_stat = self.get_type(self.regintr_name)
 
         self.parse_parameter(pkg)
         self.parse_regfield(pkg)
@@ -317,7 +317,7 @@ class SVRegbk(SVutil):
 
     def parse_regfield(self, pkg):
         for i, v in pkg.enums.items():
-            self.EnumToRegfield(i, v)
+            self.enum_to_regfield(i, v)
 
     def parse_register_type(self, pkg):
         """ 
@@ -341,7 +341,7 @@ class SVRegbk(SVutil):
                     break
             # get struct
             _v = [SVType(vv) for vv in v]
-            tt = [self.GetType(vv.tp) for vv in _v]
+            tt = [self.get_type(vv.tp) for vv in _v]
 
             self.regtypes[self.type_to_reg(i)] = _v
             self.regmembtypes[self.type_to_reg(i)] = tt
@@ -350,13 +350,13 @@ class SVRegbk(SVutil):
             for k in self.addrsdict.keys():
                 tp = self.regtypes.get(k)
                 if type(tp) == list and k not in self.regslices:
-                    self.StructToRegfield(k, tp)
+                    self.struct_to_regfield(k, tp)
         
 
     def __getattr__(self, n):
         return self.custom.__dict__[n]
 
-    def GetDefaultsStr(self, name, lst=False):
+    def get_defaults_str(self, name, lst=False):
         reg = self.regaddrsdict.get(name)
         d = self.regdefaults.get(name)
         if not d:
@@ -369,7 +369,7 @@ class SVRegbk(SVutil):
             _s = d.numstr
         return _s
 
-    def GetBWStr(self, name, lst=False):
+    def get_bWStr(self, name, lst=False):
         reg = self.regaddrsdict.get(name)
         bw = self.regbws.get(name)
         if not bw:
@@ -385,7 +385,7 @@ class SVRegbk(SVutil):
             _s = str(bw)
         return _s
 
-    def GetType(self, tp):
+    def get_type(self, tp):
         tp = self.pkg.AllType.get(tp)
         return [SVType(t) for t in tp] if tp else None
 
@@ -393,7 +393,7 @@ class SVRegbk(SVutil):
         """ pascal to upper snake case"""
         return re.sub(rf'(?!^)([A-Z])', rf'_\1', t).upper()
 
-    def EnumToRegfield(self, name, enum):
+    def enum_to_regfield(self, name, enum):
         _v = SVEnums(enum)
         _s = name.split(self.regfield_suf)
         if len(_s) == 2:
@@ -415,7 +415,7 @@ class SVRegbk(SVutil):
             if len(reserved) != 0:
                 self.regslices[_s[0]] += [(self.reserved_name, reserved)]
 
-    def StructToRegfield(self, name, struct):
+    def struct_to_regfield(self, name, struct):
         """struct is list of SVType"""
         regfield = SVEnums([[] for i in enumsfield.dic])
         regslice = []
@@ -440,11 +440,11 @@ class SVRegbk(SVutil):
         self.regfields[name] = regfield
         self.regbws[name] = num
 
-    def GetAddrCmt(self, reg):
+    def get_addr_cmt(self, reg):
         cmt = self.addrsdict[reg].cmt
-        return self.GetCmt(cmt)
+        return self.get_cmt(cmt)
 
-    def GetCmt(self, cmt):
+    def get_cmt(self, cmt):
         width = ""
         rw = ""
         arr = ""
@@ -471,7 +471,7 @@ class SVRegbk(SVutil):
                 continue
         return width, rw, arr, omit, comb, _
 
-    def GetAddrNField(self, reg):
+    def get_addr_n_field(self, reg):
         """
         Return the address and regfield given the register name
         the address is multiplied by regaddrbw
@@ -486,38 +486,38 @@ class SVRegbk(SVutil):
         names = regfield.names if regfield else None
         return addr, nums, names
 
-    def GetAddr(self, reg):
+    def get_addr(self, reg):
         if type(reg) == int:
             addr = reg
         elif type(reg) == tuple:
-            addr = self.GetAddrNField(reg[0])[0]
+            addr = self.get_addr_n_field(reg[0])[0]
             offset = reg[1] * self.regbsize
             addr += offset
         elif type(reg) == str:
-            addr = self.GetAddrNField(reg)[0]
+            addr = self.get_addr_n_field(reg)[0]
         else:
             raise TypeError("un-recognized register sequence type")
         return addr
 
-    def RegWrite(self, reg, datalst):
+    def reg_write(self, reg, datalst):
         """
         Return the address ,packed data and register fields names given register name
         and list of data of each register fields.
         """
-        addr, regnums, regnames = self.GetAddrNField(reg)
-        data = self.RegfieldPack(regnums, datalst)
+        addr, regnums, regnames = self.get_addr_n_field(reg)
+        data = self.regfield_pack(regnums, datalst)
         return addr, data, regnames
 
-    def RegRead(self, reg, data):
+    def reg_read(self, reg, data):
         """
         Return the address ,extracted data fields and register fields names given register name
         and read data.
         """
-        addr, regnums, regnames = self.GetAddrNField(reg)
-        datalst = self.RegfieldExtract(regnums, data)
+        addr, regnums, regnames = self.get_addr_n_field(reg)
+        datalst = self.regfield_extract(regnums, data)
         return datalst, regnames
 
-    def ShowAddr(self, valuecb=hex):
+    def show_addr(self, valuecb=hex):
         print(f"{self.pkg.name:-^{3*self.w}}")
         SVEnuml().ShowField
         SVEnuml().ShowLine
@@ -532,10 +532,10 @@ class SVRegbk(SVutil):
                 )
             )
 
-    def ShowRegfield(self, name):
+    def show_regfield(self, name):
         pass
 
-    def RegfieldPack(self, regfieldlst, datalst):
+    def regfield_pack(self, regfieldlst, datalst):
         """
         The function packs the provided data list
         based on each fields to a data of bandwidth self.regbw.
@@ -558,7 +558,7 @@ class SVRegbk(SVutil):
         data = data & msk
         return data
 
-    def RegfieldExtract(self, regfieldlst, data):
+    def regfield_extract(self, regfieldlst, data):
         """
         Given the regfield list and a data, extract each fields' bit slice
         Co-test with RegfieldPack by:
@@ -571,12 +571,12 @@ class SVRegbk(SVutil):
             datalst.append((data & msk) >> s)
         return datalst[0] if len(datalst) == 1 else datalst
 
-    def RegfieldUnitTest(self):
+    def regfield_unit_test(self):
         field = [[0, 5, 17, 30, 31], [0, 8, 15]]
         datalst = [[31, 1033, 2033, 0, 1], [56, 22, 55]]
         err = []
         for f, d in zip(field, datalst):
-            _d = self.RegfieldExtract(f, self.RegfieldPack(f, d))
+            _d = self.regfield_extract(f, self.regfield_pack(f, d))
             self.print(_d)
             err += [_d == d]
         return err
