@@ -426,9 +426,9 @@ class SVparse(SVutil):
             "enum": self.EnumParse,
             "module": self.HierParse,
             "import": self.ImportParse,
-            "input": self.PortParse,
-            "inout": self.PortParse,
-            "output": self.PortParse,
+            "input": self.port_parse,
+            "inout": self.port_parse,
+            "output": self.port_parse,
             "`include": self.IncludeRead,
             "`rdyack_input": self.RdyackParse,
             "`rdyack_output": self.RdyackParse,
@@ -667,8 +667,10 @@ class SVparse(SVutil):
             self.cur_hier.paramports[name] = num
         return name, num
 
-    def PortParse(self, s, lines):
+    def port_parse(self, s, lines):
         # bw = s.bracket_parse()
+        if self.flag_port is not 'port':
+            return None
         tp = s.TypeParse(self.cur_hier.AllTypeKeys.union(self.gb_hier.SelfTypeKeys))
         tp = "logic" if tp == "" else tp
         sign = s.SignParse()
@@ -947,7 +949,7 @@ class SVparse(SVutil):
     def HierParse(self, s, lines):
         self.cur_s = s
         self.flag_port = ""
-        self.PortFlag(self.cur_key, self.cur_s.s)
+        self.port_flag(self.cur_key, self.cur_s.s)
         name = self.cur_s.IDParse()
         new_hier = SVhier(name, self.cur_hier)
         SVparse.session.hiers[name] = new_hier
@@ -969,7 +971,7 @@ class SVparse(SVutil):
                 self.cur_s, self.cur_cmt = self.Rdline(lines)
                 continue
             _w = self.cur_s.lsplit()
-            self.PortFlag(_w, self.cur_s.s)
+            self.port_flag(_w, self.cur_s.s)
             if _w == _end:
                 break
             if _w in self.keyword:
@@ -1085,7 +1087,7 @@ class SVparse(SVutil):
         self.flag_parse = True
         self.flag_elsif_parsed = False
 
-    def PortFlag(self, w, s=None):
+    def port_flag(self, w, s=None):
         """
         flag indicating in what stage the processing is
         pport: parameter port
@@ -1099,11 +1101,10 @@ class SVparse(SVutil):
             self.flag_port = "end"
         if "#" in w and self.flag_port == "":
             self.flag_port = "pport"
-        if "input" in w or "output" in w and self.flag_port == "pport":
-            self.flag_port = "port"
-        if re.match(r"^ *[)] *[(]", _s) and self.flag_port == "pport":
-            self.flag_port = "port"
-        if re.match(r"^ *[)];", _s) and self.flag_port == "port":
+        if self.flag_port == "pport":
+            if "input" in w or "output" in w or re.match(r"^ *[)] *[(]", _s):
+                self.flag_port = "port"
+        if re.match(r"^ *[)]\s*;", _s) and self.flag_port == "port":
             self.flag_port = "end"
 
     def Rdline(self, lines):
