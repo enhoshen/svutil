@@ -8,9 +8,9 @@ from subprocess import Popen, PIPE
 from functools import reduce
 from dataclasses import dataclass
 
-from SVutil.SVutil import SVutil, V_
-from SVutil.SVclass import *
-from SVutil.SVstr import *
+from svutil.SVutil import SVutil, V_
+from svutil.SVclass import *
+from svutil.SVstr import *
 
 @dataclass
 class GBV(SVutil):

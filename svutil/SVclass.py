@@ -1,4 +1,4 @@
-from SVutil.SVutil import *
+from svutil.SVutil import *
 import re
 
 from dataclasses import dataclass, field

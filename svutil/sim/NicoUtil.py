@@ -1,9 +1,9 @@
 from nicotb import *
-from SVutil.SVparse import *
-from SVutil.SVclass import *
-from SVutil.SVsim import *
-from SVutil.SVutil import colorama
-from SVutil.SVclass import SVType 
+from svutil.SVparse import *
+from svutil.SVclass import *
+from svutil.SVsim import *
+from svutil.SVutil import colorama
+from svutil.SVclass import SVType 
 import os
 import itertools
 import numpy as np

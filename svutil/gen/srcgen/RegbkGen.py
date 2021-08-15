@@ -7,9 +7,9 @@ from dataclasses import dataclass, field
 from typing import *
 
 
-from SVutil.SVparse import *
-from SVutil.gen.SrcGen import *
-from SVutil.SVclass import *
+from svutil.SVparse import *
+from svutil.gen.SrcGen import *
+from svutil.SVclass import *
 
 @dataclass
 class Customlst:

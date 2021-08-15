@@ -169,7 +169,7 @@ nWaveRestoreRCDirHistory = "\"/home/enhoshen/research/lpAccel/sim/Address.rc\"" 
 /sim/Peripheral/RTC/apbsyncrtc.rc\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CSlave/PG.rc\"" "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/ahbmastif.rc\""
 nWaveOpenFsdbDirHistory = "\"/home/enhoshen/research/lpAccel/sim/loop.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072205_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_ug_072205\
 _syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest_5ns.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072206_syn_PEt\
-est.fsdb\"" "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/PupilProposalCore_tb_3.fsdb\"" "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/PupilProposalCore_tb_0.fsdb\""
+est.fsdb\"" "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/PupilProposalCore_tb_0.fsdb\""
 [Form]
 version = Verdi_Q-2020.03-SP1
 wave/unknownSave.fm = 100,100,575,275
@@ -275,11 +275,11 @@ VirtualFileEditorDialog = 1721,1410,637,403
 saveSigDlg = 1764,1418,551,386
 restoreSigDlg = 2567,1220,551,438
 CreateBusDialog = 2459,950,788,709
-QwUserAskDlg = 1270,1293,324,134
-QwWarnMsgDlg = 385,1011,600,250
-openFileDlg = 2192,1613,1374,484
 ActiveFileDialog = 2506,1719,747,272
-qWaveSignalDialog = 2213,31,1398,2061
+QwWarnMsgDlg = 385,1011,600,250
+QwUserAskDlg = 1270,1293,324,142
+qWaveSignalDialog = 2084,822,1398,1226
+openFileDlg = 2192,1392,1374,484
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile1]
 shortcut = 
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile3]
@@ -491,8 +491,8 @@ PointStyle = FALSE
 SetDefaultRadix = TRUE
 FilterTextField = FALSE
 anaAuto100VertFit = FALSE
-getSignalForm = 2213 31 1398 2061 341 1963 811 485
-viewPort = 1279 747 1278 1408 254 131
+getSignalForm = 2084 822 1398 1226 341 1128 811 276
+viewPort = 2 32 1917 1047 254 131
 signalSpacing = 5
 digitalSignalHeight = 15
 analogSignalHeight = 98

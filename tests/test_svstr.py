@@ -1,5 +1,5 @@
-from SVutil.SVstr import SVstr
-from SVutil.SVparse import SVhier
+from svutil.SVstr import SVstr
+from svutil.SVparse import SVhier
 
 class TestSVstr:
 
@@ -10,7 +10,7 @@ class TestSVstr:
         })
     def test_bracket(self):
         
-        b = SVstr('[3][5][7][9]').BracketParse()
+        b = SVstr('[3][5][7][9]').bracket_parse()
         print(b)
         assert b == ('3','5','7','9')
 
@@ -29,7 +29,8 @@ class TestSVstr:
 
     def test_param(self):
         x = SVstr("2*CONSTANT_PARAM").NumParse(self.mock_hier),
-        assert x == 50
+        print(self.mock_hier.params)
+        assert x == 100 
 
     def test_shift(self):
         x = []

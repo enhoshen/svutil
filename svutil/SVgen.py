@@ -2,8 +2,8 @@ import os
 import inspect
 from functools import wraps
 
-from SVutil.SVparse import *
-from SVutil.SVutil import SVutil
+from svutil.SVparse import *
+from svutil.SVutil import SVutil
 
 class Ind:
     def __init__(self, n):
@@ -236,21 +236,27 @@ class SVgen(SVutil):
 
         return new_func
 
-    def Blk(orig):
+    def blk(orig):
+        sig = inspect.signature(orig)
+
         @wraps(orig)
         def new_func(*arg, **kwargs):
-            ind = kwargs.get("ind")
-            ind = (
-                arg[0].cur_ind.Copy() if ind is None else ind
-            )  # orig must be a member function
-            kwargs["ind"] = ind
+            post = {}
+
+            ind = arg[0].cur_ind.Copy() if not kwargs.get('ind') else kwargs.get('ind')
+            if sig.parameters.get('ind'):
+                kwargs['ind'] = ind
+            else:
+                kwargs.pop('ind',None)
+                post['ind'] = True
+
             yield ''
             x = orig(*arg, **kwargs)
             yield from x
 
         return new_func
 
-    @Blk
+    @blk
     def Line3BannerBlk(self, w, cmtc, text, ind=None):
         """
         w: banner width; 
@@ -266,7 +272,7 @@ class SVgen(SVutil):
         s += f'{ind.b}{cmtc}{"":=^{w}}\n'
         yield s
 
-    @Blk
+    @blk
     def one_line_banner_blk(self, w=None, cmtc='//', text='', ind=None):
         """
         w: banner width; 

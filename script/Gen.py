@@ -1,21 +1,21 @@
 #!/usr/bin/env python3 -i
 if __name__ == "__main__":
-    from SVutil.SVparse import *
+    from svutil.SVparse import *
     import sys
-    import SVutil.SVutilCompleter
+    import svutil.SVutilCompleter
     session = SVparseSession(V_(VERBOSE))
     session.FileParse(paths=None)
     hiers = EAdict(session.hiers)
 
-    from SVutil.gen.tbgen import *
+    from svutil.gen.tbgen import *
     try:
         gTestSv = TbSvGen(session=session)
         gTestPy = TbPyGen(session=session)
     except:
         SVutil().print('TestGen initialization failed') 
 
-    from SVutil.gen.SrcGen import *
-    from SVutil.gen.srcgen import *
+    from svutil.gen.SrcGen import *
+    from svutil.gen.srcgen import *
     try:
         gRegbk = RegbkGen(session=session)
     except:
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     except:
         SVutil().print('ConnectGen initialization failed') 
 
-    from SVutil.gen.drawiogen import * 
+    from svutil.gen.drawiogen import * 
     try:
         gIFgen = InterfaceDiagramGen(session=session)
     except:
@@ -35,17 +35,17 @@ if __name__ == "__main__":
     except:
         SVutil().print('BlockGen initialization failed') 
 
-    from SVutil.gen.LatexGen import LatexGen
+    from svutil.gen.LatexGen import LatexGen
     try:
         gLatex = LatexGen(session=session)
     except:
         SVutil().print('LatexGen initialization failed') 
 
-    from SVutil.gen.BannerGen import GanzinBanner
+    from svutil.gen.BannerGen import GanzinBanner
     gBanner = GanzinBanner()
 
 
-    from SVutil.gen.xlgen import * 
+    from svutil.gen.xlgen import * 
     try:
         gmemmapxl = MemmapGen(session=session)
     except:

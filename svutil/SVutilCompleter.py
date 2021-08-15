@@ -3,8 +3,8 @@ import builtins
 import __main__
 import rlcompleter
 
-from SVutil.SVutil import SVutil, colorama
-from SVutil.SVparse import EAdict, SVhier
+from svutil.SVutil import SVutil, colorama
+from svutil.SVparse import EAdict, SVhier
 import subprocess
 import sys
 import shutil

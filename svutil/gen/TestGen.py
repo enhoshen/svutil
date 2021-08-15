@@ -5,9 +5,9 @@ from functools import reduce
 
 import numpy as np
 
-from SVutil.SVparse import *
-from SVutil.SVgen import *
-from SVutil.SVclass import *
+from svutil.SVparse import *
+from svutil.SVgen import *
+from svutil.SVclass import *
 
 @SVgen.UserClass
 class TestGen(SVgen):
