@@ -325,7 +325,7 @@ class TbSvGen(TestGen, SrcGen):
 
         yield s+'\n'
 
-    @SVgen.Blk
+    @SVgen.blk
     def ParamBlk(self, module, ind=None, **conf):
         s = self.comment_banner_str("Parameters", ind=ind)
         for pkg, param in module.scope.imported.items():
@@ -343,7 +343,7 @@ class TbSvGen(TestGen, SrcGen):
             s += f"{ind.b}{pmtp} {tpstr}{bwstr}{param} = {detail[pmfield.numstr]};\n"
         yield s+'\n'
 
-    @SVgen.Blk
+    @SVgen.blk
     def CommentBlkBlk(self, s, width=35):
         yield f'{ind.b}//{"":=<{width}}\n{ind.b}//{s:^{width}}\n{ind.b}//{"":=<{width}}\n'
 
@@ -353,7 +353,7 @@ class TbSvGen(TestGen, SrcGen):
             + f'{ind.b}//{s:^{width}}\n' \
             + f'{ind.b}//{"":=<{width}}\n'
 
-    @SVgen.Blk
+    @SVgen.blk
     def InsBlk(self, module, name="dut", ind=None, **conf):
         s = "\n"
         s += ind.base + module.hier + " #(\n"

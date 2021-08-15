@@ -39,7 +39,7 @@ class TbPyGen(TestGen):
         s += f"{ind.b}])"
         yield s
 
-    @SVgen.Blk
+    @SVgen.blk
     def NicoutilImportBlk(self, ind=None):
         s  = f"{ind.b}from nicotb import *\n"
         s += f"{ind.b}import numpy as np \n\n"
@@ -88,12 +88,11 @@ class TbPyGen(TestGen):
         s = s.replace("\n", f"\n{ind.b}")
         yield s
 
-    def businitBlk(self, module):
-        ind = self.cur_ind.Copy()
-        yield ""
+    @SVgen.blk
+    def bus_init(self, module, ind=None):
         s = "\n"
 
-        s += f"{ind.b}def businit():\n"
+        s += f"{ind.b}def bus_init():\n"
         # s += f'{ind[1]}SBC = StructBusCreator\n'
         s += f"{ind[1]}#Nico.SBC.TopTypes()\n"
         s += f"{ind[1]}#Nico.SBC.AllTypes()\n"
@@ -132,7 +131,7 @@ class TbPyGen(TestGen):
         s = "\n"
 
         s += f"{ind.b}def main():\n"
-        s += f"{ind[1]}buses = businit()\n"
+        s += f"{ind[1]}buses = bus_init()\n"
         s += f"{ind[1]}buses.SetToN()\n"
         s += f"{ind[1]}buses.Write() #don't use this afterward if you're not sure what you're doing\n"
         s += f"{ind[1]}yield rst_out\n"
@@ -150,7 +149,7 @@ class TbPyGen(TestGen):
         nicoutil = self.NicoutilImportBlk()
         gzsim = self.gzsim_import(spacing=True)
         svutil = self.svutil_import(spacing=True)
-        businit = self.businitBlk(module)
+        businit = self.bus_init(module)
         main = self.mainBlk()
         s = self.Genlist([(tb,), builtin, (nicoutil,), gzsim, svutil, nicoutil, (businit, main), tb])
         if conf.get("copy") == True:

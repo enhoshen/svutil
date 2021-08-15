@@ -23,7 +23,7 @@ class ConnectGen(SrcGen):
         self.logic_group_dft = "short"
 
     # TODO
-    @SVgen.Blk
+    @SVgen.blk
     def logic_block(self, module, short=None, group=None, ind=None):
         s = f"{ind.b}// {module.name}\n"
         pfield = SVhier.portfield
@@ -58,7 +58,7 @@ class ConnectGen(SrcGen):
 
         yield s
 
-    @SVgen.Blk
+    @SVgen.blk
     def instance_block(self, module, short=None, group=None, ind=None):
         """
         Generates sub modules connection codes.
