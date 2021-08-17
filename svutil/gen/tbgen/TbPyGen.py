@@ -132,8 +132,8 @@ class TbPyGen(TestGen):
 
         s += f"{ind.b}def main():\n"
         s += f"{ind[1]}buses = bus_init()\n"
-        s += f"{ind[1]}buses.set_to_n()\n"
-        s += f"{ind[1]}buses.write() #don't use this afterward if you're not sure what you're doing\n"
+        s += f"{ind[1]}buses.SetToN()\n"
+        s += f"{ind[1]}buses.Write() #don't use this afterward if you're not sure what you're doing\n"
         s += f"{ind[1]}yield rst_out\n"
         s += f"{ind[1]}#j = []\n"
         s += f"{ind[1]}#for jj in j:\n"

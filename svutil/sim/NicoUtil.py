@@ -45,49 +45,49 @@ class StructBus:
     def value(self, v):
         self.buses[0].signals[0].value = v
 
-    def set_to_z(self):
-        [x.set_to_z() for x in self.buses]
+    def SetToZ(self):
+        [x.SetToZ() for x in self.buses]
 
-    def set_to_x(self):
-        [x.set_to_x() for x in self.buses]
+    def SetToX(self):
+        [x.SetToX() for x in self.buses]
 
-    def set_to_n(self):
+    def SetToN(self):
         [
-            x.set_to_n()
+            x.SetToN()
             if isinstance(x, StructBus)
             else [s._x.fill(0) for s in x.signals]
             for x in self.buses
         ]
 
-    def set_to(self, n):
-        self.set_to_n()
+    def SetTo(self, n):
+        self.SetToN()
         [
-            x.set_to(n)
+            x.SetTo(n)
             if isinstance(x, StructBus)
             else [s._value.fill(n) for s in x.signals]
             for x in self.buses
         ]
 
-    # def write(self, imm=False):
-    #    [ x.write(imm) for x in self.buses ]
-    def write(self, *lst, imm=False):
+    # def Write(self, imm=False):
+    #    [ x.Write(imm) for x in self.buses ]
+    def Write(self, *lst, imm=False):
         """
-        Apply write() on the elements
-        if lst is not provided, write every elements
+        Apply Write() on the elements
+        if lst is not provided, Write every elements
         lst could be a list of bus names,
         or it could be seperated arguments of bus names.
-        Ex: write('a','b') equals write(['a','b'])
+        Ex: Write('a','b') equals Write(['a','b'])
         """
         if not lst:
-            [x.write(imm=imm) for x in self.buses]
+            [x.Write(imm=imm) for x in self.buses]
         else:
             if len(lst) == 1 and type(lst[0]) == list:
-                [self.buses[self.namelist[x]].write(imm=imm) for x in lst[0]]
+                [self.buses[self.namelist[x]].Write(imm=imm) for x in lst[0]]
             else:
-                [self.buses[self.namelist[x]].write(imm=imm) for x in lst]
+                [self.buses[self.namelist[x]].Write(imm=imm) for x in lst]
 
-    def read(self):
-        [x.read() for x in self.buses]
+    def Read(self):
+        [x.Read() for x in self.buses]
 
     # TODO *arg setter
     def __setitem__(self, k, v):
@@ -238,80 +238,80 @@ class StructBusCreator:
 
 
 class Busdict(EAdict):
-    def flatten(self, lst):
+    def Flatten(self, lst):
         return (
-            self.flatten(lst[0]) + (self.flatten(lst[1:]) if len(lst) > 1 else [])
+            self.Flatten(lst[0]) + (self.Flatten(lst[1:]) if len(lst) > 1 else [])
             if type(lst) == list
             else [lst]
         )
 
-    def read(self, *lst):
+    def Read(self, *lst):
         if not lst:
             [
-                [i.read() for i in self.flatten(x)] if type(x) == list else x.read()
+                [i.Read() for i in self.Flatten(x)] if type(x) == list else x.Read()
                 for x in self.dic.values()
             ]
         else:
             if len(lst) == 1 and type(lst[0]) == list:
                 [
-                    [i.read() for i in self.flatten(x)]
+                    [i.Read() for i in self.Flatten(x)]
                     if type(x) == list
-                    else self.dic[x].read()
+                    else self.dic[x].Read()
                     for x in lst[0]
                 ]
             else:
                 [
-                    [i.read() for i in self.flatten(x)]
+                    [i.Read() for i in self.Flatten(x)]
                     if type(x) == list
-                    else self.dic[x].read()
+                    else self.dic[x].Read()
                     for x in lst
                 ]
 
-    def write(self, *lst, imm=False):
+    def Write(self, *lst, imm=False):
         if not lst:
             [
-                [i.write(imm=imm) for i in self.flatten(x)]
+                [i.Write(imm=imm) for i in self.Flatten(x)]
                 if type(x) == list
-                else x.write(imm=imm)
+                else x.Write(imm=imm)
                 for x in self.dic.values()
             ]
         else:
             if len(lst) == 1 and type(lst[0]) == list:
                 [
-                    [i.write(imm=imm) for i in self.flatten(self.dic[x])]
+                    [i.Write(imm=imm) for i in self.Flatten(self.dic[x])]
                     if type(self.dic[x]) == list
-                    else self.dic[x].write(imm=imm)
+                    else self.dic[x].Write(imm=imm)
                     for x in lst[0]
                 ]
             else:
                 [
-                    [i.write(imm=imm) for i in self.flatten(self.dic[x])]
+                    [i.Write(imm=imm) for i in self.Flatten(self.dic[x])]
                     if type(self.dic[x]) == list
-                    else self.dic[x].write(imm=imm)
+                    else self.dic[x].Write(imm=imm)
                     for x in lst
                 ]
 
     def is_sb(self, x):
         return isinstance(x, StructBus)
 
-    def set_to_n(self):
+    def SetToN(self):
         bussettoN = lambda x: [s._x.fill(0) for s in x.signals]
         [
-            [i.set_to_n() if self.is_sb(i) else bussettoN(i) for i in self.flatten(x)]
+            [i.SetToN() if self.is_sb(i) else bussettoN(i) for i in self.Flatten(x)]
             if type(x) == list
-            else x.set_to_n()
+            else x.SetToN()
             if self.is_sb(x)
             else bussettoN(x)
             for x in self.dic.values()
         ]
 
-    def set_to(self, n):
+    def SetTo(self, n):
         busfill = lambda x: [s._value.fill(n) for s in x.signals]
-        self.set_to_n()
+        self.SetToN()
         [
-            [i.set_to(n) if self.is_sb(i) else busfill(i) for i in self.flatten(x)]
+            [i.SetTo(n) if self.is_sb(i) else busfill(i) for i in self.Flatten(x)]
             if type(x) == list
-            else x.set_to(n)
+            else x.SetTo(n)
             if self.is_sb(x)
             else busfill(x)
             for x in self.dic.values()
