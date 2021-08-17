@@ -5,10 +5,10 @@ from functools import reduce
 
 import numpy as np
 
-from SVutil.SVparse import *
-from SVutil.SVgen import *
-from SVutil.SVclass import *
-from SVutil.gen.TestGen import TestGen
+from svutil.SVparse import *
+from svutil.SVgen import *
+from svutil.SVclass import *
+from svutil.gen.TestGen import TestGen
 
 @SVgen.UserClass
 class TbPyGen(TestGen):
@@ -56,8 +56,8 @@ class TbPyGen(TestGen):
 
     @SVgen.str
     def svutil_import(self):
-        s  = f"from SVutil.SVparse import GBV, EAdict\n"
-        s += f"from SVutil.sim import NicoUtil\n"
+        s  = f"from svutil.SVparse import GBV, EAdict\n"
+        s += f"from svutil.sim import NicoUtil\n"
         return s
 
     @SVgen.str

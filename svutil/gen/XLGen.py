@@ -1,7 +1,7 @@
 import os
 import sys
 import xlsxwriter as xl
-from SVutil.SVgen import *
+from svutil.SVgen import *
 
 
 class XLGen(SVgen):

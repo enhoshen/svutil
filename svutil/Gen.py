@@ -1,15 +1,15 @@
-from SVutil.SVparse import *
+from svutil.SVparse import *
 import sys
 import SVutil.SVutilCompleter
-from SVutil.gen.SrcGen import *
-from SVutil.gen.TestGen import TestGen
-from SVutil.gen.srcgen.RegbkGen import RegbkGen
-from SVutil.gen.srcgen.ConnectGen import ConnectGen
-from SVutil.gen.drawiogen.InterfaceDiagramGen import InterfaceDiagramGen
-from SVutil.gen.drawiogen.BlockDiagramGen import BlockDiagramGen
-from SVutil.gen.LatexGen import LatexGen
-from SVutil.gen.BannerGen import GanzinBanner
-from SVutil.gen.xlgen.MemmapGen import MemmapGen
+from svutil.gen.SrcGen import *
+from svutil.gen.TestGen import TestGen
+from svutil.gen.srcgen.RegbkGen import RegbkGen
+from svutil.gen.srcgen.ConnectGen import ConnectGen
+from svutil.gen.drawiogen.InterfaceDiagramGen import InterfaceDiagramGen
+from svutil.gen.drawiogen.BlockDiagramGen import BlockDiagramGen
+from svutil.gen.LatexGen import LatexGen
+from svutil.gen.BannerGen import GanzinBanner
+from svutil.gen.xlgen.MemmapGen import MemmapGen
 
 if __name__ == "__main__":
     session = SVparseSession(V_(VERBOSE))

@@ -1,8 +1,8 @@
 import os
 import sys
-from SVutil.SVparse import *
-from SVutil.gen.DrawioGen import *
-from SVutil.SVclass import *
+from svutil.SVparse import *
+from svutil.gen.DrawioGen import *
+from svutil.SVclass import *
 import itertools
 import numpy as np
 

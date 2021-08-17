@@ -2,8 +2,8 @@ import os
 import inspect
 from functools import wraps
 
-from SVutil.SVparse import *
-from SVutil.SVutil import SVutil
+from svutil.SVparse import *
+from svutil.SVutil import SVutil
 
 class Ind:
     def __init__(self, n):

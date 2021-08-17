@@ -1,8 +1,8 @@
 import os
 import sys
-from SVutil.SVparse import *
-from SVutil.gen.SrcGen import *
-from SVutil.SVclass import *
+from svutil.SVparse import *
+from svutil.gen.SrcGen import *
+from svutil.SVclass import *
 from itertools import zip_longest
 import numpy as np
 import re

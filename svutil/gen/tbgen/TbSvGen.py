@@ -5,11 +5,11 @@ from functools import reduce
 
 import numpy as np
 
-from SVutil.SVparse import *
-from SVutil.SVgen import *
-from SVutil.SVclass import *
-from SVutil.gen.TestGen import TestGen
-from SVutil.gen.SrcGen import SrcGen
+from svutil.SVparse import *
+from svutil.SVgen import *
+from svutil.SVclass import *
+from svutil.gen.TestGen import TestGen
+from svutil.gen.SrcGen import SrcGen
 # TODO instance block can be from ConnectGen
 
 def initial_block(orig):

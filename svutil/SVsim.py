@@ -1,5 +1,5 @@
-from SVutil.SVparse import *
-from SVutil.SVclass import *
+from svutil.SVparse import *
+from svutil.SVclass import *
 import os
 import itertools
 import numpy as np

@@ -1,6 +1,6 @@
 import os
 import sys
-from SVutil.gen.XLGen import *
+from svutil.gen.XLGen import *
 import xlsxwriter as xl
 
 

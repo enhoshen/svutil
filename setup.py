@@ -9,7 +9,7 @@ ext_args = {
     'extra_compile_args': ['--std=c++11'],
 }
 setup(
-     name='SVutil'
+     name='svutil'
     ,version='0.9'
     #,description='Python Distribution Utilities'
     ,author='En-Ho Shen'
@@ -22,13 +22,13 @@ setup(
         ,'nicotb @ git+https://github.com/johnjohnlin/nicotb'
         ]
     ,package_dir={
-         'SVutil': 'SVutil'
+         'svutil': 'svutil'
         }
     ,ext_modules=[
         ]
     ,package_data={
-         'SVutil.gen': ['drawio_block_ex.txt, *.md']
-        ,'Svutil.sim': ['*.md', 'mynWave.conf', 'mynovas.rc']
+         'svutil.gen': ['drawio_block_ex.txt, *.md']
+        ,'svutil.sim': ['*.md', 'mynWave.conf', 'mynovas.rc']
         }
     ,scripts = [
          'script/Gen.py'
