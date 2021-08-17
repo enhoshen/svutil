@@ -107,11 +107,11 @@ SVparse.hiers and can be accessed by `hiers`
 
 ### helper functions
 
-* ShowPaths()
+* show_paths()
 * ShowFiles(file_index [,start_line[, end_line]] )
-* Reset()
-  * Reset SVparse class
-* FileParse(paths=[(True,INC)])
+* reset()
+  * reset SVparse class
+* file_parse(paths=[(True,INC)])
   * parse a list of path enclosed in a tuple (bool,path)
   * the bool marks if the path is under `include/`
   
@@ -123,9 +123,9 @@ SVparse.hiers and can be accessed by `hiers`
 
 #### SVstr
 
-### ToClip
+### to_clip
 
-`ToClip` global function makes use of package `xclip`, by specifying
+`to_clip` global function makes use of package `xclip`, by specifying
 environment variable `XCLIP` pointing to `xclip` binary executable, so
 you can benefit from string to clipboard convenience.
 
@@ -216,7 +216,7 @@ yield -> A' end
 so the blocks has a base indentation
 
 ```python
-ind = self.cur_ind.Copy()
+ind = self.cur_ind.copy()
 yield ''
 ```
 
@@ -229,7 +229,7 @@ the following blocks generates a connected module instance for you
 
 ```python
     def InsGen(self , module , name='dut' ,  **conf):
-        ind = self.cur_ind.Copy()
+        ind = self.cur_ind.copy()
         yield ''
         s = '\n'
         s += ind.base + module.hier + ' #(\n'

@@ -8,7 +8,7 @@ import numpy as np
 import re
 
 
-@SVgen.UserClass
+@SVgen.user_class
 class LatexGen(SVgen):
     # TODO $clog2 in latex
     def __init__(self, session=None, regbk=None, dut=None):
@@ -22,15 +22,15 @@ class LatexGen(SVgen):
             self.regbk = SVRegbk(self.regbk) if self.regbk else None
         self.dut = dut if dut else self.dut
 
-    def Reload(self):
-        self.session.Reload()
-        self.Refresh()
+    def reload(self):
+        self.session.reload()
+        self.refresh()
         self.regbk = SVRegbk(self.regbk) if self.regbk else None
 
-    def L_(self, s):
+    def l_(self, s):
         return s.replace("_", "\_")
 
-    def ParameterStr(self, param):
+    def parameter_str(self, param):
         ind = Ind(1)
         param = SVParam(param)
         param_tp = param.tp
@@ -42,9 +42,9 @@ class LatexGen(SVgen):
             memb_tp = [SVType(i) for i in tp]
             if memb_tp[0].tp == "enum":
                 en = SVEnums(self.cur_module.AllEnums[memb_tp[0].name])
-                desp += self.EnumlDespStr(en, ind)
-        name = self.L_(param.name)
-        num = self.L_(param.numstr)
+                desp += self.enuml_desp_str(en, ind)
+        name = self.l_(param.name)
+        num = self.l_(param.numstr)
         s = f"{ind.b}\\parameter{{ {name} }} {{ \n"
         s += (
             f"{ind[1]}\\parameterDES{{  }} {{ {num} }} {{ None }} {{ {desp}{ind[1]}}}\n"
@@ -53,7 +53,7 @@ class LatexGen(SVgen):
         s = s.replace("$", "\\$")
         return s
 
-    def SignalStr(self, sig, clk=None, ind=None):
+    def signal_str(self, sig, clk=None, ind=None):
         ind = Ind(1) if ind is None else ind
         tpfield = SVhier.typefield
         sig = SVPort(sig)
@@ -67,7 +67,7 @@ class LatexGen(SVgen):
         if sig_tp != "logic" and sig_tp != "logic signed" and len(tp) != 1:
             # for memb in self.cur_module.AllType.get(sig_tp):
             #    memb = SVType(memb)
-            #    name = self.L_(sig.name+'.'+memb.name +' '+sig.dimstr)
+            #    name = self.l_(sig.name+'.'+memb.name +' '+sig.dimstr)
             #    width = str(memb.bw)
             #    active = 'LOW' if name[-2:] == '_n' else  ( 'HIGH' if width =='1' else 'N/A' )
             #    if '-1:0' in width:
@@ -79,25 +79,25 @@ class LatexGen(SVgen):
             #    if memb_tp :
             #        memb_tp = [SVType(i) for i in memb_tp]
             #        if memb_tp[0].tp =='enum':
-            #            desp += self.EnumlDespStr(memb_tp[0].enumliteral, ind )
+            #            desp += self.enuml_desp_str(memb_tp[0].enumliteral, ind )
             #    memblist.append( (name, io, desp, width, active, clk)  )
             sig_struct = self.cur_module.AllType.get(sig_tp)
-            memblist = self.MemlistAppend(
+            memblist = self.memlist_append(
                 self.cur_module, sig, sig_struct, ind, clk, self.struct_lvl
             )
-            memblist = [(self.L_(sig.name + ".") + name, *_) for name, *_ in memblist]
+            memblist = [(self.l_(sig.name + ".") + name, *_) for name, *_ in memblist]
         else:
             desp = f"\n{ind[2]}\\TODO\\\\\n"
             if sig_tp == "enum":
                 en = SVEnums(self.cur_module.AllEnums[sig.tp])
-                desp += self.EnumlDespStr(en, ind)
+                desp += self.enuml_desp_str(en, ind)
             if sig_tp != "logic" and sig_tp != "logic signed" and len(tp) == 1:
                 try:
                     en = SVEnums(self.cur_module.AllEnums[tp[0].name])
-                    desp += self.EnumlDespStr(en, ind)
+                    desp += self.enuml_desp_str(en, ind)
                 except:
                     self.print(tp, sig_tp)
-            name = self.L_(sig.name + " " + sig.dimstr)
+            name = self.l_(sig.name + " " + sig.dimstr)
             width = "1" if sig.bwstr == "" else sig.bwstr.replace("_", "\_")
             active = (
                 "LOW"
@@ -117,21 +117,21 @@ class LatexGen(SVgen):
             s += f"{ind[1]}\\signalDES{{ {desp} {ind[1]}}} {{ {width} }} {{ {active} }} {{ {clk} }} {{{reged}}} {{ {delay}\\%}}  }}\n"
         return s
 
-    def MemlistAppend(self, module, sig, struct, ind, clk, lvl=1):
+    def memlist_append(self, module, sig, struct, ind, clk, lvl=1):
         memlist = []
         for memb in struct:
             memb = SVType(memb)
             sub_tp = module.AllType.get(memb.tp)
             if memb.tp != "logic" and memb.tp != "logic signed" and len(sub_tp) != 1:
                 sub_memlist = [
-                    (self.L_(memb.name + ".") + name, *_)
-                    for name, *_ in self.MemlistAppend(
+                    (self.l_(memb.name + ".") + name, *_)
+                    for name, *_ in self.memlist_append(
                         module, sig, sub_tp, ind, clk, lvl - 1
                     )
                 ]
                 self.print(sub_memlist, verbose=2)
             else:
-                name = self.L_(memb.name + " " + sig.dimstr)
+                name = self.l_(memb.name + " " + sig.dimstr)
                 width = str(memb.bw)
                 active = (
                     "LOW" if name[-2:] == "_n" else ("HIGH" if width == "1" else "N/A")
@@ -146,12 +146,12 @@ class LatexGen(SVgen):
                     memb_tp = [SVType(i) for i in memb_tp]
                     if memb_tp[0].tp == "enum":
                         en = SVEnums(self.cur_module.AllEnums[memb_tp[0].name])
-                        desp += self.EnumlDespStr(en, ind)
+                        desp += self.enuml_desp_str(en, ind)
                 sub_memlist = [(name, io, desp, width, active, clk)]
             memlist += sub_memlist
         return memlist
 
-    def RegMemMapStr(self, reg, regdesp):  # reg is a SVEnuml object
+    def reg_mem_map_str(self, reg, regdesp):  # reg is a SVEnuml object
         """
         corresponds to latex macro memmap, the register memory map
         lists
@@ -166,8 +166,8 @@ class LatexGen(SVgen):
         desp = regdesp.desp
 
         ind = Ind(1)
-        name = self.L_(reg.name)
-        arr_suf = self.L_(self.cur_regbk.arr_num_suf)
+        name = self.l_(reg.name)
+        arr_suf = self.l_(self.cur_regbk.arr_num_suf)
         ofs = reg.num * reg_bsize
         arr = "" if arr == "" else f" [{name}{arr_suf}]"
         s = f"{ind.b}\\memmap{{\\hyperref[subsubsec:{reg.name.lower()}]{{{name}}}{arr}}}"
@@ -182,7 +182,7 @@ class LatexGen(SVgen):
         else:
             s += desp + "\n"
         s += f"{ind[1]}}}{{\n"
-        reg_slices = self.RegSliceList(reg_slices) if reg_slices else None
+        reg_slices = self.reg_slice_list(reg_slices) if reg_slices else None
         if reg_slices and reg_slices[0][0] == self.cur_regbk.reserved_name:
             reg_slices.pop(0)
         if reg_defaults:
@@ -199,13 +199,13 @@ class LatexGen(SVgen):
                 s += f"{ind[2]}{{[{reg_bw_str}]}}: {reg_defaults[0].__str__()}\\\\\n"
         else:
             reset = "\\TODO" if len(reg.cmt) < 3 else reg.cmt[2]
-            reset = self.L_(self.Lbrac(reset))
+            reset = self.l_(self.lbrac(reset))
             s += f"{ind[2]}{reset}\n"
         s += f"{ind[1]}}}\n"
         s += f"{ind.b}}}\n"
         return s
 
-    def RegFieldStr(
+    def reg_field_str(
         self, reg_name, regdesp
     ):  # str, self.cur_regbk.regslices, self.cur_regbk.regtypes; align slices to types!
         """
@@ -222,11 +222,11 @@ class LatexGen(SVgen):
         ind = Ind(0)
         _name = reg_name.replace("_", "\_")
         s = f"{ind.b}\\begin{{regfieldtable}}{{{reg_name.lower()}}}{{{_name} register field}}\n"
-        reg_slices = self.RegSliceList(reg_slices)
+        reg_slices = self.reg_slice_list(reg_slices)
         if reg_slices[0][0] == self.cur_regbk.reserved_name:
             s += f"{ind[1]}\\regfield{{{reg_slices[0][1]}}}{{RESERVED}}{{N/A}}{{reserved}}\n"
             reg_slices.pop(0)
-        self.print(reg_types, verbose="RegFieldStr")
+        self.print(reg_types, verbose="reg_field_str")
         for _slice, _type, _membtype, _default, _desp in zip(
             reg_slices, reg_types, reg_membtypes, reg_defaults, desp
         ):
@@ -236,13 +236,13 @@ class LatexGen(SVgen):
             s += f"{ind[3]}{_desp}\n"
             if _membtype and _membtype[0].tp == "enum":
                 en = SVEnums(self.cur_regbk.pkg.enums[_membtype[0].name])
-                s += self.EnumlDespStr(en, ind=ind + 1)
+                s += self.enuml_desp_str(en, ind=ind + 1)
             s += f"{ind[3]}}}{{{_default.__str__()}}}{{N/A}}\n"
             s += f"{ind[2]}}}\n"
         s += f"{ind.b}\\end{{regfieldtable}}\n"
         return s
 
-    def RegFieldSubSec(self, reg, regdesp):
+    def reg_field_sub_sec(self, reg, regdesp):
         ofs = regdesp.ofs
         size = regdesp.size
         rw = regdesp.rw
@@ -250,8 +250,8 @@ class LatexGen(SVgen):
         reg_bsize = regdesp.reg_bsize
 
         ind = Ind(0)
-        _name = self.L_(reg)
-        arr_suf = self.L_(self.cur_regbk.arr_num_suf)
+        _name = self.l_(reg)
+        arr_suf = self.l_(self.cur_regbk.arr_num_suf)
         arr_ofs = "" if not arr else f"+:{reg_bsize}{_name}{arr_suf}"
         s = f"{ind.b}\\subsubsection{{{_name}}} \\label{{subsubsec:{reg.lower()}}}\n"
         s += f"{ind[1]}\\begin{{paragitemize}}\n"
@@ -262,11 +262,11 @@ class LatexGen(SVgen):
             else f"{ind[2]}\\item \\textbf{{Register array size:}} {_name}{arr_ofs}\n"
         )
         s += f"{ind[2]}\\item \\textbf{{Size:}} {size}\n"
-        s += f"{ind[2]}\\item \\textbf{{Read/Write Access:}} {rw}\n"
+        s += f"{ind[2]}\\item \\textbf{{read/write Access:}} {rw}\n"
         s += f"{ind[1]}\\end{{paragitemize}}\n"
         return s
 
-    def EnumlDespStr(self, en: SVEnums, ind):
+    def enuml_desp_str(self, en: SVEnums, ind):
         """
         Return the enum literal and optionally its value
         in seperated lines. Usedful for struct type member
@@ -274,14 +274,14 @@ class LatexGen(SVgen):
         """
         desp = f"{ind[2]}\\\\\n"
         for l, n in zip(en.names, en.nums):
-            l = self.L_(l)
-            n = self.L_(n) if type(n) == str else n
+            l = self.l_(l)
+            n = self.l_(n) if type(n) == str else n
             desp += f"{ind[2]}{l}({n}):\\\\\n"
         desp = desp[:-3] + "\n"
         return desp
 
-    @SVgen.UserMethod
-    def SignalDesp(self, module=None, sel=None):
+    @SVgen.user_method
+    def signal_desp(self, module=None, sel=None):
         module = self.dut if not module else module
         self.cur_module = module
         pfield = SVhier.portfield
@@ -298,16 +298,16 @@ class LatexGen(SVgen):
                 s += f"\n\\emptyrowbold{{3}}\n"
                 s += f"\\ganzinmergerowbold{{1.2}}{{3}}{{\\centering \\textbf{{{last_gp}}}}}\n"
             if "rst" in name or "clk" in name:
-                s += self.SignalStr(p, "\\TODO")
+                s += self.signal_str(p, "\\TODO")
             else:
-                s += self.SignalStr(p, clk)
+                s += self.signal_str(p, clk)
             if "clk" in name:
                 clk = name.replace("_", "\_")
-        ToClip(s)
+        to_clip(s)
         return s
 
-    @SVgen.UserMethod
-    def ParameterDesp(self, module=None, local=True):
+    @SVgen.user_method
+    def parameter_desp(self, module=None, local=True):
         module = self.dut if not module else module
         self.cur_module = module
         param = module.paramsdetail if not local else module.paramports
@@ -315,25 +315,25 @@ class LatexGen(SVgen):
         for p in param.keys():
             p = module.paramsdetail[p]
             if SVParam(p).paramtype != "localparam":
-                s += self.ParameterStr(p)
-        ToClip(s)
+                s += self.parameter_str(p)
+        to_clip(s)
         return s
 
-    @SVgen.UserMethod
-    def RegMemMapDesp(self, pkg=None):
+    @SVgen.user_method
+    def reg_mem_map_desp(self, pkg=None):
         s = ""
         regbk = SVRegbk(pkg) if pkg and type(pkg) == str else self.regbk
         self.cur_regbk = regbk
         last_gp = None
         for reg in regbk.addrs.enumls:
             reg_slices = regbk.regslices.get(reg.name)
-            defaults = self.L_(regbk.GetDefaultsStr(reg.name, lst=True))
+            defaults = self.l_(regbk.GetDefaultsStr(reg.name, lst=True))
             self.print(defaults, verbose="RegMemMap")
             if defaults:
                 defaults.reverse()
             reg_bw = regbk.params.get(f"{reg.name}_BW")
             reg_bw = reg_bw.num if reg_bw else None
-            reg_bw_str = self.L_(regbk.GetBWStr(reg.name))
+            reg_bw_str = self.l_(regbk.GetBWStr(reg.name))
             width, rw, arr, *_ = regbk.GetAddrCmt(reg.name)
             reg_bw = width if not reg_bw else reg_bw
             reg_bw_str = width if not reg_bw_str else reg_bw_str
@@ -342,7 +342,7 @@ class LatexGen(SVgen):
             if len(tps) == 1 and tps[0] is not None and tps[0].tp == "enum":
                 desp = f"{Ind(3).b}\\TODO\\\\\n"
                 en = SVEnums(self.cur_regbk.pkg.enums[tps[0].name])
-                desp += self.EnumlDespStr(en, Ind(1))
+                desp += self.enuml_desp_str(en, Ind(1))
             else:
                 desp = None
             regdesp = RegDesp(
@@ -365,23 +365,23 @@ class LatexGen(SVgen):
                     "desp",
                 ],
             )
-            s += self.RegMemMapStr(reg, regdesp)
+            s += self.reg_mem_map_str(reg, regdesp)
             if reg.group != [] and reg.group[0] != last_gp:
                 last_gp = reg.group[0]
                 s += f"\n{Ind(1).b}\\emptyrowbold{{5}}\n"
                 s += f"{Ind(1).b}\\ganzinmergerowbold{{1.2}}{{5}}{{\\centering \\textbf{{{last_gp}}}}}\n"
-        ToClip(s)
+        to_clip(s)
         return s
 
-    @SVgen.UserMethod
-    def RegFieldDesp(self, pkg=None):
+    @SVgen.user_method
+    def reg_field_desp(self, pkg=None):
         s = ""
         regbk = SVRegbk(pkg) if pkg and type(pkg) == str else self.regbk
         self.cur_regbk = regbk
         for reg in regbk.regslices:
             ofs = regbk.addrsdict[reg].num * regbk.regbsize
             ofs = hex(ofs).upper().replace("X", "x")
-            reg_bw = self.L_(regbk.GetBWStr(reg))
+            reg_bw = self.l_(regbk.GetBWStr(reg))
             width, rw, arr, *_ = regbk.GetAddrCmt(reg)
             reg_bw = width if not reg_bw else reg_bw
             regdesp = RegDesp(
@@ -392,8 +392,8 @@ class LatexGen(SVgen):
                 regbk.regbsize,
                 memblst=["ofs", "size", "rw", "arr", "reg_bsize"],
             )
-            s += self.RegFieldSubSec(reg, regdesp)
-            defaults = self.L_(regbk.GetDefaultsStr(reg, lst=True))
+            s += self.reg_field_sub_sec(reg, regdesp)
+            defaults = self.l_(regbk.GetDefaultsStr(reg, lst=True))
             if defaults:
                 defaults.reverse()
             else:
@@ -419,16 +419,16 @@ class LatexGen(SVgen):
                     "desp",
                 ],
             )
-            s += self.RegFieldStr(reg, regdesp)
+            s += self.reg_field_str(reg, regdesp)
             s += "\n"
-        ToClip(s)
+        to_clip(s)
         return s
 
-    def ExtractDesp(self, s):
+    def extract_desp(self, s):
         regfpat = r"(\regDES{)([^}]*)(})"
         pass
 
-    def RegSliceStr(self, _slice):
+    def reg_slice_str(self, _slice):
         """
         return a list of slice string
         meant for multiple slice for a same field
@@ -443,24 +443,24 @@ class LatexGen(SVgen):
         _slice_str = _slice_str[:-2]
         return _slice_str
 
-    def RegSliceList(self, slices):
-        return [(_slice[0], self.RegSliceStr(_slice)) for _slice in slices]
+    def reg_slice_list(self, slices):
+        return [(_slice[0], self.reg_slice_str(_slice)) for _slice in slices]
 
-    def Lbrac(self, s):
+    def lbrac(self, s):
         return s.replace("[", "{[").replace("]", "]}")
 
-    def L_(self, s):
+    def l_(self, s):
         if type(s) == str:
             return s.replace("_", "\_") if s else None
         if type(s) == list:
-            return [self.L_(i) for i in s]
+            return [self.l_(i) for i in s]
         return None
 
-    def Str2Lst(self, s):
+    def str2_lst(self, s):
         if not s:
             return s
-        s = self.L_(s)
-        s = SVstr(s).ReplaceSplit([",", "'{", "{", "}"])
+        s = self.l_(s)
+        s = SVstr(s).replace_split([",", "'{", "{", "}"])
         return s
 
 

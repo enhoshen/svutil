@@ -27,26 +27,25 @@ class Ind:
     def __add__(self, n):
         return Ind(self.n + n)
 
-    def Copy(self):
+    def copy(self):
         return Ind(self.n)
 
 
 class SVgen(SVutil):
     def __init__(self, paths=None, session=None, verbose=None):
-        self.V_(GBV.VERBOSE)
+        self.v_(GBV.VERBOSE)
         if session is None:
             self.session = SVparseSession(verbose=self.verbose)
-            self.session.FileParse(paths)
+            self.session.file_parse(paths)
         else:
             self.session = session
-        self.genlist = {}
         self.customlst = []
         self.userfunclst = []
         self.genpath = './'
 
-        self.Refresh()
+        self.refresh()
 
-    def Refresh(self):
+    def refresh(self):
         self.dutname = GBV.TESTMODULE
         self.dut = self.session.hiers.get(self.dutname)
         self.dutfile = self.session.hiers.get(self.dutname + "_sv")
@@ -57,13 +56,13 @@ class SVgen(SVutil):
         self.cond = {}  # syn 2ns test name etc.
         self.cur_ind = Ind(0)
 
-    def IndBlk(self):
-        ind = self.cur_ind.Copy()
+    def ind_blk(self):
+        ind = self.cur_ind.copy()
         yield ""
         while 1:
             yield ind.b + "\n"
 
-    def Genlist(self, structure):
+    def genlist(self, structure):
         """
         Generate texts based on a simple structure description list.
         
@@ -96,62 +95,62 @@ class SVgen(SVutil):
         """
 
         o = ""
-        _ind = self.cur_ind.Copy()
+        _ind = self.cur_ind.copy()
         for strt in structure:
             if isinstance(strt, int):
                 self.cur_ind += strt
             elif type(strt) == list:
                 for v in strt:
                     next(v)  # initialize
-                    o += self.Nextblk(v)
+                    o += self.nextblk(v)
                     self.cur_ind += 1
                 strt.reverse()
                 for v in strt:
-                    o += self.Nextblk(v)
+                    o += self.nextblk(v)
                     self.cur_ind -= 1
             elif type(strt) == tuple:
-                prev_ind = self.cur_ind.Copy()
+                prev_ind = self.cur_ind.copy()
                 for i in strt:
                     if isinstance(i, int):
                         self.cur_ind += i 
                         continue
-                    self.Nextblk(i)
-                    o += self.Nextblk(i)
+                    self.nextblk(i)
+                    o += self.nextblk(i)
                 self.cur_ind = prev_ind
             elif type(strt) == str:
                 o += strt
             else:
-                o += self.Nextblk(strt)
+                o += self.nextblk(strt)
 
-        self.cur_ind = _ind.Copy()
+        self.cur_ind = _ind.copy()
         return o
 
-    def Str2Blk(self, strcallback, *arg, **kwargs):
-        ind = self.cur_ind.Copy()
+    def str_to_blk(self, strcallback, *arg, **kwargs):
+        ind = self.cur_ind.copy()
         yield ""
         yield strcallback(*arg, **kwargs, ind=ind)
 
-    def BlkGroup(self, *arg):
-        ind = self.cur_ind.Copy()
+    def blk_group(self, *arg):
+        ind = self.cur_ind.copy()
         yield ""
-        s = self.Genlist([tuple(arg)])
+        s = self.genlist([tuple(arg)])
         yield s
 
-    def GenStr(self, gen):
+    def gen_str(self, gen):
         s = ""
         for _s in gen:
             s += _s
         return s
 
-    def Blkprint(self, gen):
+    def blkprint(self, gen):
         s = ""
-        print(self.GenStr(gen))
+        print(self.gen_str(gen))
 
-    def Nextblk(self, blk):
+    def nextblk(self, blk):
         s = next(blk, None)
         return s if s != None else ""
 
-    def FileWrite(self, fpath, text, suf, overwrite=False):
+    def file_write(self, fpath, text, suf, overwrite=False):
         if os.path.isfile(self.genpath + fpath + "." + suf) and not overwrite:
             self.print("file exists, make a copy, rename the file right away")
             import time
@@ -165,7 +164,7 @@ class SVgen(SVutil):
 
 
 
-    def FindFormatWidth(self, lst):
+    def find_format_width(self, lst):
         """
         Find from a list of strings the largest width,
         used in format string formatting the seperation width.
@@ -196,7 +195,7 @@ class SVgen(SVutil):
             # processing
             post = {}
 
-            ind = arg[0].cur_ind.Copy() if not kwargs.get('ind') else kwargs.get('ind')
+            ind = arg[0].cur_ind.copy() if not kwargs.get('ind') else kwargs.get('ind')
             if sig.parameters.get('ind'):
                 kwargs['ind'] = ind
             else:
@@ -219,19 +218,19 @@ class SVgen(SVutil):
 
         return new_func
 
-    def Clip(orig):
+    def clip(orig):
         @wraps(orig)
         def new_func(*arg, **kwargs):
             ind = kwargs.get("ind")
             ind = (
-                arg[0].cur_ind.Copy() if ind is None else ind
+                arg[0].cur_ind.copy() if ind is None else ind
             )  # orig must be a member function
             toclip = kwargs.get("toclip")
             toclip = True if toclip is None else toclip
             kwargs["ind"] = ind
             x = orig(*arg, **kwargs)
             if toclip:
-                ToClip(x)
+                to_clip(x)
             return x
 
         return new_func
@@ -243,7 +242,7 @@ class SVgen(SVutil):
         def new_func(*arg, **kwargs):
             post = {}
 
-            ind = arg[0].cur_ind.Copy() if not kwargs.get('ind') else kwargs.get('ind')
+            ind = arg[0].cur_ind.copy() if not kwargs.get('ind') else kwargs.get('ind')
             if sig.parameters.get('ind'):
                 kwargs['ind'] = ind
             else:
@@ -257,7 +256,7 @@ class SVgen(SVutil):
         return new_func
 
     @blk
-    def Line3BannerBlk(self, w, cmtc, text, ind=None):
+    def line3_banner_blk(self, w, cmtc, text, ind=None):
         """
         w: banner width; 
         cmtc: language specified comment character
@@ -293,8 +292,8 @@ def GenSession():
     # ins = g.InsGen(dut, 'u1' )
     # lg = g.LogicGen(dut)
     # tb = g.TbSVGen()
-    # ind = g.IndBlk()
-    # g.Genlist( [ (tb,), tb , (lg,) , [ins] , tb , tb])
+    # ind = g.ind_blk()
+    # g.genlist( [ (tb,), tb , (lg,) , [ins] , tb , tb])
     # print(o)
 
 if __name__ == "__main__":

@@ -1,2 +1,2 @@
 from .BlockDiagramGen import BlockDiagramGen
-from .InterfaceDiagramGen import InterfaceDiagramGen
+from .InterfaceDiagramGen import InterfaceDiagramGen 

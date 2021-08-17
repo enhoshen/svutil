@@ -25,6 +25,7 @@ all:
 gentest:
 	ARGS="+define+TEST_PAT0" \
 	INC=Test_include \
+	TESTMODULE=TestModule \
 	REGBK=TestRegbk \
 	Gen.py
 

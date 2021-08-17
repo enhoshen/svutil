@@ -8,7 +8,7 @@ import numpy as np
 import re
 
 
-@SVgen.UserClass
+@SVgen.user_class
 class ConnectGen(SrcGen):
     r"""
     This class saves you effor writing a top module connecting numbers of
@@ -71,7 +71,7 @@ class ConnectGen(SrcGen):
         s = "\n"
         s += ind.base + module.name + " #(\n"
         s_param = ""
-        w = self.FindFormatWidth(
+        w = self.find_format_width(
             [(param + " ",) for param, v in module.paramports.items()]
         )
         for param, v in module.paramports.items():
@@ -83,7 +83,7 @@ class ConnectGen(SrcGen):
         short = "" if short is None else short
         sb = f"{ind.b}) u_{ins_name} (\n"
         s_port = ""
-        w = self.FindFormatWidth([(n + " ",) for io, n, *_ in module.ports])
+        w = self.find_format_width([(n + " ",) for io, n, *_ in module.ports])
         cur_group = SVPort(module.ports[0]).group
         group = group.__iter__() if group is not None else None
         cur_group_name = (
@@ -124,11 +124,11 @@ class ConnectGen(SrcGen):
         name_split = re.split(rf"([A-Z][^A-Z]+)|([A-Z]*(?=[A-Z][^A-Z]*))", s)
         return "_".join([x.lower() for x in name_split if x != "" and x is not None])
 
-    @SVgen.UserMethod
-    @SVgen.Clip
-    def ShowIns(self, module=[], short=[], group=[], toclip=True, ind=None):
+    @SVgen.user_method
+    @SVgen.clip
+    def show_ins(self, module=[], short=[], group=[], toclip=True, ind=None):
         """
-        A SVgen Clip function to generates sub modules connection codes.
+        A SVgen clip function to generates sub modules connection codes.
         Arguments:
             module: a list of SVhier to be connected as sub modules
             short : the shorthand for each sub modules
@@ -156,6 +156,6 @@ class ConnectGen(SrcGen):
             for m, s, g in zip_longest(module, short, group)
         )
         ins = (1,) + ins
-        s = self.Genlist([logicban, logic, "\n", combban, ins])
+        s = self.genlist([logicban, logic, "\n", combban, ins])
         self.print("\n", s, verbose=1, level=True)
         return s

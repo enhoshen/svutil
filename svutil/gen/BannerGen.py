@@ -10,10 +10,10 @@ import numpy as np
 import time
 
 
-@SVgen.UserClass
+@SVgen.user_class
 class BannerGen(SVgen):
     def __init__(self, ind=Ind(0)):
-        self.V_(VERBOSE)
+        self.v_(VERBOSE)
         self.cur_ind = ind
         self.genpath = "./"
         self.customlst = ["name", "email", "genpath", "yyyy", "mm", "dd", "time"]
@@ -23,8 +23,8 @@ class BannerGen(SVgen):
         self.yyyy, self.mm, self.dd = _time.tm_year, _time.tm_mon, _time.tm_mday
         self.time = lambda: f"{self.yyyy}"
 
-    @SVgen.UserMethod
-    def UserReg(self, nmtuplelst):
+    @SVgen.user_method
+    def user_reg(self, nmtuplelst):
         """
         customzie your name and email
         with a list of (name, email) pairs
@@ -36,24 +36,24 @@ class BannerGen(SVgen):
             self.name += [n]
             self.email += [f"<{e}>"]
 
-    @SVgen.UserMethod
-    def UserEmpty(self):
+    @SVgen.user_method
+    def user_empty(self):
         self.name, self.email = [], []
 
-    @SVgen.UserMethod
-    def FileReg(self, f):
+    @SVgen.user_method
+    def file_reg(self, f):
         self.filepath = f
         _f = f.split("/")[-1].rsplit(".", 1)
         self.filename = _f[0]
         _f = _f[-1] if len(_f) != 1 else ""
         self.filesuf = _f
 
-    @SVgen.UserMethod
-    def TimeReg(self, yyyy, mm, dd):
+    @SVgen.user_method
+    def time_reg(self, yyyy, mm, dd):
         self.yyyy, self.mm, self.dd = yyyy, mm, dd
 
 
-@SVgen.UserClass
+@SVgen.user_class
 class GanzinBanner(BannerGen):
     def __init__(self, ind=Ind(0)):
         super().__init__()
@@ -72,11 +72,11 @@ class GanzinBanner(BannerGen):
         self.pycopyrightstr = self.svcopyrightstr.replace("//", "#")
         self.pystatementstr = self.svstatementstr.replace("//", "#")
 
-    def IncGuardStr(self):
+    def inc_guard_str(self):
         return f"__{self.filename.upper()}_{self.filesuf.upper()}__"
 
-    def BannerBlk(self, suf="sv"):
-        ind = self.cur_ind.Copy()
+    def banner_blk(self, suf="sv"):
+        ind = self.cur_ind.copy()
         yield ""
         s = ""
         if suf == "sv":
@@ -97,66 +97,66 @@ class GanzinBanner(BannerGen):
             s += "\n"
         yield s
 
-    def IncGuardBlk(self):
-        ind = self.cur_ind.Copy()
+    def inc_guard_blk(self):
+        ind = self.cur_ind.copy()
         yield ""
-        s = f"{ind.b}`ifndef {self.IncGuardStr()}\n"
-        s += f"{ind.b}`define {self.IncGuardStr()}\n\n"
+        s = f"{ind.b}`ifndef {self.inc_guard_str()}\n"
+        s += f"{ind.b}`define {self.inc_guard_str()}\n\n"
         yield s
-        yield f"\n{ind.b}`endif // {self.IncGuardStr()}"
+        yield f"\n{ind.b}`endif // {self.inc_guard_str()}"
 
-    def BannerStr(self, fr, suf="sv"):
+    def banner_str(self, fr, suf="sv"):
         with open(fr, "r") as fr:
-            ban = self.BannerBlk(suf)
+            ban = self.banner_blk(suf)
             try:
                 fstr = fr.read()
             except:
                 self.print("file read not supported")
                 return None
-            s = self.Genlist([(ban,), fstr])
+            s = self.genlist([(ban,), fstr])
         return s
 
-    def BannerIncguardStr(self, fr, suf="sv"):
+    def banner_incguard_str(self, fr, suf="sv"):
         with open(fr, "r") as fr:
-            ban = self.BannerBlk(suf)
-            incg = self.IncGuardBlk()
+            ban = self.banner_blk(suf)
+            incg = self.inc_guard_blk()
             try:
                 fstr = fr.read()
             except:
                 self.print("file read not supported")
                 return None
-            s = self.Genlist([(ban,), (incg,), fstr, incg])
+            s = self.genlist([(ban,), (incg,), fstr, incg])
         return s
 
-    @SVgen.UserMethod
-    def BanWrite(self, fr=None, overwrite=False):
+    @SVgen.user_method
+    def ban_write(self, fr=None, overwrite=False):
         """
-        Write Banner at the start of the file
+        write Banner at the start of the file
         Arguments:
             fr = file name
             overwrite = True to write to the file, False to generate a new one
         """
-        fpath = self.Write(self.BannerStr, fr, overwrite)
+        fpath = self.write(self.banner_str, fr, overwrite)
         if os.path.isfile(fpath) or not os.path.exists(fpath):
             self.print("Banner attached to ", fpath)
 
-    @SVgen.UserMethod
-    def BanIncWrite(self, fr=None, overwrite=False):
-        fpath = self.Write(self.BannerIncguardStr, fr, overwrite)
+    @SVgen.user_method
+    def ban_inc_write(self, fr=None, overwrite=False):
+        fpath = self.write(self.banner_incguard_str, fr, overwrite)
         if os.path.isfile(fpath) or not os.path.exists(fpath):
             self.print("Banner, include guard attached to ", fpath)
 
-    def Write(self, strcallback=None, fr=None, overwrite=False):
+    def write(self, strcallback=None, fr=None, overwrite=False):
         """
         Utility to write strings to files
         """
         if not strcallback:
-            strcallback = self.BannerStr
+            strcallback = self.banner_str
         if not fr:
             self.print("specify a file")
             return
         else:
-            self.FileReg(fr)
+            self.file_reg(fr)
         if not overwrite and os.path.isfile(self.filepath):
             self.print("file exists, make a copy, rename the file right away")
             fpath = self.genpath + self.filename + "_" + time.strftime("%m%d%H")
@@ -166,7 +166,7 @@ class GanzinBanner(BannerGen):
             fpath = self.filepath
         _suf = "Makefile" if self.filename == "Makefile" else self.filesuf
         if os.path.isfile(fpath) or not os.path.exists(fpath):
-            t = self.TypeCheck(fr)
+            t = self.type_check(fr)
             s = strcallback(fr, _suf)
             if s is None or t is None:
                 self.print("un-supported files or something went wrong")
@@ -175,22 +175,22 @@ class GanzinBanner(BannerGen):
                 f.write(s)
         return fpath
 
-    @SVgen.UserMethod
-    def FolderBanWrite(self, _dir=".", overwrite=False):
+    @SVgen.user_method
+    def folder_ban_write(self, _dir=".", overwrite=False):
         """
-        Write Banner to every files of provided folder _dir
+        write Banner to every files of provided folder _dir
             Arguments:
                 _dir = folder path
                 overwrite = True to write to the file, False to generate a new one
         """
         assert self.name != [] and self.email != [], "specify name and email"
         for f in os.listdir(_dir):
-            self.BanWrite(_dir + "/" + f, overwrite)
+            self.ban_write(_dir + "/" + f, overwrite)
 
-    @SVgen.UserMethod
-    def FolderBanIncWrite(self, _dir=".", overwrite=False):
+    @SVgen.user_method
+    def folder_ban_inc_write(self, _dir=".", overwrite=False):
         """
-        Write Banner and include guard to every files of the provided folder _dir
+        write Banner and include guard to every files of the provided folder _dir
         This is meant for .sv files.
             Arguments:
                 _dir = folder path
@@ -198,15 +198,15 @@ class GanzinBanner(BannerGen):
         """
         for f in os.listdir(_dir):
             if f.endswith(".sv"):
-                self.BanIncWrite(_dir + "/" + f, overwrite)
+                self.ban_inc_write(_dir + "/" + f, overwrite)
             else:
-                self.BanWrite(_dir + "/" + f, overwrite)
+                self.ban_write(_dir + "/" + f, overwrite)
 
-    def TypeCheck(self, fr):
+    def type_check(self, fr):
         return fr.endswith((".sv", ".py", "Makefile"))
 
 
 if __name__ == "__main__":
     g = GanzinBanner()
-    g.UserReg([("En-Ho Shen", "enhoshen@ganzin.com.tw")])
+    g.user_reg([("En-Ho Shen", "enhoshen@ganzin.com.tw")])
     pass

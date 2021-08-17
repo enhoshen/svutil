@@ -5,15 +5,15 @@ from svutil.gen.SrcGen import *
 from svutil.gen.TestGen import TestGen
 from svutil.gen.srcgen.RegbkGen import RegbkGen
 from svutil.gen.srcgen.ConnectGen import ConnectGen
-from svutil.gen.drawiogen.InterfaceDiagramGen import InterfaceDiagramGen
+from svutil.gen.drawiogen.interface_diagram_gen import interface_diagram_gen
 from svutil.gen.drawiogen.BlockDiagramGen import BlockDiagramGen
 from svutil.gen.LatexGen import LatexGen
 from svutil.gen.BannerGen import GanzinBanner
 from svutil.gen.xlgen.MemmapGen import MemmapGen
 
 if __name__ == "__main__":
-    session = SVparseSession(V_(VERBOSE))
-    session.FileParse(paths=None)
+    session = SVparseSession(v_(VERBOSE))
+    session.file_parse(paths=None)
     hiers = EAdict(session.hiers)
     try:
         gTest = TestGen(session=session)
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     except:
         SVutil().print("ConnectGen initialization failed")
     try:
-        gIFgen = InterfaceDiagramGen(session=session)
+        gIFgen = interface_diagram_gen(session=session)
     except:
         SVutil().print("InterfaceGen initialization failed")
     try:

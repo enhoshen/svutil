@@ -60,7 +60,7 @@ class LayerConf:
             s += f"{ '' if v==None else v:<{w}}"
         return s
 
-    def ToPEconf(self):
+    def to_p_econf(self):
         upix = 12 if self.Pch * self.U >= 12 else self.Pch * self.U
         peconf = [
             self.Pch,
@@ -91,7 +91,7 @@ class ModelConf:
         self.layers = layers
         pass
 
-    def AddLayer(self, conf):
+    def add_layer(self, conf):
         self.layers.append(conf)
 
     def __getitem__(self, i):

@@ -18,13 +18,13 @@ class SVutil:
         self.verbose = verbose
         pass
 
-    def V_(self, verbose):
+    def v_(self, verbose):
         try:
             self.verbose = int(verbose)
         except:
             self.verbose = verbose
 
-    def Verbose(self, v):
+    def verbose(self, v):
         """ set verbose level """
         self.verbose = v if v else 0
 
@@ -35,7 +35,7 @@ class SVutil:
             Args:
                 verbose: determine the verbose level of the message, if not given, messages
                     is printed nonetheless
-                trace: see self.Trace
+                trace: see self.trace
                 level: print messages with lower verbose level than self.verbose if True
                     or else only the specific verbose level messages are printed
         """
@@ -51,7 +51,7 @@ class SVutil:
                 color = "" if not color else color
         ins = (
             f"{colorama.Fore.CYAN}"
-            + self.Trace(ins, trace)
+            + self.trace(ins, trace)
             + f"{colorama.Style.RESET_ALL}"
             + color
         )
@@ -66,13 +66,13 @@ class SVutil:
             if verbose == self.verbose or verbose is None:
                 print(ins, *arg, f"{colorama.Style.RESET_ALL}", **kwarg)
 
-    def Trace(self, ins, trace):
+    def trace(self, ins, sel):
         """ code tracing using inspect module """
         home = os.environ.get("HOME", "")
         fn = ins.filename.replace(home, "")
         self.trace_format_width = max(self.trace_format_width, len(fn))
         w = self.trace_format_width
-        Trace = {
+        trace = {
             None: "",
             0: f"[SVutil]",
             1: f"[{fn:<{w}},line:{ins.lineno}, in {ins.function}]",
@@ -80,9 +80,9 @@ class SVutil:
             3: f"[{fn:<{w}},line:{ins.lineno}]",
             4: f"[{os.path.basename(fn)}, in {ins.function}]",
         }
-        return Trace[trace]
+        return trace[sel]
 
-    def Custom(self):
+    def custom(self):
         self.print(f"{self.cyellow}Customizable variable: {self.creset}", trace=2)
         w = len(max(self.customlst, key=len))
         for i in self.customlst:
@@ -111,7 +111,7 @@ class SVutil:
         return f"{match}"
 
     # decorator class
-    def UserClass(cls):
+    def user_class(cls):
         if not cls.__dict__.get("customlst"):
             cls.customlst = []
 
@@ -132,11 +132,11 @@ class SVutil:
 
         return cls
 
-    def UserCustom(orig):
+    def user_custom(orig):
         orig.__svutil_custom__ = True
         return orig
 
-    def UserMethod(orig):
+    def user_method(orig):
         orig.__svutil_userfunc__ = True
         return orig 
 
@@ -151,7 +151,7 @@ class SVcvar:
     pass
 
 
-def V_(verbose):
+def v_(verbose):
     try:
         verbose = int(verbose)
     except:

@@ -10,10 +10,10 @@ from svutil.SVgen import *
 from svutil.SVclass import *
 from svutil.gen.TestGen import TestGen
 
-@SVgen.UserClass
+@SVgen.user_class
 class TbPyGen(TestGen):
-    def TbBlk(self):
-        ind = self.cur_ind.Copy()
+    def tb_blk(self):
+        ind = self.cur_ind.copy()
         yield ""
         s = "\n"
         yield s
@@ -40,7 +40,7 @@ class TbPyGen(TestGen):
         yield s
 
     @SVgen.blk
-    def NicoutilImportBlk(self, ind=None):
+    def nicoutil_import_blk(self, ind=None):
         s  = f"{ind.b}from nicotb import *\n"
         s += f"{ind.b}import numpy as np \n\n"
         yield s
@@ -70,9 +70,9 @@ class TbPyGen(TestGen):
         s += f"from gzsim.protocol import OneWire\n"
         return s
 
-    def NicoutilImportBlkNonPackage(self):
+    def nicoutil_import_blk_non_package(self):
         """ deprecated """
-        ind = self.cur_ind.Copy()
+        ind = self.cur_ind.copy()
         yield ""
         s = "\n"
         s += "import sys\n"
@@ -94,8 +94,8 @@ class TbPyGen(TestGen):
 
         s += f"{ind.b}def bus_init():\n"
         # s += f'{ind[1]}SBC = StructBusCreator\n'
-        s += f"{ind[1]}#Nico.SBC.TopTypes()\n"
-        s += f"{ind[1]}#Nico.SBC.AllTypes()\n"
+        s += f"{ind[1]}#Nico.SBC.top_types()\n"
+        s += f"{ind[1]}#Nico.SBC.all_types()\n"
         s += f"{ind[1]}dic = {{}}\n"
         w = [0, 0]
         for p in module.ports:
@@ -110,8 +110,8 @@ class TbPyGen(TestGen):
                 s += f'{ind[1]}#{" "+last_gp+" ":=^{20}}#\n'
             tp = p.tp
             _q = "'"
-            dimf = f"Nico.DutPortDim('{p.name+_q:<{w[0]+1}})"
-            dim = f"Nico.DutPortDim('{p.name+_q})"
+            dimf = f"Nico.dut_port_dim('{p.name+_q:<{w[0]+1}})"
+            dim = f"Nico.dut_port_dim('{p.name+_q})"
             if tp == "logic" or tp == "signed logic":
                 s += f"{ind[1]}dic['"
                 s += f'{p.name + _q+"] ":<{w[0]+3}}'
@@ -119,21 +119,21 @@ class TbPyGen(TestGen):
             else:
                 s += f"{ind[1]}dic['"
                 s += f'{p.name + _q+"] ":<{w[0]+3}}'
-                s += f"= Nico.SBC.Get('{p.tp+_q:<{w[1]+1}}, '{p.name+_q}, dim={dim})\n"
+                s += f"= Nico.SBC.get('{p.tp+_q:<{w[1]+1}}, '{p.name+_q}, dim={dim})\n"
 
                 # TODO macro....
         s += f"{ind[1]}return NicoUtil.Busdict(dic) # access by name without quotes\n"
         yield s
 
-    def mainBlk(self):
-        ind = self.cur_ind.Copy()
+    def main_blk(self):
+        ind = self.cur_ind.copy()
         yield ""
         s = "\n"
 
         s += f"{ind.b}def main():\n"
         s += f"{ind[1]}buses = bus_init()\n"
-        s += f"{ind[1]}buses.SetToN()\n"
-        s += f"{ind[1]}buses.Write() #don't use this afterward if you're not sure what you're doing\n"
+        s += f"{ind[1]}buses.set_to_n()\n"
+        s += f"{ind[1]}buses.write() #don't use this afterward if you're not sure what you're doing\n"
         s += f"{ind[1]}yield rst_out\n"
         s += f"{ind[1]}#j = []\n"
         s += f"{ind[1]}#for jj in j:\n"
@@ -144,19 +144,19 @@ class TbPyGen(TestGen):
 
     def module_test(self, module=None, **conf):
         module = self.dut if not module else module
-        tb = self.TbBlk()
+        tb = self.tb_blk()
         builtin = self.builtin_import(spacing=True)
-        nicoutil = self.NicoutilImportBlk()
+        nicoutil = self.nicoutil_import_blk()
         gzsim = self.gzsim_import(spacing=True)
         svutil = self.svutil_import(spacing=True)
         businit = self.bus_init(module)
-        main = self.mainBlk()
-        s = self.Genlist([(tb,), builtin, (nicoutil,), gzsim, svutil, nicoutil, (businit, main), tb])
+        main = self.main_blk()
+        s = self.genlist([(tb,), builtin, (nicoutil,), gzsim, svutil, nicoutil, (businit, main), tb])
         if conf.get("copy") == True:
-            ToClip(s)
+            to_clip(s)
         return s
 
     def write(self, text, **conf):
-        p = self.TbWrite(text, "py", **conf)
+        p = self.tb_write(text, "py", **conf)
         self.print("PY testbench written to ", p)
 

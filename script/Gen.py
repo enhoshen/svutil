@@ -3,8 +3,8 @@ if __name__ == "__main__":
     from svutil.SVparse import *
     import sys
     import svutil.SVutilCompleter
-    session = SVparseSession(V_(VERBOSE))
-    session.FileParse(paths=None)
+    session = SVparseSession(v_(VERBOSE))
+    session.file_parse(paths=None)
     hiers = EAdict(session.hiers)
 
     from svutil.gen.tbgen import *

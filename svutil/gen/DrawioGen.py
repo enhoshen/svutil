@@ -14,13 +14,13 @@ class Shape:
         self.w = w
         self.h = h
 
-    def Pos(self):
+    def pos(self):
         return self.x, self.y
 
-    def Dim(self):
+    def dim(self):
         return self.w, self.h
 
-    def Copy(self):
+    def copy(self):
         return Shape(self.x, self.y, self.w, self.h)
 
 
@@ -28,12 +28,12 @@ class Style(SVutil):
     def __init__(self, s=None, **kwargs):
         self.__dict__["verbose"] = None
         self.__dict__["attr"] = {}
-        self.StrToStyle(s)
+        self.str_to_style(s)
         for k, v in kwargs.items():
             self.attr[k] = v
         pass
 
-    def StrToStyle(self, s):
+    def str_to_style(self, s):
         if not s:
             return None
         split = s.split(";")
@@ -46,11 +46,11 @@ class Style(SVutil):
                     self.attr[s[0]] = s[1]
         return s
 
-    def StyleStr(self, deft=None, tp=None, **kwargs):
+    def style_str(self, deft=None, tp=None, **kwargs):
         s = ""
         if deft is not None:
             s += deft
-            self.StrToStyle(deft)
+            self.str_to_style(deft)
         s += f"{tp}; " if tp else ""
         for k, v in kwargs.items():
             self.attr[k] = v
@@ -124,43 +124,43 @@ class DrawioGen(SVgen):
         self.lightblue = ["#DDF0F1", "#A9D6E7", "#89CCD3"]
         self.heavyblue = ["#3081B0", "#27708B", "#1A4A5E"]
 
-    def Config(self, *arg, **kwargs):
+    def config(self, *arg, **kwargs):
         pass
 
-    def mxGeometry(self, shape, ind):
-        return f'{ind.b}<mxGeometry x="{shape.x}" y="{shape.y}" width="{shape.w}" height="{shape.h}" as="geometry"/>\n'
+    def mx_geometry(self, shape, ind):
+        return f'{ind.b}<mx_geometry x="{shape.x}" y="{shape.y}" width="{shape.w}" height="{shape.h}" as="geometry"/>\n'
 
-    def mxPoint(self, shape, to, ind):
-        return f'{ind.b}<mxPoint x="{shape.x}" y="{shape.y}" as="{to}"/>\n'
+    def mx_point(self, shape, to, ind):
+        return f'{ind.b}<mx_point x="{shape.x}" y="{shape.y}" as="{to}"/>\n'
 
-    def mxPointBlk(self, shape, to="sourcePoint"):
-        ind = self.cur_ind.Copy()
+    def mx_point_blk(self, shape, to="sourcePoint"):
+        ind = self.cur_ind.copy()
         yield ""
-        yield self.mxPoint(shape, to, ind)
+        yield self.mx_point(shape, to, ind)
 
-    def mxPageBlk(self):
-        ind = self.cur_ind.Copy()
+    def mx_page_blk(self):
+        ind = self.cur_ind.copy()
         yield ""
         s = f'{ind.b}<mxGraphModel dx="794" dy="1636" grid="1" gridSize="10" guides="1" tooltips="1" connect="1"'
         s += ' arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="1" shadow="0">\n'
         yield s
         yield f"{ind.b}</mxGraphModel>\n"
 
-    def RootBlk(self):
-        ind = self.cur_ind.Copy()
+    def root_blk(self):
+        ind = self.cur_ind.copy()
         yield ""
         yield f'{ind.b}<root>\n{ind.b}<mxCell id="0"/>\n{ind.b}<mxCell id="1" parent="0"/>\n'
         yield f"{ind.b}</root>\n"
 
-    def mxGeometryBlk(self, shape):
-        ind = self.cur_ind.Copy()
+    def mx_geometry_blk(self, shape):
+        ind = self.cur_ind.copy()
         yield ""
-        s = f'{ind.b}<mxGeometry width="{shape.w}" height="{shape.h}" relative="1" as="geometry">\n'
+        s = f'{ind.b}<mx_geometry width="{shape.w}" height="{shape.h}" relative="1" as="geometry">\n'
         yield s
-        yield f"{ind.b}</mxGeometry>\n"
+        yield f"{ind.b}</mx_geometry>\n"
 
-    def mxCellBlk(self, value, style, parent, edge=None):
-        ind = self.cur_ind.Copy()
+    def mx_cell_blk(self, value, style, parent, edge=None):
+        ind = self.cur_ind.copy()
         ID = f"SVgen-mxCell-{value}-{DrawioGen.unique_id}"
         DrawioGen.unique_id += 1
         yield ""
@@ -171,38 +171,38 @@ class DrawioGen(SVgen):
         yield s
         yield f"{ind.b}</mxCell>\n"
 
-    def ClassicArrowStr(self, value, style, shape, face, parent, ind):
+    def classic_arrow_str(self, value, style, shape, face, parent, ind):
         _d = DrawioGen(ind, self.session)
-        mcblk = _d.mxCellBlk(value, style, parent, edge="1")
-        mxGeoBlk = _d.mxGeometryBlk(shape)
+        mcblk = _d.mx_cell_blk(value, style, parent, edge="1")
+        mxGeoBlk = _d.mx_geometry_blk(shape)
         _x = (
             [shape.x, shape.x + shape.w]
             if face == "right"
             else [shape.x + shape.w, shape.x]
         )
-        src = _d.mxPointBlk(Shape(_x[0], shape.y), "sourcePoint")
-        trg = _d.mxPointBlk(Shape(_x[1], shape.y), "targetPoint")
-        srctrg = _d.BlkGroup(src, trg)
-        s = _d.Genlist([[mcblk, mxGeoBlk, srctrg]])
+        src = _d.mx_point_blk(Shape(_x[0], shape.y), "sourcePoint")
+        trg = _d.mx_point_blk(Shape(_x[1], shape.y), "targetPoint")
+        srctrg = _d.blk_group(src, trg)
+        s = _d.genlist([[mcblk, mxGeoBlk, srctrg]])
         return s
 
-    def CellGeoStr(self, value, shape, style, parent, ind):
+    def cell_geo_str(self, value, shape, style, parent, ind):
         _d = DrawioGen(ind, self.session)
-        mcblk = _d.mxCellBlk(value, style, parent)
-        mxGeo = _d.Str2Blk(_d.mxGeometry, shape)
-        s = _d.Genlist([[mcblk, mxGeo]])
+        mcblk = _d.mx_cell_blk(value, style, parent)
+        mxGeo = _d.str_to_blk(_d.mx_geometry, shape)
+        s = _d.genlist([[mcblk, mxGeo]])
         return s
 
-    def TextStr(self, value, shape, style=None, parent="1", ind=Ind(0)):
+    def text_str(self, value, shape, style=None, parent="1", ind=Ind(0)):
         style = self.textstyle2 if not style else style
-        return self.CellGeoStr(value, shape, style, parent, ind)
+        return self.cell_geo_str(value, shape, style, parent, ind)
 
-    def GroupStr(self, shape, parent, ind):
-        return self.CellGeoStr("", shape, "group;", parent, ind)
+    def group_str(self, shape, parent, ind):
+        return self.cell_geo_str("", shape, "group;", parent, ind)
 
-    def CurlyStr(self, shape, parent, flip, ind):
+    def curly_str(self, shape, parent, flip, ind):
         flipstr = "flipH=0" if not flip else "flipH=1"
-        return self.CellGeoStr(
+        return self.cell_geo_str(
             "",
             shape,
             f"shape=curlyBracket;whiteSpace=wrap;html=1;rounded=1;{flipstr};",
@@ -210,17 +210,17 @@ class DrawioGen(SVgen):
             ind,
         )
 
-    def RectangleStr(self, value, shape, parent, flip, ind):
+    def rectangle_str(self, value, shape, parent, flip, ind):
         _p = f"SVgen-mxCell--{DrawioGen.unique_id}"
-        s = self.GroupStr(shape, parent, ind)
-        txt_sh = self.rec_txt_ofs.Copy()
+        s = self.group_str(shape, parent, ind)
+        txt_sh = self.rec_txt_ofs.copy()
         txt_sh.x = (shape.w - self.rec_txt_width) / 2
         textstyle = self.textstyle_rec1left if not flip else self.textstyle_rec1
         _d = DrawioGen(ind + 1, self.session)
-        mcblk = _d.mxCellBlk("", "fillColor=none;rounded=0;", _p)
-        mxGeo = _d.Str2Blk(_d.mxGeometry, Shape(0, 0, shape.w, shape.h))
-        s += _d.Genlist([[mcblk, mxGeo]])
-        s += self.TextStr(value, txt_sh, textstyle, _p, ind + 1)
+        mcblk = _d.mx_cell_blk("", "fillColor=none;rounded=0;", _p)
+        mxGeo = _d.str_to_blk(_d.mx_geometry, Shape(0, 0, shape.w, shape.h))
+        s += _d.genlist([[mcblk, mxGeo]])
+        s += self.text_str(value, txt_sh, textstyle, _p, ind + 1)
         return s
 
 

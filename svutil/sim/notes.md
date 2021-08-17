@@ -28,7 +28,7 @@ logic [3:0] t [2] ;
 * just like before, initialize your signal, or get as many `x` and `z` as you can
 ```verilog
 def clk_cb():                
-        cbbus.SetToX()       
+        cbbus.set_to_x()       
         //cbbus[0].x[1,1] = 0  don't use x ! it is 4-valued encoding of x
         //cbbus[2].x = 0       
         cbbus[0].value[1,1]= 0
@@ -36,7 +36,7 @@ def clk_cb():
         yield rst_out        
         while True:          
             yield clk        
-            abus.Read()      
+            abus.read()      
 ```
 * self defined packed struct signal can be directly controlled by its name
 ```verilog

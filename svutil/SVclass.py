@@ -69,7 +69,7 @@ macrofield = EAdict(["args", "macrostr", "lambda"])
 class SVclass(SVutil):
     def __init__(self):
         self.w = 20
-        self.V_(VERBOSE)
+        self.v_(VERBOSE)
         pass
 
     def __getattr__(self, n):
@@ -97,7 +97,7 @@ class SVclass(SVutil):
         return s + "\n"
 
     @property
-    def Show(self):
+    def show(self):
         s = ""
         s += self.show_field
         s += self.show_line
@@ -268,7 +268,7 @@ class SVRegbk(SVutil):
         self.custom = RegbkCustom() if custom is None else custom
 
         self.name = pkg.name
-        self.verbose = V_(VERBOSE)
+        self.verbose = v_(VERBOSE)
         self.w = 20
         self.pkg = pkg
         self.addrs = pkg.enums.get(self.regaddr_name)
@@ -369,7 +369,7 @@ class SVRegbk(SVutil):
             _s = d.numstr
         return _s
 
-    def get_bWStr(self, name, lst=False):
+    def get_bw_str(self, name, lst=False):
         reg = self.regaddrsdict.get(name)
         bw = self.regbws.get(name)
         if not bw:

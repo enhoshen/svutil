@@ -34,7 +34,7 @@ def rst_out_cb2():
 
 
 def clk_cb():
-    cbbus.SetToX()
+    cbbus.set_to_x()
     print(environ.get("TOPMODULE"))
     print(type(cbbus))
     cbbus[0].x = 0
@@ -42,14 +42,14 @@ def clk_cb():
     yield rst_out
     while True:
         yield clk
-        abus.Read()
+        abus.read()
         cbbus[1].value = abus[0].value[0]
         if abus.is_number:
             cbbus[0].value[0] = abus[0].value[0]
             cbbus[1].value[0] = abus[0].value[0]
         else:
-            cbbus.SetToX()
-        cbbus.Write()
+            cbbus.set_to_x()
+        cbbus.write()
 
 
 mytype2 = StructBusCreator("mytype2", ["l", "m"])
@@ -60,7 +60,7 @@ mytype = StructBusCreator(
     [(1,), (1,), (1,)],
     ["logic", "logic", "mytype2"],
 )
-cbbus = mytype.CreateStructBus("t")
+cbbus = mytype.create_struct_bus("t")
 abus = CreateBus(("a",))
 """
 cbbus, abus = CreateBuses([

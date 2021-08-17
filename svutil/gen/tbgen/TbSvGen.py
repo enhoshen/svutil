@@ -17,7 +17,7 @@ def initial_block(orig):
     def new_func(*arg, **kwargs):
         ind = kwargs.get("ind")
         ind = (
-            arg[0].cur_ind.Copy() if ind is None else ind
+            arg[0].cur_ind.copy() if ind is None else ind
         )  # orig must be a member function
         kwargs["ind"] = ind
         s = f"{ind.b}initial begin\n"
@@ -26,7 +26,7 @@ def initial_block(orig):
         return s
     return new_func
 
-@SVgen.UserClass
+@SVgen.user_class
 class TbSvGen(TestGen, SrcGen):
     def __init__(self, ind=Ind(0), session=None):
         super().__init__(ind=ind, session=session)
@@ -98,8 +98,8 @@ class TbSvGen(TestGen, SrcGen):
         s += f'{ind.b}`define FSDBNAME(suffix) `"{self.fsdbname}``suffix``.fsdb`"\n'
         return s
 
-    def ModBlk(self):
-        ind = self.cur_ind.Copy()
+    def mod_blk(self):
+        ind = self.cur_ind.copy()
         yield ""
         s = f"{ind.b}module " + GBV.TOPMODULE + ";\n"
         yield s + self.declare_logic(ind=ind + 1)
@@ -141,7 +141,7 @@ class TbSvGen(TestGen, SrcGen):
             s += f"{ind.b}int {ccnt};\n"
         for ck in self.clk_domain_lst:
             _aff = ck[0] + "_" if ck[0] != "" else ""
-            s += f"{ind.b}`Pos({_aff}rst_out, {_aff}rst{ck[1]})\n"
+            s += f"{ind.b}`pos({_aff}rst_out, {_aff}rst{ck[1]})\n"
             s += f"{ind.b}`PosIf({_aff}ck_ev , {_aff}clk, {_aff}rst{ck[1]})\n"
         return s
 
@@ -155,7 +155,7 @@ class TbSvGen(TestGen, SrcGen):
         for ev in self.nico_eventlst:
             s += f"{ind.b}logic {ev[1]}; //TODO modify event condition\n"
 
-        w = self.FindFormatWidth([i[0] + ", " + i[1] + "," for i in self.nico_eventlst])
+        w = self.find_format_width([i[0] + ", " + i[1] + "," for i in self.nico_eventlst])
         for ev in self.nico_eventlst:
             s += f'{ind.b}`PosIf({ev[0]+", "+ev[1]+",":<{w}} {self.rst_lst[0]})//TODO modify reset logic\n'
         s += '\n'
@@ -175,7 +175,7 @@ class TbSvGen(TestGen, SrcGen):
     @SVgen.str
     def initial_block_str(self, ind=None):
         s = self.clocking_block(ind=ind)
-        s += self.AnsiColorVarStr(ind=ind)
+        s += self.ansi_color_var_str(ind=ind)
         s += self.timeformat_initial_block(ind=ind)
         s += self.seed_initial_block(ind=ind)
         s += self.clocking_initial_block(ind=ind)
@@ -266,12 +266,12 @@ class TbSvGen(TestGen, SrcGen):
         s += f"{ind[1]}end\n"
         # _s += f'#(2*`{self.hclkmacro+"*`"+self.endcyclemacro}) $display("timeout");\n' #TODO
         s += "\n"
-        s += self.SimFinStr(ind=ind + 1)
+        s += self.sim_fin_str(ind=ind + 1)
         s += f"{ind[1]}-> event_exit;"
         return s
 
     @SVgen.str
-    def AnsiColorVarStr(self):
+    def ansi_color_var_str(self):
         s  = f'string ansi_blue   = "\\033[34m";\n'
         s += f'string ansi_cyan   = "\\033[36m";\n'
         s += f'string ansi_green  = "\\033[32m";\n'
@@ -281,7 +281,7 @@ class TbSvGen(TestGen, SrcGen):
         return s
 
     @SVgen.str
-    def SimFinStr(self, ind=None):
+    def sim_fin_str(self, ind=None):
         _ck = self.clk_domain_lst[0][0]
         _aff = _ck + "_" if _ck != "" else ""
         s = f'{ind.b}$display({{ansi_blue,"{"":=<42}", ansi_reset}});\n'
@@ -295,16 +295,16 @@ class TbSvGen(TestGen, SrcGen):
         s += f'{ind.b}$display({{ansi_blue,"{"":=<42}", ansi_reset}});'
         return s
 
-    def DeclareBlkBlk(self):
+    def declare_blk_blk(self):
         pass
 
-    def TopBlkBlk(self, tpname):
-        ind = self.cur_ind.Copy()
+    def top_blk_blk(self, tpname):
+        ind = self.cur_ind.copy()
         yield ""
         yield
 
-    def LogicBlk(self, module, **conf):
-        ind = self.cur_ind.Copy()
+    def logic_blk(self, module, **conf):
+        ind = self.cur_ind.copy()
         yield ""
         s = self.comment_banner_str("Logics", ind=ind)
         pfield = SVhier.portfield
@@ -326,7 +326,7 @@ class TbSvGen(TestGen, SrcGen):
         yield s+'\n'
 
     @SVgen.blk
-    def ParamBlk(self, module, ind=None, **conf):
+    def param_blk(self, module, ind=None, **conf):
         s = self.comment_banner_str("Parameters", ind=ind)
         for pkg, param in module.scope.imported.items():
             for _p in param:
@@ -344,7 +344,7 @@ class TbSvGen(TestGen, SrcGen):
         yield s+'\n'
 
     @SVgen.blk
-    def CommentBlkBlk(self, s, width=35):
+    def comment_blk_blk(self, s, width=35):
         yield f'{ind.b}//{"":=<{width}}\n{ind.b}//{s:^{width}}\n{ind.b}//{"":=<{width}}\n'
 
     @SVgen.str
@@ -354,11 +354,11 @@ class TbSvGen(TestGen, SrcGen):
             + f'{ind.b}//{"":=<{width}}\n'
 
     @SVgen.blk
-    def InsBlk(self, module, name="dut", ind=None, **conf):
+    def ins_blk(self, module, name="dut", ind=None, **conf):
         s = "\n"
         s += ind.base + module.hier + " #(\n"
         s_param = ""
-        w = self.FindFormatWidth(
+        w = self.find_format_width(
             [(param + " ",) for param, v in module.paramports.items()])
         for param, v in module.paramports.items():
             if module.paramsdetail[param][SVhier.paramfield.paramtype] == "parameter":
@@ -366,7 +366,7 @@ class TbSvGen(TestGen, SrcGen):
         s_param = s_param.replace(f"{ind[1]},", ind[1] + " ", 1)
         sb = f"{ind.b}) {name} (\n"
         s_port = ""
-        w = self.FindFormatWidth([(n + " ",) for io, n, *_ in module.ports])
+        w = self.find_format_width([(n + " ",) for io, n, *_ in module.ports])
         cur_group = SVPort(module.ports[0]).group
         for p in module.ports:
             p = SVPort(p)
@@ -389,29 +389,29 @@ class TbSvGen(TestGen, SrcGen):
 
         inc = self.include_str()
         defb = self.define_str()
-        mod = self.ModBlk()
-        pm = self.ParamBlk(module)
-        lg = self.LogicBlk(module)
-        ins = self.InsBlk(module)
+        mod = self.mod_blk()
+        pm = self.param_blk(module)
+        lg = self.logic_blk(module)
+        ins = self.ins_blk(module)
 
-        s = self.Genlist([inc, defb, (mod,),  (1, pm, lg, ins), mod])
+        s = self.genlist([inc, defb, (mod,),  (1, pm, lg, ins), mod])
         if conf.get("copy") == True:
-            ToClip(s)
+            to_clip(s)
         return s
 
     def write(self, text, **conf):
-        p = self.TbWrite(text, "sv", **conf)
+        p = self.tb_write(text, "sv", **conf)
         self.print("SV testbench written to ", p)
 
     # decorator
     def initial_block(orig):
         return initial_block(orig)
 
-    @SVgen.UserMethod
-    def ShowIns(self, module=None):
+    @SVgen.user_method
+    def show_ins(self, module=None):
         module = self.dut if not module else module
-        ins = self.InsBlk(module)
-        s = self.Genlist([(ins,)])
-        ToClip(s)
+        ins = self.ins_blk(module)
+        s = self.genlist([(ins,)])
+        to_clip(s)
         self.print(s)
 

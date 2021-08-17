@@ -116,7 +116,7 @@ class SVutilCompleter(rlcompleter.Completer):
             words.update(get_class_members(thisobject.__class__))
 
         if not inspect.isclass(thisobject):
-            self.cur_sv_words = self.SVtypeAttr(thisobject)
+            self.cur_sv_words = self.sv_type_attr(thisobject)
             self.cur_object = thisobject
             words.update(self.cur_sv_words)
 
@@ -133,7 +133,7 @@ class SVutilCompleter(rlcompleter.Completer):
                 if word[:n] == attr and not (noprefix and word[: n + 1] == noprefix):
                     match = "%s.%s" % (expr, word)
                     try:
-                        val = self.SVGetAttr(thisobject, word)
+                        val = self.sv_get_attr(thisobject, word)
                     except Exception:
                         pass  # Include even if attribute not set
                     else:
@@ -148,7 +148,7 @@ class SVutilCompleter(rlcompleter.Completer):
         matches.sort()
         return matches
 
-    def SVGetAttr(self, obj, word):
+    def sv_get_attr(self, obj, word):
         # omit = {SVhier}
         # if hasattr(obj, '__class__'):
         #    tp = obj.__class__
@@ -156,7 +156,7 @@ class SVutilCompleter(rlcompleter.Completer):
         #        return None
         return getattr(obj, word)
 
-    def SVtypeAttr(self, obj):
+    def sv_type_attr(self, obj):
         if not hasattr(obj, "__class__"):
             return set()
         if hasattr(obj, "__svcompleterattr__"):
@@ -164,14 +164,14 @@ class SVutilCompleter(rlcompleter.Completer):
         else:
             return set()
 
-    def SVtypeFmt(self, obj):
+    def sv_type_fmt(self, obj):
         return hasattr(obj, "__svcompleterfmt__")
 
-    def SV_display_hook(self, substitution, matches, longest_match_length):
+    def sv_display_hook(self, substitution, matches, longest_match_length):
         """ 
         SVutil display hook
 
-        if an SVtypeFmt computes true for an object, use the object's
+        if an sv_type_fmt computes true for an object, use the object's
         __svcompleterfmt__ to display the matches.
 
         Parameter
@@ -196,7 +196,7 @@ class SVutilCompleter(rlcompleter.Completer):
         for i, match in enumerate(matches):
             _match = match.split(".")[-1]
             # use customized completer display formator
-            if self.SVtypeFmt(self.cur_object):
+            if self.sv_type_fmt(self.cur_object):
                 attr = _match[:-1] if _match[-1] == "(" else _match
                 print(self.cur_object.__svcompleterfmt__(attr, f"{match:<{w}}"), end="")
             else:
@@ -240,6 +240,6 @@ else:
     # reference to globals).
     atexit.register(lambda: readline.set_completer(None))
     _readline_available = True
-    readline.set_completion_display_matches_hook(sc.SV_display_hook)
-    # sc.SV_display_hook(None, ['123','456','789'], 5)
+    readline.set_completion_display_matches_hook(sc.sv_display_hook)
+    # sc.sv_display_hook(None, ['123','456','789'], 5)
     # print(EAdict([1,2,3]).__svcompleterfmt__(1,'1'))

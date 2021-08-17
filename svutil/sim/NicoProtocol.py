@@ -14,13 +14,13 @@ from nicotb.utils import RandProb
 class ProtoCreateBus:
     """
     this class member functions help createbuses, if you've already connected buses,
-    ArgParse is not needed
+    arg_parse is not needed
     """
 
     def __init__(self):
         pass
 
-    def ArgParse(self, protoCallback, portCallback, *args, clk, **kwargs):
+    def arg_parse(self, protoCallback, portCallback, *args, clk, **kwargs):
         """
         args[0] is the data bus, it could be a list, ex: [hrdata,hwdata] in AHB
         portCallback should return list of buses for protocl buses
@@ -47,7 +47,7 @@ class ProtoCreateBus:
         else:
             self.proto = protoCallback(*args, clk=clk, **kw)
 
-    def SideChoose(self, side="master"):
+    def side_choose(self, side="master"):
         if side == "master":
             self.master = self.proto
             return
@@ -55,21 +55,21 @@ class ProtoCreateBus:
             self.slave = self.proto
             return
 
-    def SendIter(self, it):
-        yield from self.master.SendIter(it)
+    def send_iter(self, it):
+        yield from self.master.send_iter(it)
 
-    def Monitor(self):
-        yield from self.slave.Monitor()
+    def monitor(self):
+        yield from self.slave.monitor()
 
-    def MyMonitor(self, n):
-        yield from self.slave.MyMonitor(n)
+    def my_monitor(self, n):
+        yield from self.slave.my_monitor(n)
 
     @property
-    def Data(self):
+    def data(self):
         return self.data
 
-    @Data.setter
-    def Data(self, data):
+    @data.setter
+    def data(self, data):
         self.proto.data = GetBus(data)
 
     @property
@@ -80,10 +80,10 @@ class ProtoCreateBus:
 class ReqAckBus(ProtoCreateBus):
     def __init__(self, *args, clk, side="master", **kwargs):
         protoCallback = TwoWire.Master if side == "master" else MySlaveTwoWire
-        self.ArgParse(protoCallback, self.PortParse, *args, clk=clk, **kwargs)
-        self.SideChoose(side)
+        self.arg_parse(protoCallback, self.port_parse, *args, clk=clk, **kwargs)
+        self.side_choose(side)
 
-    def PortParse(self, name, hier=""):
+    def port_parse(self, name, hier=""):
         self.req, self.ack = CreateBuses(
             [
                 (
@@ -102,17 +102,17 @@ class ReqAckBus(ProtoCreateBus):
         )
         return [self.req, self.ack]
 
-    def Connect(self, ports):
+    def connect(self, ports):
         pass
 
 
 class ValBus(ProtoCreateBus):
     def __init__(self, *args, clk, side="master", **kwargs):
         protoCallback = OneWire.Master if side == "master" else OneWire.Slave
-        self.ArgParse(protoCallback, self.PortParse, *args, clk=clk, **kwargs)
-        self.SideChoose(side)
+        self.arg_parse(protoCallback, self.port_parse, *args, clk=clk, **kwargs)
+        self.side_choose(side)
 
-    def PortParse(self, name, hier=""):
+    def port_parse(self, name, hier=""):
         self.val = CreateBus(
             (
                 hier,
@@ -126,10 +126,10 @@ class TwoWireBus(ProtoCreateBus):
     # EX: inbus = TwoWireBus( data[0],clk=ck_ev ,A=5,name='Input' )
     def __init__(self, *args, clk, side="master", **kwargs):
         protoCallback = TwoWire.Master if side == "master" else MySlaveTwoWire
-        self.ArgParse(protoCallback, self.PortParse, *args, clk=clk, **kwargs)
-        self.SideChoose(side)
+        self.arg_parse(protoCallback, self.port_parse, *args, clk=clk, **kwargs)
+        self.side_choose(side)
 
-    def PortParse(self, name, hier=""):
+    def port_parse(self, name, hier=""):
         self.rdy, self.ack = CreateBuses(
             [
                 (
@@ -152,10 +152,10 @@ class TwoWireBus(ProtoCreateBus):
 class OneWireBus(ProtoCreateBus):
     def __init__(self, *args, clk, side="master", **kwargs):
         protoCallback = OneWire.Master if side == "master" else OneWire.Slave
-        self.ArgParse(protoCallback, self.PortParse, *args, clk=clk, **kwargs)
-        self.SideChoose(side)
+        self.arg_parse(protoCallback, self.port_parse, *args, clk=clk, **kwargs)
+        self.side_choose(side)
 
-    def PortParse(self, name, hier=""):
+    def port_parse(self, name, hier=""):
         self.dval = CreateBus(
             (
                 hier,
@@ -168,10 +168,10 @@ class OneWireBus(ProtoCreateBus):
 class NicoAhbBus(ProtoCreateBus):
     def __init__(self, *args, clk, side="master", **kwargs):
         protoCallback = Ahb.Master
-        self.ArgParse(protoCallback, self.PortParse, *args, clk=clk, **kwargs)
-        # self.SideChoose(side)
+        self.arg_parse(protoCallback, self.port_parse, *args, clk=clk, **kwargs)
+        # self.side_choose(side)
 
-    def PortParse(self, name, hier=""):
+    def port_parse(self, name, hier=""):
         self.hsel = CreateBus(
             (
                 hier,
@@ -258,24 +258,24 @@ class MySlaveTwoWire(TwoWire.Slave):
         self.A = A
         self.B = B
         self.ack.value[0] = RandProb(self.A, self.B)
-        self.ack.Write()
+        self.ack.write()
 
-    def MyMonitor(self, n):
+    def my_monitor(self, n):
         for i in range(n):
             while True:
                 yield self.clk
-                self.rdy.Read()
+                self.rdy.read()
                 if self.rdy.x[0] != 0 or self.rdy.value[0] == 0:
                     continue
                 if self.ack.value[0] != 0:
-                    self.data.Read()
-                    super(TwoWire.Slave, self).Get(self.data)
+                    self.data.read()
+                    super(TwoWire.Slave, self).get(self.data)
                     break
                 self.ack.value[0] = RandProb(self.A, self.B)
-                self.ack.Write()
+                self.ack.write()
             self.ack.value[0] = 0
-            self.ack.Write()
+            self.ack.write()
         print("monitor done")
         self.ack.value[0] = 0
-        self.ack.Write()
+        self.ack.write()
         yield self.clk

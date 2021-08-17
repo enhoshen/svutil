@@ -9,7 +9,7 @@ from svutil.SVparse import *
 from svutil.SVgen import *
 from svutil.SVclass import *
 
-@SVgen.UserClass
+@SVgen.user_class
 class TestGen(SVgen):
     def __init__(self, ind=Ind(0), session=None):
         super().__init__(session=session)
@@ -35,8 +35,8 @@ class TestGen(SVgen):
         self.userfunclst = []
 
 
-    def Refresh(self):
-        super().Refresh()
+    def refresh(self):
+        super().refresh()
         self.test = GBV.TEST
         self.testname = GBV.TEST.rsplit("_tb")[0]
         self.fsdbname = self.testname + "_tb"  # TODO
@@ -49,33 +49,33 @@ class TestGen(SVgen):
         raise NotImplementedError("Overide module_test in subclass")
 
 
-    @SVgen.UserMethod
+    @SVgen.user_method
     def write_module_test(self, module=None, **conf):
         module = self.dut if not module else module
         conf["copy"] = False
         overwrite = conf.get("overwrite")
         self.write(self.module_test(module, **conf), overwrite=overwrite)
 
-    @SVgen.UserMethod
-    def ShowModuleTest(self, module=None, copy=True, **conf):
+    @SVgen.user_method
+    def show_module_test(self, module=None, copy=True, **conf):
         module = self.dut if not module else module
         conf["copy"] = copy
         self.print(self.module_test(module, **conf))
 
 
-    @SVgen.UserMethod
-    def ShowModPortLogic(self, module=None):
+    @SVgen.user_method
+    def show_mod_port_logic(self, module=None):
         module = self.dut if not module else module
-        ins = self.LogicBlk(module)
-        s = self.Genlist([(ins,)])
-        ToClip(s)
+        ins = self.logic_blk(module)
+        s = self.genlist([(ins,)])
+        to_clip(s)
         self.print(s)
 
-    def TbWrite(self, text, suf, **conf):
+    def tb_write(self, text, suf, **conf):
         overwrite = conf.get("overwrite")
         self.print("overwriting:", overwrite)
         fpath = self.test
-        return self.FileWrite(fpath, text, suf, overwrite)
+        return self.file_write(fpath, text, suf, overwrite)
 
 
 if __name__ == "__main__":

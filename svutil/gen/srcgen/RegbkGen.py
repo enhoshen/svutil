@@ -41,7 +41,7 @@ class Customlst:
     output_all: bool= True
     
 
-@SVgen.UserClass
+@SVgen.user_class
 class RegbkGen(SrcGen):
     r"""
     This class saves you effort on reptitive but non-trivial part of your source system verilog code,
@@ -52,19 +52,19 @@ class RegbkGen(SrcGen):
         ind: the base indentation using Ind(n) object. Default: self.cur_ind
     Function naming suffix conventions:
         Str(self, *arg, ind): return a str of a code block. ind is the text base indentation of type Ind.
-        ToClip(self, *arg, ind): try copying text result to xclip and return the text as string.
+        to_clip(self, *arg, ind): try copying text result to xclip and return the text as string.
     """
 
-    def Clip(orig):
+    def clip(orig):
         """
         clip decorator, the function must be a member function
         the argument list must ends with ... pkg=None, toclip=True, ind=None
         """
 
         def new_func(*arg, **kwargs):
-            pkg = arg[0].Swap(kwargs.get("pkg"))
+            pkg = arg[0].swap(kwargs.get("pkg"))
             kwargs["pkg"] = pkg
-            x = SVgen.Clip(orig)(*arg, **kwargs)
+            x = SVgen.clip(orig)(*arg, **kwargs)
             arg[0].regbk = pkg
             return x
 
@@ -133,8 +133,8 @@ class RegbkGen(SrcGen):
         ]
         self.clr_affix = "clr_"
 
-    @SVgen.UserMethod
-    def LoadPreset(self, p):
+    @SVgen.user_method
+    def load_preset(self, p):
         if p == PRESET.AHB:
             self.protocol = PRCL_PRESET.AHB
             self.wrdata_style = WRDATA_PRESET.NEXT_CYCLE
@@ -170,13 +170,13 @@ class RegbkGen(SrcGen):
             self.wrdata_style = WRDATA_PRESET.INSTANT
             self.disable_style = DISABLE_PRESET.EN_WIRE
 
-    def Reload(self):
-        self.session.Reload()
+    def reload(self):
+        self.session.reload()
         self.regbkhier = self.session.hiers.get(self.regbkstr)
         self.regbk = SVRegbk(self.regbkhier) if self.regbkhier else None
 
-    def ModBlk(self):
-        ind = self.cur_ind.Copy()
+    def mod_blk(self):
+        ind = self.cur_ind.copy()
         yield ""
         s = "\n"
         s += (
@@ -188,14 +188,14 @@ class RegbkGen(SrcGen):
             s += f'{ind.b}`include "Peripheral/common/IntrSigGen.sv"\n\n'
         s += f"{ind.b}module {self.regbkstr}\n"
         s += f"{ind[1]}import {self.regbkstr}::*;\n"
-        s += self.ProtocolImportStr(ind=ind + 1)
+        s += self.protocol_import_str(ind=ind + 1)
         s += f"{ind.b}#(\n"
-        s += self.ProtocolParameterPortStr(ind=ind + 1)
+        s += self.protocol_parameter_port_str(ind=ind + 1)
         s += f"{ind.b})(\n"
         s += f"{ind[1]} input  {self.clk_name}\n"
         s += f"{ind[1]},input  {self.rst_name}\n"
-        s += self.ProtocolPortStr(self.regbk.regbw_name, ind=ind + 1)
-        s += self.ProtocolDataPortStr(
+        s += self.protocol_port_str(self.regbk.regbw_name, ind=ind + 1)
+        s += self.protocol_data_port_str(
             self.regbk.regaddrbw_name, self.regbk.regbw_name, ind=ind + 1
         )
         w = len(self.regbk.regbw_name) + 5 + 8
@@ -213,15 +213,15 @@ class RegbkGen(SrcGen):
         yield s
 
     @SVgen.str
-    def LogicStr(self, w, reg, bw, tp, arr=None, dim=None, comb=None, ind=None):
+    def logic_str(self, w, reg, bw, tp, arr=None, dim=None, comb=None, ind=None):
         if arr and arr != "":
             dim = f" [{reg.upper()}{self.regbk.arr_num_suf}]"
         else:
             dim = "" if dim is None else dim
         if comb:
-            return self.CombLogicStr(w, reg, bw, tp, dim, ind=ind, spacing=False)
+            return self.comb_logic_str(w, reg, bw, tp, dim, ind=ind, spacing=False)
         else:
-            return self.RegLogicStr(w, reg, bw, tp, dim, ind=ind, spacing=False)
+            return self.reg_logic_str(w, reg, bw, tp, dim, ind=ind, spacing=False)
 
     def rdata_basic_string(self, reg, comb, const):
         pad = f"{self.regbk.regbw_name}-{reg}{self.regbk.bw_suf}"
@@ -288,13 +288,13 @@ class RegbkGen(SrcGen):
 
 
     @SVgen.str
-    def RdataArrIdxLogic(self, reg):
+    def rdata_arr_idx_logic(self, reg):
         """deprecated"""
         s = f"logic [$clog2({reg.upper()}_NUM)-1:0] {reg.lower()}_{self.arr_idx_suf};\n"
         return s
 
     @SVgen.str
-    def RdataArrIdxComb(self, reg):
+    def rdata_arr_idx_comb(self, reg):
         """deprecated"""
         s = f"assign {reg.lower()}_{self.arr_idx_suf} = {self.addr_port_name}{self.addr_slice}-{reg};\n"
         return s
@@ -325,7 +325,7 @@ class RegbkGen(SrcGen):
         return s
 
     @SVgen.str
-    def WdataSeqStr(self, reg, _slice, rw=None, dim=None, ind=None):
+    def wdata_seq_str(self, reg, _slice, rw=None, dim=None, ind=None):
         # TODO slice dependent, now it only pad the MSB and it's usually the case
         disable_reg = False
         if self.disable_style == DISABLE_PRESET.DISABLE_REG and reg == "DISABLE":
@@ -361,7 +361,7 @@ class RegbkGen(SrcGen):
         return s
 
     @SVgen.str
-    def WdataCombStr(self, reg, _slice, rw=None, dim=None, comb=None, ind=None):
+    def wdata_comb_str(self, reg, _slice, rw=None, dim=None, comb=None, ind=None):
         # TODO slice dependent, now it only pad the MSB and it's usually the case
         disable_reg = False
         if self.disable_style == DISABLE_PRESET.DISABLE_REG and reg == "DISABLE":
@@ -397,7 +397,7 @@ class RegbkGen(SrcGen):
             s += f"{ind[1]}else begin\n"
             if self.regbk.regintr_name.upper() in reg.upper():
                 s += f"{ind[2]}\n"
-                s += self.IntrCombToClip(reg, pkg=self.regbk, toclip=False, ind=ind + 2)
+                s += self.intr_comb_to_clip(reg, pkg=self.regbk, toclip=False, ind=ind + 2)
             else:
                 if comb:
                     s += f"{ind[2]}{reg.lower()} = ;//TODO\n"
@@ -412,7 +412,7 @@ class RegbkGen(SrcGen):
         return s
 
     @SVgen.str
-    def WdataCombArrStr(self, reg, rw=None, dim=None, comb=None, ind=None):
+    def wdata_comb_arr_str(self, reg, rw=None, dim=None, comb=None, ind=None):
         # TODO slice dependent, now it only pad the MSB and it's usually the case
         dim = "" if not dim else dim
         s = f"{ind.b}always_comb begin\n"
@@ -444,7 +444,7 @@ class RegbkGen(SrcGen):
             s += f"{ind[1]}else begin\n"
             if self.regbk.regintr_name.upper() in reg.upper():
                 s += f"{ind[2]}\n"
-                s += self.IntrCombToClip(
+                s += self.intr_comb_to_clip(
                     reg, pkg=self.regbk, dim=dim, toclip=False, ind=ind + 2
                 )
             else:
@@ -507,7 +507,7 @@ class RegbkGen(SrcGen):
             if reg.name in self.omitlogiclst or omit:
                 pass
             else:
-                s += self.LogicStr( w, reg.name.lower(), bw, tp, arr=arr, comb=comb, ind=ind)
+                s += self.logic_str( w, reg.name.lower(), bw, tp, arr=arr, comb=comb, ind=ind)
         return s
     @SVgen.str
     def rdata_address_condition_logic_block(self, ind=None):
@@ -520,7 +520,7 @@ class RegbkGen(SrcGen):
                 pass
             else:
                 if arr:
-                    s += self.LogicStr(
+                    s += self.logic_str(
                         (0,0), reg.name.lower()+self.arr_sel_suf, 1, 'logic', arr=None, comb=True, ind=ind
                     )
         s += "\n"
@@ -531,7 +531,7 @@ class RegbkGen(SrcGen):
         """
         """
         s = f"{ind.b}// read data address selection\n"
-        s += self.LogicStr(
+        s += self.logic_str(
             (0,0), self.arr_sel,
             bw = self.regbk.regaddrbw_name,
             tp = 'logic',
@@ -539,7 +539,7 @@ class RegbkGen(SrcGen):
             comb=True,
             ind=ind
         )
-        s += self.LogicStr(
+        s += self.logic_str(
             (0,0), self.arr_sel_subtrahend,
             bw = self.arr_sel_subtrahend.upper()+'_BW',
             tp = 'logic',
@@ -551,7 +551,7 @@ class RegbkGen(SrcGen):
         return s
 
     @SVgen.str
-    def IntrCombStr(self, intr_logic, intr_field, dim=None, ind=None):
+    def intr_comb_str(self, intr_logic, intr_field, dim=None, ind=None):
         dim = "" if dim is None else f"[{dim}]"
         s = f"{ind.b}if ({self.clr_affix}{intr_logic}_r{dim}) {self.regbk.regintr_name}_w{dim}.{intr_logic} = '0;\n"
         s += f"{ind.b}else begin\n"
@@ -560,7 +560,7 @@ class RegbkGen(SrcGen):
         return s
 
     @SVgen.str
-    def IntrSigGenStr(self, ind=None):
+    def intr_sig_gen_str(self, ind=None):
         s = "\n"
         s += f"{ind.b}// interrupt\n"
         s += f"{ind.b}genvar gen;\n"
@@ -581,7 +581,7 @@ class RegbkGen(SrcGen):
         return s + "\n"
 
     @SVgen.str
-    def WRCondLogicStr(self, ind=None):
+    def w_r_cond_logic_str(self, ind=None):
         s = ""
         if self.protocol is None:
             s = f"{ind.b}//TODO\n"
@@ -610,14 +610,14 @@ class RegbkGen(SrcGen):
         tp = reg.name.lower() if tp else "logic"
         return bw, tp
 
-    @SVgen.UserMethod
-    @Clip
-    def LogicToClip(self, pkg=None, toclip=True, ind=None):
+    @SVgen.user_method
+    @clip
+    def logic_to_clip(self, pkg=None, toclip=True, ind=None):
         w = [0, 0]
         s = ""
 
-        s += self.ProtocolLogicStr(ind=ind)
-        s += self.DataAddrLogicStr(
+        s += self.protocol_logic_str(ind=ind)
+        s += self.data_addr_logic_str(
             self.regbk.regaddrbw_name, self.regbk.regbw_name, ind=ind
         )
 
@@ -647,7 +647,7 @@ class RegbkGen(SrcGen):
                         dim = f" [{self.regbk.regintr_name.upper()}{self.regbk.arr_num_suf}]"
                     else:
                         dim = ""
-                    s += self.LogicStr(
+                    s += self.logic_str(
                         w,
                         self.clr_affix + intr.name.lower(),
                         1,
@@ -662,13 +662,13 @@ class RegbkGen(SrcGen):
             s += f"{ind.b}logic {l};\n"
 
         s += f"{ind.b}//\n"
-        s += self.WRCondLogicStr(ind=ind)
+        s += self.w_r_cond_logic_str(ind=ind)
 
         return s
 
-    @SVgen.UserMethod
-    @Clip
-    def RdataToClip(self, pkg=None, toclip=True, ind=None):
+    @SVgen.user_method
+    @clip
+    def rdata_to_clip(self, pkg=None, toclip=True, ind=None):
         r"""
         Help building register bank read data part of combinational logics.
         Follow specific coding style in your register bank description package, the function generate
@@ -695,9 +695,9 @@ class RegbkGen(SrcGen):
         if arr_reg != []:
             s += f"{ind.b}// array register read data index\n"
             #for i in arr_reg:
-            #    s += self.RdataArrIdxLogic(i[0].name, ind=ind)
+            #    s += self.rdata_arr_idx_logic(i[0].name, ind=ind)
             #for i in arr_reg:
-            #    s += self.RdataArrIdxComb(i[0].name, ind=ind)
+            #    s += self.rdata_arr_idx_comb(i[0].name, ind=ind)
             for i in arr_reg:
                 s += self.rdata_address_condition_comb(i[0].name, ind=ind)
             s += f"\n"
@@ -769,12 +769,12 @@ class RegbkGen(SrcGen):
             s += f"{ind.b}end\n\n"
             s1 = [f"o_{self.rdata_name} <= '0;"]
             s2 = [f"o_{self.rdata_name} <= {self.rdata_name}_w;"]
-            s += self.SeqCeStr(s1, s2, ce=self.read_cond, ind=ind)
+            s += self.seq_ce_str(s1, s2, ce=self.read_cond, ind=ind)
         return s
 
-    @SVgen.UserMethod
-    @Clip
-    def WdataToClip(self, pkg=None, toclip=True, ind=None):
+    @SVgen.user_method
+    @clip
+    def wdata_to_clip(self, pkg=None, toclip=True, ind=None):
         r"""
         Help building register bank write data part of both combinational and sequential part logics.
         Follow specific coding style in your register bank description package, the function generate
@@ -798,20 +798,20 @@ class RegbkGen(SrcGen):
                 dim = f"{gen}"
                 s += f"{ind.b}generate\n"
                 s += f"{ind[1]}for ({gen} = 0; {gen} < {reg.name}{self.regbk.arr_num_suf}; ++{gen}) begin: arr_{reg.name.lower()}\n"
-                s += self.WdataCombArrStr(reg.name, rw, dim=dim, comb=comb, ind=ind + 2)
+                s += self.wdata_comb_arr_str(reg.name, rw, dim=dim, comb=comb, ind=ind + 2)
                 if not comb:
-                    s += self.WdataSeqStr(reg.name, _slice, rw, dim, ind=ind + 2)
+                    s += self.wdata_seq_str(reg.name, _slice, rw, dim, ind=ind + 2)
                 s += f"{ind[1]}end\n"
                 s += f"{ind.b}endgenerate\n\n"
             else:
-                s += self.WdataCombStr(reg.name, _slice, rw, comb=comb, ind=ind)
+                s += self.wdata_comb_str(reg.name, _slice, rw, comb=comb, ind=ind)
                 if not comb:
-                    s += self.WdataSeqStr(reg.name, _slice, rw, ind=ind)
+                    s += self.wdata_seq_str(reg.name, _slice, rw, ind=ind)
         return s
 
-    @SVgen.UserMethod
-    @Clip
-    def IntrCombToClip(self, reg, dim=None, pkg=None, toclip=True, ind=None):
+    @SVgen.user_method
+    @clip
+    def intr_comb_to_clip(self, reg, dim=None, pkg=None, toclip=True, ind=None):
         r"""
         Help build clear register read part of interrupts combinational logics.
         """
@@ -821,19 +821,19 @@ class RegbkGen(SrcGen):
             self.regbk.GetType(reg.lower()),
             self.regbk.regfields[self.regbk.regintr_name.upper()].enumls,
         ):
-            s += self.IntrCombStr(intr.name, field.name, dim=dim, ind=ind) + "\n"
+            s += self.intr_comb_str(intr.name, field.name, dim=dim, ind=ind) + "\n"
         return s
 
-    @SVgen.UserMethod
-    @SVgen.Clip
-    def CombToClip(self, pkg=None, toclip=True, ind=None):
+    @SVgen.user_method
+    @SVgen.clip
+    def comb_to_clip(self, pkg=None, toclip=True, ind=None):
         """ Build basic combinational part including flags, states ... etc."""
         s = ""
         #
         if self.protocol is None:
             s = f"\n"
         if self.protocol == PRCL_PRESET.REQACK:
-            s += self.ReqAckCombStr(ind=ind)
+            s += self.req_ack_comb_str(ind=ind)
         if self.protocol == PRCL_PRESET.VALID:
             if self.wrdata_style == WRDATA_PRESET.INSTANT:
                 pass
@@ -845,11 +845,11 @@ class RegbkGen(SrcGen):
             s += f"{ind.b}assign {self.read_cond} = i_pctl.psel && !i_pctl.penable && !o_resp.o_pslverr;\n"
         #
         if self.regbk.raw_intr_stat:
-            s += self.IntrSigGenStr(ind=ind)
+            s += self.intr_sig_gen_str(ind=ind)
         return s
 
     @SVgen.str
-    def ReqAckCombStr(self, ind=None):
+    def req_ack_comb_str(self, ind=None):
         s = ""
         if self.wrdata_style == WRDATA_PRESET.INSTANT:
             s += f"{ind.b}assign {self.write_cond} = i_req && o_ack && {self.write_name};\n"
@@ -883,9 +883,9 @@ class RegbkGen(SrcGen):
             s += f"{ind.b}assign {self.cg_cond} = i_en;\n"
         return s
 
-    @SVgen.UserMethod
-    @Clip
-    def SeqToClip(self, pkg=None, toclip=True, ind=None):
+    @SVgen.user_method
+    @clip
+    def seq_to_clip(self, pkg=None, toclip=True, ind=None):
         """
         Build basic sequential part including state_main, clr_interrupts not in the control reg list...etc.
         """
@@ -897,7 +897,7 @@ class RegbkGen(SrcGen):
         if self.protocol is None:
             s += f"\n"
         if self.protocol == PRCL_PRESET.REQACK:
-            s += self.ReqAckSeqStr(ind=ind)
+            s += self.req_ack_seq_str(ind=ind)
 
         s += f"{ind.b}\n"
         # TODO array clear interrupt
@@ -910,21 +910,21 @@ class RegbkGen(SrcGen):
                 if not clr.upper() + intr.name.upper() in self.regbk.regaddrsdict:
                     s1 += [f'{clr+intr.name+"_r":<{w}} <= \'0;']
                     s2 += [f'{clr+intr.name+"_r":<{w}} <= {clr+intr.name}_w;']
-            s += self.SeqCeStr(s1, s2, ce="", ind=ind)
+            s += self.seq_ce_str(s1, s2, ce="", ind=ind)
         return s
 
     @SVgen.str
-    def ReqAckSeqStr(self, ind=None):
+    def req_ack_seq_str(self, ind=None):
         s = ""
         if self.wrdata_style == WRDATA_PRESET.INSTANT:
-            s += self.SeqCeStr([f"o_ack <= '0;"], [f"o_ack <= ack_w;"], ind=ind)
+            s += self.seq_ce_str([f"o_ack <= '0;"], [f"o_ack <= ack_w;"], ind=ind)
         elif self.wrdata_style == WRDATA_PRESET.RD_NEXT_CYCLE:
             pass
         elif self.wrdata_style == WRDATA_PRESET.NEXT_CYCLE:
-            s += self.SeqCeStr(
+            s += self.seq_ce_str(
                 [f"reqNack_r <= '0;"], [f"reqNack_r <= i_req && o_ack;"], ind=ind
             )
-            s += self.SeqCeStr(
+            s += self.seq_ce_str(
                 [f"write_r <= '0;", f"{self.addr_name}_r <= '0;"],
                 [
                     f"write_r <= {self.write_name};",
@@ -938,7 +938,7 @@ class RegbkGen(SrcGen):
         if self.disable_style is None:
             pass
         elif self.disable_style == DISABLE_PRESET.DISABLE_REG:
-            s += self.SeqCeStr(
+            s += self.seq_ce_str(
                 [f"state_main_r <= MAIN_IDLE;"],
                 [f"state_main_r <= state_main_w;"],
                 ce="state_main_r != state_main_w",
@@ -948,24 +948,24 @@ class RegbkGen(SrcGen):
             pass
         return s
 
-    @SVgen.UserMethod
-    def ToFile(self, pkg=None, ind=None, toclip=False, overwrite=False):
-        self.Custom()
-        regbktemp = self.Swap(pkg)
+    @SVgen.user_method
+    def to_file(self, pkg=None, ind=None, toclip=False, overwrite=False):
+        self.custom()
+        regbktemp = self.swap(pkg)
         ind = self.cur_ind if not ind else ind
-        Ind = self.IndBlk()
-        mod = self.ModBlk()
+        Ind = self.ind_blk()
+        mod = self.mod_blk()
         banw = 25
-        logicban = self.Line3BannerBlk(banw, "//", "Logic")
-        logic = self.Str2Blk(self.LogicToClip, pkg=pkg, toclip=False)
-        combban = self.Line3BannerBlk(banw, "//", "Combinational")
-        comb = self.Str2Blk(self.CombToClip, pkg=pkg, toclip=False)
-        seqban = self.Line3BannerBlk(banw, "//", "Sequential")
-        seq = self.Str2Blk(self.SeqToClip, pkg=pkg, toclip=False)
-        regbkban = self.Line3BannerBlk(banw, "//", "Reg bank")
-        rdata = self.Str2Blk(self.RdataToClip, pkg=pkg, toclip=False)
-        wdata = self.Str2Blk(self.WdataToClip, pkg=pkg, toclip=False)
-        s = self.Genlist(
+        logicban = self.line3_banner_blk(banw, "//", "Logic")
+        logic = self.str_to_blk(self.logic_to_clip, pkg=pkg, toclip=False)
+        combban = self.line3_banner_blk(banw, "//", "Combinational")
+        comb = self.str_to_blk(self.comb_to_clip, pkg=pkg, toclip=False)
+        seqban = self.line3_banner_blk(banw, "//", "Sequential")
+        seq = self.str_to_blk(self.seq_to_clip, pkg=pkg, toclip=False)
+        regbkban = self.line3_banner_blk(banw, "//", "Reg bank")
+        rdata = self.str_to_blk(self.rdata_to_clip, pkg=pkg, toclip=False)
+        wdata = self.str_to_blk(self.wdata_to_clip, pkg=pkg, toclip=False)
+        s = self.genlist(
             [
                 (mod,),
                 mod,
@@ -976,12 +976,12 @@ class RegbkGen(SrcGen):
             ]
         )
         if toclip:
-            ToClip(s)
-        p = self.FileWrite(self.regbkstr, s, "sv", overwrite=overwrite)
+            to_clip(s)
+        p = self.file_write(self.regbkstr, s, "sv", overwrite=overwrite)
         self.print("Regbk file write to", p)
         self.regbk = regbktemp
 
-    def Swap(self, pkg=None):
+    def swap(self, pkg=None):
         regbktemp = self.regbk
         regbk = SVRegbk(pkg) if pkg and type(pkg) == str else self.regbk
         self.regbk = regbk

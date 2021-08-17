@@ -47,7 +47,7 @@ class DISABLE_PRESET:
 class SrcGen(SVgen):
     def __init__(self, session=None):
         super().__init__(session=session)
-        self.V_(GBV.VERBOSE)
+        self.v_(GBV.VERBOSE)
         self.customlst += ["clk_name", "rst_name"]
         self.userfunclst += []
         self.clk_name = "i_clk"
@@ -60,17 +60,17 @@ class SrcGen(SVgen):
         return f',{inout} {tp+" "+bwstr:<{w[0]}}{io[0]}_{reg+dim}'
 
     @SVgen.str
-    def RegLogicStr(self, w, reg, bw, tp, dim):
+    def reg_logic_str(self, w, reg, bw, tp, dim):
         bwstr = "" if bw == 1 else f"[{bw}-1:0] "
         return f'{tp+" "+bwstr:<{w[0]}}{reg+"_r"+dim:<{w[1]}} ,{reg}_w{dim};'
 
     @SVgen.str
-    def CombLogicStr(self, w, reg, bw, tp, dim):
+    def comb_logic_str(self, w, reg, bw, tp, dim):
         bwstr = "" if bw == 1 else f"[{bw}-1:0] "
         return f'{tp+" "+bwstr:<{w[0]}}{reg+dim:<{w[1]}};'
 
     @SVgen.str
-    def SeqCeStr(self, s1, s2, ce=None, ind=None):
+    def seq_ce_str(self, s1, s2, ce=None, ind=None):
         ff_str = (
             f"always_ff @(posedge {self.clk_name} or negedge {self.rst_name}) begin"
         )
@@ -92,7 +92,7 @@ class SrcGen(SVgen):
 
     # port list
     @SVgen.str
-    def ProtocolImportStr(self):
+    def protocol_import_str(self):
         s = ""
         if self.protocol == PRCL_PRESET.AHB:
             s  = f"import Ahb::*;\n"
@@ -105,7 +105,7 @@ class SrcGen(SVgen):
         return s
 
     @SVgen.str
-    def ProtocolParameterPortStr(self):
+    def protocol_parameter_port_str(self):
         s = ""
         if self.protocol == PRCL_PRESET.AHB:
             s += f" parameter ahb_endian SLVEND = LITTLE_END\n"
@@ -115,7 +115,7 @@ class SrcGen(SVgen):
         return s
 
     @SVgen.str
-    def ProtocolDataPortStr(self, addrbw, bw):
+    def protocol_data_port_str(self, addrbw, bw):
         """ addrbw, bw are name to the parameters """
         s = f"// data and address\n"
         if (
@@ -137,7 +137,7 @@ class SrcGen(SVgen):
         return s
 
     @SVgen.str
-    def ProtocolPortStr(self, bw):
+    def protocol_port_str(self, bw):
         """ bw are name to the parameters """
         # disable
         s = ""
@@ -166,7 +166,7 @@ class SrcGen(SVgen):
 
     # Logic list
     @SVgen.str
-    def ProtocolLogicStr(self, w=20):
+    def protocol_logic_str(self, w=20):
         # state
         s = ""
         if self.disable_style == DISABLE_PRESET.DISABLE_REG:
@@ -186,8 +186,8 @@ class SrcGen(SVgen):
         return s + "\n"
 
     @SVgen.str
-    def DataAddrLogicStr(self, addrbw, bw):
-        s = f"// Data and address\n"
+    def data_addr_logic_str(self, addrbw, bw):
+        s = f"// data and address\n"
         if self.protocol == PRCL_PRESET.AHB:
             pass
         elif self.protocol == PRCL_PRESET.APB3:

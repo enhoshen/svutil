@@ -15,10 +15,10 @@ import os
 
 def BusInit():
     SBC = StructBusCreator
-    SBC.TopTypes()
-    confbus = SBC.Get("Conf", "i_PEconf")
-    instbus = SBC.Get("Inst", "i_PEinst")
-    status = SBC.Get("DPstatus", "o_status")
+    SBC.top_types()
+    confbus = SBC.get("Conf", "i_PEconf")
+    instbus = SBC.get("Inst", "i_PEinst")
+    status = SBC.get("DPstatus", "o_status")
     dummy = CreateBus(("dummy",))
     return confbus, instbus, status, dummy
 
@@ -53,10 +53,10 @@ def test():
     inbus, wbus, obus, lpebus = PErdyack(data)
     print(inbus.data.values)
     SVparse.hiers["PE"].ShowPorts
-    conf.SetTo(0)
-    inst.SetTo(0)
+    conf.set_to(0)
+    inst.set_to(0)
     layer = AlexBest[4]
-    peconf = layer.ToPEconf()
+    peconf = layer.to_p_econf()
     print(peconf)
     config = [
         (4, 4, 4, 1, 1, 3, 3, 48, 12, 13 * 4, 4, 1, 2, 1, 0, 0, 1, 0, 13),
@@ -79,20 +79,20 @@ def test():
             yield bus.values
 
     inst.reset.value = 1
-    inst.Write()
+    inst.write()
     yield ck_ev
     yield ck_ev
     inst.reset.value = 0
     inst.start.value = 1
     inst.dval.value = 1
-    inst.Write()
+    inst.write()
     yield ck_ev
     inst.reset.value = 0
     inst.start.value = 0
-    inst.Write()
+    inst.write()
     conf.values = peconf
     conf.Au.value = 4
-    conf.Write()
+    conf.write()
     print(layer)
     print(conf)
     for iteration in range(layer.PEpass):
@@ -120,32 +120,32 @@ def test():
             layer.Pch, layer.R, layer.Pm, layer.S, layer.Wb, layer.Ab, 1.3
         )
         if conf.PixReuse.value[0] == 1:
-            j.append(JoinableFork(inbus.SendIter(Input[3](inbus.data))))
-            # j.append( JoinableFork(inbus.SendIter(it(pch*tw*xb*s)))   )
-            j.append(JoinableFork(wbus.SendIter(Weight[3](wbus.data))))
+            j.append(JoinableFork(inbus.send_iter(Input[3](inbus.data))))
+            # j.append( JoinableFork(inbus.send_iter(it(pch*tw*xb*s)))   )
+            j.append(JoinableFork(wbus.send_iter(Weight[3](wbus.data))))
             j.append(
-                JoinableFork(lpebus.SendIter(lpedata(layer.Tw * layer.Pm, lpebus.data)))
+                JoinableFork(lpebus.send_iter(lpedata(layer.Tw * layer.Pm, lpebus.data)))
             )
-            # j.append( JoinableFork( wbus.SendIter(it(pm*pch*r*s)) ) )
-            # j.append( JoinableFork( obus.MyMonitor(tw*xb*s*pm*pch*r) ) )
+            # j.append( JoinableFork( wbus.send_iter(it(pm*pch*r*s)) ) )
+            # j.append( JoinableFork( obus.my_monitor(tw*xb*s*pm*pch*r) ) )
         else:
-            j.append(JoinableFork(inbus.SendIter(it(xb * tw * upix * s))))
-            j.append(JoinableFork(wbus.SendIter(it(pm * pch * r * s))))
-            j.append(JoinableFork(obus.MyMonitor(tw * xb * s * pm * pch * r)))
+            j.append(JoinableFork(inbus.send_iter(it(xb * tw * upix * s))))
+            j.append(JoinableFork(wbus.send_iter(it(pm * pch * r * s))))
+            j.append(JoinableFork(obus.my_monitor(tw * xb * s * pm * pch * r)))
 
         for jj in j:
             yield from jj.Join()
         [jj.Destroy() for jj in j]
         while True:
             yield ck_ev
-            status.Read()
+            status.read()
             if status.confEnd.value[0]:
                 print("confEnd")
                 inst.next.value = 1
-                inst.Write()
+                inst.write()
                 yield ck_ev
                 inst.next.value = 0
-                inst.Write()
+                inst.write()
                 break
     # yield from repeat(ck_ev,100)
     FinishSim()

@@ -3,12 +3,12 @@ import parser as ps
 import re
 import os
 from subprocess import Popen, PIPE
-from svutil.SVutil import SVutil, V_
+from svutil.SVutil import SVutil, v_
 from svutil.SVclass import *
 
 VERBOSE = os.environ.get("VERBOSE", 0)
 # verilog system function implementation
-# S2num can evaulate the functions directly
+# to_num can evaulate the functions directly
 class SVsysfunc (SVutil):
     # current SVhier
     def __init__(self, cur_hier, package):
@@ -38,7 +38,7 @@ class SVstr(SVutil):
     """
     sp_chars = ['=', '{', '}', '[', ']', '::', ';', ',', '(', ')', '#']
     op_chars = ['+', '-', '*', '/', '(', ')', '<<', '>>']
-    verbose = V_(VERBOSE)
+    verbose = v_(VERBOSE)
 
     def __init__(self, s):
         self.s = s
@@ -67,11 +67,11 @@ class SVstr(SVutil):
     def lsplit(self, sep=None):
         # split sep or any special chars from the start
         self.lstrip()
-        if self.End():
+        if self.end():
             return ""
         _s = self.s
         if sep == None:
-            _idx = SVstr(_s).FirstSPchar()
+            _idx = SVstr(_s).first_s_pchar()
             _spidx = _s.find(" ")
             if _idx != -1 and (_idx < _spidx or _spidx == -1):
                 if _idx == 0:
@@ -92,18 +92,18 @@ class SVstr(SVutil):
             self.s = ""
         return _s
 
-    def SpanReplace(self, span, s):
+    def span_replace(self, span, s):
         self.s = self.s[0 : span[0]] + s + self.s[span[1] + 1 :]
         return self
 
-    def FirstSPchar(self):
+    def first_s_pchar(self):
         # FUCKING cool&concise implementation:
         return next((i for i, x in enumerate(self.s) if x in self.sp_chars), -1)
         # _specC = [ x for x in (map(self.s.find,self.sp_chars)) if x > -1]
         # _idx = -1 if len(_specC) == 0 else min(_specC)
         # return _idx
 
-    def CommentParse(self):
+    def comment_parse(self):
         _s = self.s.rstrip()
         if "//" in _s:
             self.s = _s.split("//")[0]
@@ -111,15 +111,15 @@ class SVstr(SVutil):
         else:
             return ""
 
-    def IDParse(self):
+    def id_parse(self):
         """
         find one identifier at the start of the string
         TODO multiple ID ( often sperated by , )
         """
-        if self.End():
+        if self.end():
             return ""
         self.s = self.s.lstrip()
-        _idx = self.FirstSPchar()
+        _idx = self.first_s_pchar()
         if _idx != -1:
             _s = self.s[0:_idx]
             self.s = self.s[_idx:]
@@ -128,32 +128,32 @@ class SVstr(SVutil):
         self.s = _s[1] if len(_s) > 1 else ""
         return _s[0].rstrip(";")
 
-    def IDarrParse(self):
+    def id_arr_parse(self):
         n = []
-        name = self.IDParse()
+        name = self.id_parse()
         n.append(name)
         while self.s != "" and self.s[0] == ",":
             self.s = self.s[1:]
-            name = self.IDParse()
+            name = self.id_parse()
             n.append(name)
         return n
 
-    def IDDIMarrParse(self):
+    def id_dim_arr_parse(self):
         n = []
         d = []
-        name = self.IDParse()
+        name = self.id_parse()
         n.append(name)
         dim = self.bracket_parse()
         d.append(dim)
-        while not self.End() and self.s[0] == ",":
+        while not self.end() and self.s[0] == ",":
             self.s = self.s[1:]
-            name = self.IDParse()
+            name = self.id_parse()
             n.append(name)
             dim = self.bracket_parse()
             d.append(dim)
         return n, d
 
-    def SignParse(self):
+    def sign_parse(self):
         self.lstrip()
         if "unsigned" in self.s:
             self.s = self.s.replace("unsigned", "")
@@ -174,14 +174,14 @@ class SVstr(SVutil):
         num = []
         while 1:
             self.print(self.s, verbose="bracket_parse")
-            if self.End() or self.s[0] != bracket[0]:
+            if self.end() or self.s[0] != bracket[0]:
                 break
             rbrack = self.s.find(bracket[1])
             num.append(self.s[1:rbrack])
             self.s = self.s[rbrack + 1 :].lstrip()
         return tuple(num)
 
-    def TypeParse(self, typekeylist):
+    def type_parse(self, typekeylist):
         tp = ""
         temp = SVstr(self.s).lsplit()
         if temp in typekeylist or "::" in temp:
@@ -189,7 +189,7 @@ class SVstr(SVutil):
             self.lsplit()
         return tp
 
-    def KeywordParse(self, key, rules):
+    def keyword_parse(self, key, rules):
         _step = 0
         self.s = self.s.lsplit()
         if self.s == None:
@@ -197,19 +197,19 @@ class SVstr(SVutil):
         if _step == len(rules):
             return
 
-    def FunctionParse(self):
-        self.print(self.End(), verbose=3)
+    def function_parse(self):
+        self.print(self.end(), verbose=3)
         func = self.lsplit()
-        if self.End():
+        if self.end():
             return func, []
         if self.s[0] == "(":
             _s, self.s = self.split(")", maxsplit=1)
-            args = SVstr(_s).ReplaceSplit(["(", ","])
+            args = SVstr(_s).replace_split(["(", ","])
             return func, args
         else:
             return func, []
 
-    def NumParse(self, cur_hier, package=None):
+    def num_parse(self, cur_hier, package=None):
         """
         split the equal sign at the start of the string
         return left string as num, meaning that it converts
@@ -219,16 +219,16 @@ class SVstr(SVutil):
         """
         _s = self.lstrip("=")
         # if cur_hier.AllMacro:
-        _s = SVstr(_s.MultiMacroExpand(cur_hier.AllMacro))
+        _s = SVstr(_s.multi_macro_expand(cur_hier.AllMacro))
 
-        num = _s.S2num(cur_hier, package)
+        num = _s.to_num(cur_hier, package)
         self.s = ""
         return num
 
-    def Arit2num(self, s):
+    def arit_to_num(self, s):
         pass
 
-    def S2num(self, cur_hier, package=None):
+    def to_num(self, cur_hier, package=None):
         params = cur_hier.Params
         _s = self.s.lstrip()
         # if '$clog2' in _s:
@@ -237,7 +237,7 @@ class SVstr(SVutil):
         sysfunc = SVsysfunc(cur_hier, package)
         _s = _s.replace("$", "sysfunc.")
         _s = re.sub(rf"(sysfunc.\w*\s*)\((\w*)\)", r'\1("\2")', _s)
-        _s_no_op = SVstr(_s).ReplaceSplit(self.op_chars + [",", "'", "{", "}"])
+        _s_no_op = SVstr(_s).replace_split(self.op_chars + [",", "'", "{", "}"])
         for w in _s_no_op:
             if "::" in w:
                 _pkg, _param = w.split("::")
@@ -262,7 +262,7 @@ class SVstr(SVutil):
         _s = re.sub(rf"/([^/])", rf"//\1", _s)
         slist = _s.split()
         for i, v in enumerate(slist):
-            _n, _ = SVstr(v).BaseConvert()
+            _n, _ = SVstr(v).base_convert()
             slist[i] = _n if _n else slist[i]
         _s = " ".join(slist)
         # _s = _s.replace('\'','')
@@ -271,11 +271,11 @@ class SVstr(SVutil):
         except:
             if _s != "":
                 self.print(
-                    f"S2num {_s} failed, return original string: {self.s}", verbose=2
+                    f"to_num {_s} failed, return original string: {self.s}", verbose=2
                 )
             return _s
 
-    def BaseConvert(self):
+    def base_convert(self):
         mapping = {"'b": "0b", "'h": "0x", "'o": "0o", "'d": "", "'": ""}
         rule = rf"(\'[bB]|\'[hH]|\'[oO]|\'[dD]|\')"
         if re.search(rule, self.s):
@@ -285,18 +285,18 @@ class SVstr(SVutil):
             _n = f"{_base}{lst[2]}"
             if lst[1] == "'":
                 _n = f'0b{"":{lst[2]}<{32}}'
-                self.print(_n, lst[2], verbose="BaseConvert")
+                self.print(_n, lst[2], verbose="base_convert")
             return _n, _size
         else:
             return None, None
 
-    def S2lst(self):
+    def to_lst(self):
         # TODO
         if not "{" in self.s:
             return [self.s]
         _s = SVstr(self.s.replace("'{", "{"))
         while True:
-            span = _s.DeepestBracketSpan()
+            span = _s.deepest_bracket_span()
             if not span:
                 break
             spans = _s.s[span[0] : span[1] + 1]
@@ -308,39 +308,39 @@ class SVstr(SVutil):
             spans = re.sub(r"(?<=\w) *}", '"]', spans)
             spans = re.sub(r"}", "]", spans)
             spans = re.sub(r"{", "[", spans)
-            _s = _s.SpanReplace(span, spans)
+            _s = _s.span_replace(span, spans)
         self.print(_s, verbose=46)
         try:
             return eval(ps.expr(_s.s).compile("file.py"))
         except:
             self.print(
-                f"S2lst {_s.s} failed, return original string: {self.s}", verbose=3
+                f"to_lst {_s.s} failed, return original string: {self.s}", verbose=3
             )
             return [self.s]
 
-    def Slice2num(self, cur_hier, package=None):
+    def slice_to_num(self, cur_hier, package=None):
         if self.s == "":
             return 1
         _temp = self.s.replace("::", "  ")
         _idx = _temp.find(":")
         _s, _e = self.s[0:_idx], self.s[_idx + 1 :]
         try:
-            return SVstr(_s).NumParse(cur_hier, package) - SVstr(_e).NumParse(cur_hier, package) + 1
+            return SVstr(_s).num_parse(cur_hier, package) - SVstr(_e).num_parse(cur_hier, package) + 1
         except (TypeError):
-            self.print("Slice2num fail, TypeError", verbose=2)
+            self.print("slice_to_num fail, TypeError", verbose=2)
             self.print(self.s, verbose="Slice2Num")
 
-    def Slice2TwoNum(self, cur_hier, package=None):
+    def slice_to_two_num(self, cur_hier, package=None):
         if self.s == "":
             return 1
         _temp = self.s.replace("::", "  ")
         _idx = _temp.find(":")
-        self.print(_idx, verbose="Slice2TwoNum")
+        self.print(_idx, verbose="slice_to_two_num")
         _s, _e = self.s[0:_idx] if _idx != -1 else "", self.s[_idx + 1 :]
-        self.print(_s, _e, verbose="Slice2TwoNum")
-        return (SVstr(_s).NumParse(cur_hier, package), SVstr(_e).NumParse(cur_hier, package))
+        self.print(_s, _e, verbose="slice_to_two_num")
+        return (SVstr(_s).num_parse(cur_hier, package), SVstr(_e).num_parse(cur_hier, package))
 
-    def SimpleMacroExpand(self, macros):
+    def simple_macro_expand(self, macros):
         """
         Expand a simple substituion macro
         the string must start with ` and end with a word character
@@ -359,7 +359,7 @@ class SVstr(SVutil):
         except:
             self.print("macro expansion error", verbose=2)
 
-    def MacroFuncExpand(self, macros):
+    def macro_func_expand(self, macros):
         """
         Expand a potentially nested macro to a string.
         Limitation: the string start with ` and end with )
@@ -393,7 +393,7 @@ class SVstr(SVutil):
         except:
             self.print("macro function expansion error", verbose=2)
 
-    def MultiMacroExpand(self, macros):
+    def multi_macro_expand(self, macros):
         _s = self.s
         self.print(_s, verbose="MacroFunc")
         nested = -1
@@ -419,7 +419,7 @@ class SVstr(SVutil):
                     try:
                         exp = (
                             exp[0 : span[0]]
-                            + SVstr(exp[span[0] : rbkt]).SimpleMacroExpand(macros)
+                            + SVstr(exp[span[0] : rbkt]).simple_macro_expand(macros)
                             + exp[rbkt:]
                         )
                     except:
@@ -428,14 +428,14 @@ class SVstr(SVutil):
                 else:
                     exp = (
                         exp[0 : span[0]]
-                        + SVstr(exp[span[0] : rbkt + 1]).MacroFuncExpand(macros)
+                        + SVstr(exp[span[0] : rbkt + 1]).macro_func_expand(macros)
                         + exp[rbkt + 1 :]
                     )
                 nested = -1
                 rbkt = 0
         return exp
 
-    def FirstBracketSpan(self, bracket=["(", ")"]):
+    def first_bracket_span(self, bracket=["(", ")"]):
         """
         Find the first enclosed bracket span if the
         string start with bracket[0]
@@ -455,7 +455,7 @@ class SVstr(SVutil):
                     rbkt = i
         return (lbkt, rbkt)
 
-    def DeepestBracketSpan(self, bracket=["{", "}"]):
+    def deepest_bracket_span(self, bracket=["{", "}"]):
         """
         Find the deepest nested bracket span of a
         string
@@ -469,13 +469,13 @@ class SVstr(SVutil):
                 return (lbkt, rbkt)
         return None
 
-    def DeleteList(self, clist):
+    def delete_list(self, clist):
         _s = self.s
         for c in clist:
             _s = _s.replace(c, "")
         return _s
 
-    def ReplaceSplit(self, clist):
+    def replace_split(self, clist):
         _s = self.s
         for c in clist:
             _s = _s.replace(c, " ")
@@ -487,15 +487,15 @@ class SVstr(SVutil):
     def __contains__(self, st):
         return st in self.s
 
-    def End(self):
+    def end(self):
         return self.s == ""
 
 
 class SVARGstr(SVstr):
-    def Pluslsplit(self):
+    def pluslsplit(self):
         bcnt = False
         prvc = ""
-        if self.End():
+        if self.end():
             return None
         for i, c in enumerate(self.s):
             if c == '"':
@@ -513,15 +513,15 @@ class SVARGstr(SVstr):
         self.s = ""
         return _s, ""
 
-    def PlusSplit(self):
+    def plus_split(self):
         l = []
-        parse = self.Pluslsplit()
+        parse = self.pluslsplit()
         while parse:
             if parse == ("", "+"):
                 l.append([])
             if parse[0] != "":
                 l[-1].append(parse[0])
-            parse = self.Pluslsplit()
+            parse = self.pluslsplit()
         return l
 
     def define(self, args):
@@ -532,9 +532,9 @@ class SVARGstr(SVstr):
             text = _a[1] if len(_a) > 1 else ""
             func = lambda *, text=text: text
             l[name] = ([], text, func)
-            self.print(func(), func, verbose="ARGSParse")
+            self.print(func(), func, verbose="args_parse")
         for k, v in l.items():
-            self.print(v[2](), verbose="ARGSParse")
+            self.print(v[2](), verbose="args_parse")
         return l
 
     def incdir(self, args):

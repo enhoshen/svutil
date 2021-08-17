@@ -45,7 +45,7 @@ def test():
     for it, bus in zip(
         *[[ir, iw, wr, ww, gr, gw], [inrbus, iwbus, wrbus, wwbus, grbus, gwbus]]
     ):
-        j.append(JoinableFork(bus.SendIter(it(bus.data))))
+        j.append(JoinableFork(bus.send_iter(it(bus.data))))
     for jj in j:
         yield from jj.Join()
     for i in range(c.Pch * c.Pm * c.R * c.Tw * c.Xb):

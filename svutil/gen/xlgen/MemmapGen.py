@@ -4,7 +4,7 @@ from svutil.gen.XLGen import *
 import xlsxwriter as xl
 
 
-@SVgen.UserClass
+@SVgen.user_class
 class MemmapGen(XLGen):
     def __init__(self, session=None):
         super().__init__(session=session)
@@ -17,7 +17,7 @@ class MemmapGen(XLGen):
         ]
         self.userfunclst += []
         self.filepath = "./memmap.xlsx"
-        self.CreateWorkbook(self.filepath)
+        self.create_workbook(self.filepath)
         self.cols = [
             "Reg Offset",
             "Register Name",
@@ -30,10 +30,10 @@ class MemmapGen(XLGen):
         self.reg_row = 3
         self.col_start = 1
         self.regfield_lvl = 2
-        self.DftFmt()
-        self.DftColWid()
+        self.dft_fmt()
+        self.dft_col_wid()
 
-    def DftFmt(self):
+    def dft_fmt(self):
         self.regfieldfmt = self.wb.add_format(
             {"font_name": "Arial", "bg_color": "#E7E6E6", "text_wrap": True}
         )
@@ -97,7 +97,7 @@ class MemmapGen(XLGen):
             self.regfielddespfmt,
         ]
 
-    def DftColWid(self):
+    def dft_col_wid(self):
         self.regofs_w = 12
         self.regname_w = 32
         self.access_w = 13
@@ -112,24 +112,24 @@ class MemmapGen(XLGen):
         ]
         self.title_w = sum(self.colwid_lst)
 
-    def SetCol(self):
+    def set_col(self):
         for i, v in enumerate(self.colwid_lst):
             col = self.col_start + i
             self.cur_sh.set_column(col, col, v)
 
-    def AddRegbk(self, regbk):
+    def add_regbk(self, regbk):
         self.print(regbk.name)
         self.cur_sh = self.wb.add_worksheet(
             re.sub(rf"(?i)Regbk|(?i)Regbank", "", regbk.name)
         )
-        self.SetCol()
-        self.AddTitle(regbk)
-        self.AddField()
+        self.set_col()
+        self.add_title(regbk)
+        self.add_field()
         self.cur_row = self.reg_row
         for v in regbk.regaddrs.enumls:
-            self.AddReg(regbk, v, self.cur_row)
+            self.add_reg(regbk, v, self.cur_row)
 
-    def AddTitle(self, regbk):
+    def add_title(self, regbk):
         self.cur_sh.merge_range(
             self.title_row,
             self.col_start,
@@ -139,23 +139,23 @@ class MemmapGen(XLGen):
             self.titlefmt,
         )
 
-    def AddField(self):
+    def add_field(self):
         self.cur_sh.write_row(self.field_row, self.col_start, self.cols, self.fieldfmt)
 
-    def AddReg(self, regbk, regenum, rowidx):
+    def add_reg(self, regbk, regenum, rowidx):
         _, rw, *_ = regbk.GetCmt(regenum.cmt)
         dft = regbk.regdefaults.get(regenum.name.upper())
         dft = dft.num if dft else "TODO"
         if type(dft) == list:
-            dft = self.DftConvert(regbk, regenum.name, dft)
+            dft = self.dft_convert(regbk, regenum.name, dft)
         data = [hex(regenum.num * regbk.regbsize), regenum.name, rw, dft, "TODO"]
         for i, d, f in zip(range(len(data)), data, self.regfmt_lst):
             self.cur_sh.write(rowidx, self.col_start + i, d, f)
-        # self.SetGroup(self.cur_row, self.regfield_lvl)
+        # self.set_group(self.cur_row, self.regfield_lvl)
         self.cur_row += 1
-        self.AddRegField(regbk, regenum.name)
+        self.add_reg_field(regbk, regenum.name)
 
-    def AddRegField(self, regbk, name):  # TODO set level, collapsed
+    def add_reg_field(self, regbk, name):  # TODO set level, collapsed
         _, regrw, *_ = regbk.GetCmt(regbk.regaddrsdict[name].cmt)
         slices = regbk.regslices.get(name.upper())
         field = regbk.regfields.get(name.upper())
@@ -166,7 +166,7 @@ class MemmapGen(XLGen):
         if field:
             acc_dic = {}
             if type(dft) == int:
-                dft = self.DftConvert(regbk, name, dft)
+                dft = self.dft_convert(regbk, name, dft)
             for n, c in zip(field.names, field.cmts):
                 _, rw, *_ = regbk.GetCmt(c)
                 acc_dic[n] = rw if rw != "" else regrw
@@ -178,17 +178,17 @@ class MemmapGen(XLGen):
                 else:
                     fdft = "0" if s[0] == "RESERVED" else "TODO"
                 data = [
-                    self.SliceToString(s[1]),
+                    self.slice_to_string(s[1]),
                     s[0],
                     acc_dic[s[0]],
                     fdft,
                     "Reserved" if s[0] == "RESERVED" else "TODO",
                 ]
-                self.RegfieldRow(data)
+                self.regfield_row(data)
             return True
         else:
             if type(dft) == list:
-                dft = self.DftConvert(regbk, name, dft)
+                dft = self.dft_convert(regbk, name, dft)
             bw = regbk.regbws.get(name)
             try:
                 bw = bw.num
@@ -200,23 +200,23 @@ class MemmapGen(XLGen):
             data = [slce, name, regrw, dft, "TODO"]
             for ii, d, f in zip(range(len(data)), data, self.regfieldfmt_lst):
                 self.cur_sh.write(self.cur_row, self.col_start + ii, d, f)
-                self.SetGroup(self.cur_row, self.regfield_lvl)
+                self.set_group(self.cur_row, self.regfield_lvl)
             self.cur_row += 1
             if bw != regbk.regbw:
                 slce = f"[{regbk.regbw-1}:{bw}]"
                 data = [slce, "RESERVED", regrw, "0", "Reserved"]
-                self.RegfieldRow(data)
+                self.regfield_row(data)
             return True
 
-    def RegfieldRow(self, data):
+    def regfield_row(self, data):
         for ii, d, f in zip(range(len(data)), data, self.regfieldfmt_lst):
             if d == "Reserved":
                 f = self.regfielddespfmt_it
             self.cur_sh.write(self.cur_row, self.col_start + ii, d, f)
-            self.SetGroup(self.cur_row, self.regfield_lvl)
+            self.set_group(self.cur_row, self.regfield_lvl)
         self.cur_row += 1
 
-    def DftConvert(self, regbk, regname, dft):
+    def dft_convert(self, regbk, regname, dft):
         if type(dft) == str:
             return dft
         if type(dft) == list:
@@ -227,7 +227,7 @@ class MemmapGen(XLGen):
             return dft
         return dft
 
-    def SliceToString(self, slice_lst):
+    def slice_to_string(self, slice_lst):
         s = ""
         for i in slice_lst:
             if i[0] != i[1]:
@@ -236,14 +236,14 @@ class MemmapGen(XLGen):
                 s += f"[{i[0]}]"
         return s
 
-    def SetGroup(self, row_idx, lvl):
+    def set_group(self, row_idx, lvl):
         self.cur_sh.set_row(row_idx, None, None, {"level": lvl, "hidden": True})
 
-    @SVgen.UserMethod
-    def AllRegbk(self):
+    @SVgen.user_method
+    def all_regbk(self):
         for i, v in self.session.package.items():
             if re.match(rf"\w*(?i)Regbk", i):
                 regbk = SVRegbk(v)
                 if regbk.addrs:
-                    self.AddRegbk(regbk)
+                    self.add_regbk(regbk)
         self.wb.close()
