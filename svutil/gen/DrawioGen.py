@@ -54,10 +54,10 @@ class Style(SVutil):
         s += f"{tp}; " if tp else ""
         for k, v in kwargs.items():
             self.attr[k] = v
-        return self.Str
+        return self.str
 
     @property
-    def Str(self):
+    def str(self):
         s = ""
         for k, v in self.attr.items():
             s += f"{k}={v};" if v is not "" else f"{k};"
@@ -128,10 +128,10 @@ class DrawioGen(SVgen):
         pass
 
     def mx_geometry(self, shape, ind):
-        return f'{ind.b}<mx_geometry x="{shape.x}" y="{shape.y}" width="{shape.w}" height="{shape.h}" as="geometry"/>\n'
+        return f'{ind.b}<mxGeometry x="{shape.x}" y="{shape.y}" width="{shape.w}" height="{shape.h}" as="geometry"/>\n'
 
     def mx_point(self, shape, to, ind):
-        return f'{ind.b}<mx_point x="{shape.x}" y="{shape.y}" as="{to}"/>\n'
+        return f'{ind.b}<mxPoint x="{shape.x}" y="{shape.y}" as="{to}"/>\n'
 
     def mx_point_blk(self, shape, to="sourcePoint"):
         ind = self.cur_ind.copy()
@@ -155,9 +155,9 @@ class DrawioGen(SVgen):
     def mx_geometry_blk(self, shape):
         ind = self.cur_ind.copy()
         yield ""
-        s = f'{ind.b}<mx_geometry width="{shape.w}" height="{shape.h}" relative="1" as="geometry">\n'
+        s = f'{ind.b}<mxGeometry width="{shape.w}" height="{shape.h}" relative="1" as="geometry">\n'
         yield s
-        yield f"{ind.b}</mx_geometry>\n"
+        yield f"{ind.b}</mxGeometry>\n"
 
     def mx_cell_blk(self, value, style, parent, edge=None):
         ind = self.cur_ind.copy()
