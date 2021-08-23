@@ -271,7 +271,7 @@ class SVstr(SVutil):
         except:
             if _s != "":
                 self.print(
-                    f"to_num {_s} failed, return original string: {self.s}", verbose=2
+                    f"to_num {_s} failed, return original string: {self.s}", verbose=3
                 )
             return _s
 
@@ -327,7 +327,7 @@ class SVstr(SVutil):
         try:
             return SVstr(_s).num_parse(cur_hier, package) - SVstr(_e).num_parse(cur_hier, package) + 1
         except (TypeError):
-            self.print("slice_to_num fail, TypeError", verbose=2)
+            self.print("slice_to_num fail, TypeError", verbose=3)
             self.print(self.s, verbose="Slice2Num")
 
     def slice_to_two_num(self, cur_hier, package=None):

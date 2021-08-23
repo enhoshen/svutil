@@ -504,7 +504,7 @@ class SVparse(SVutil):
                 cls.session.cur_parse.readfile(p if "/" in p else f"./{p}", inc=inc)
                 cls.session.visited[os.path.normpath(p)] = True
             else:
-                self.print(
+                SVutil().print(
                     f'{"":>{SVparse.session.path_level*4}}{os.path.normpath(p)} visited!',
                     trace=2,
                     level=True,

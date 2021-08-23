@@ -24,10 +24,6 @@ class SVutil:
         except:
             self.verbose = verbose
 
-    def verbose(self, v):
-        """ set verbose level """
-        self.verbose = v if v else 0
-
     def print(self, *arg, verbose=None, trace=1, level=False, color=None, **kwarg):
         """
         Customized message print controlled with verbose level for each messages seperately
