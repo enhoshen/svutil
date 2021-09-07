@@ -1101,9 +1101,9 @@ class SVparse(SVutil):
             self.flag_port = "end"
         if "#" in w and self.flag_port == "":
             self.flag_port = "pport"
-        if self.flag_port == "pport":
-            if "input" in w or "output" in w or re.match(r"^ *[)] *[(]", _s):
-                self.flag_port = "port"
+        #if self.flag_port == "pport":
+        if "input" in w or "output" in w or re.match(r"^ *[)] *[(]", _s):
+            self.flag_port = "port"
         if re.match(r"^ *[)]\s*;", _s) and self.flag_port == "port":
             self.flag_port = "end"
 

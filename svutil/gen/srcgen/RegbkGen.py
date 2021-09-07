@@ -3,7 +3,7 @@ import sys
 import itertools
 
 import numpy as np
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict 
 from typing import *
 
 
@@ -11,12 +11,12 @@ from svutil.SVparse import *
 from svutil.gen.SrcGen import *
 from svutil.SVclass import *
 
-@dataclass
+@dataclass(order=True)
 class Customlst:
     protocol: PRCL_PRESET= None
     wrdata_style: WRDATA_PRESET = None
     disable_style: DISABLE_PRESET= None
-    omitlogiclst: List[str]= field(default_factory=["VERSION"])
+    omitlogiclst: List[str] = field(default_factory = lambda: ["VERSION"])
 
     addr_name: str= "addr"
     addr_port_name: str= f"i_{addr_name}"
@@ -24,7 +24,9 @@ class Customlst:
     wdata_name: str= "i_wdata"
     rdata_name: str= "rdata"
     ointr_name: str= "o_intr"
-    addr_slice: str= "REG_ADDR_BW-1:REG_BSIZE_BW"
+    addr_slice: str= "[REG_ADDR_BW-1:REG_BSIZE_BW]"
+    reg_idx_bw_name: str = "REG_INDEX_BW"
+    reg_idx_name: str = "reg_idx"
     #"[{self.regbk.regaddrbw_name}-1:{(self.regbk.regbsizebw_name)}]"
     
     write_cond: str = "write_valid"
@@ -74,54 +76,55 @@ class RegbkGen(SrcGen):
         super().__init__(session=session)
         self.regbkhier = self.regbk
         self.regbk = SVRegbk(self.regbkhier) if self.regbkhier else None
-        self.customlst += [
-            "protocol",
-            "wrdata_style",
-            "addr_port_name",
-            "addr_name",
-            "write_name",
-            "wdata_name",
-            "rdata_name",
-            "ointr_name",
-            "addr_slice",
-            "write_cond",
-            "read_cond",
-            "cg_cond",
-            "wo_cg_cond",
-            "ro_cg_cond",
-            "arr_sel_subtrahend",
-            "arr_sel",
-            "arr_sel_suf",
-            "arr_idx_suf",
-            "output_all",
-            "omitlogiclst",
-        ]
-        self.protocol = None
-        self.wrdata_style = None
-        self.disable_style = None
-        self.omitlogiclst = ["VERSION"]
+        self.custom = Customlst()
+        self.customlst += asdict(self.custom).keys()
+        #    "protocol",
+        #    "wrdata_style",
+        #    "addr_port_name",
+        #    "addr_name",
+        #    "write_name",
+        #    "wdata_name",
+        #    "rdata_name",
+        #    "ointr_name",
+        #    "addr_slice",
+        #    "write_cond",
+        #    "read_cond",
+        #    "cg_cond",
+        #    "wo_cg_cond",
+        #    "ro_cg_cond",
+        #    "arr_sel_subtrahend",
+        #    "arr_sel",
+        #    "arr_sel_suf",
+        #    "arr_idx_suf",
+        #    "output_all",
+        #    "omitlogiclst",
+        #]
+        #self.protocol = None
+        #self.wrdata_style = None
+        #self.disable_style = None
+        #self.omitlogiclst = ["VERSION"]
 
-        self.addr_name = "addr"
-        self.addr_port_name = f"i_{self.addr_name}"
-        self.write_name = "i_write"
-        self.wdata_name = "i_wdata"
-        self.rdata_name = "rdata"
-        self.ointr_name = "o_intr"
-        self.addr_slice = (
-            f"[{self.regbk.regaddrbw_name}-1:{(self.regbk.regbsizebw_name)}]"
-        )
-        self.write_cond = "write_valid"
-        self.read_cond = "read_valid"
-        self.cg_cond = "ce"
-        self.wo_cg_cond = "wo_ce"
-        self.ro_cg_cond = "ro_ce"
+        #self.addr_name = "addr"
+        #self.addr_port_name = f"i_{self.addr_name}"
+        #self.write_name = "i_write"
+        #self.wdata_name = "i_wdata"
+        #self.rdata_name = "rdata"
+        #self.ointr_name = "o_intr"
+        #self.addr_slice = (
+        #    f"[{self.regbk.regaddrbw_name}-1:{(self.regbk.regbsizebw_name)}]"
+        #)
+        #self.write_cond = "write_valid"
+        #self.read_cond = "read_valid"
+        #self.cg_cond = "ce"
+        #self.wo_cg_cond = "wo_ce"
+        #self.ro_cg_cond = "ro_ce"
 
-        self.arr_sel_subtrahend = "arr_sel_subtrahend"
-        self.arr_sel_suf = "_sel"
-        self.arr_sel = "arr_sel"
-        self.arr_idx_suf = "arr_idx"
+        #self.arr_sel_subtrahend = "arr_sel_subtrahend"
+        #self.arr_sel_suf = "_sel"
+        #self.arr_sel = "arr_sel"
+        #self.arr_idx_suf = "arr_idx"
 
-        self.output_all = True
+        #self.output_all = True
 
 
         self.flag_logic_lst = [
@@ -202,7 +205,7 @@ class RegbkGen(SrcGen):
         if self.regbk.raw_intr_stat:
             s += f"{ind[1]}// interrupt\n"
             s += (
-                f'{ind[1]}{",output "+self.regbk.regintr_name:<{w}} {self.ointr_name}\n'
+                f'{ind[1]}{",output "+self.regbk.regintr_type_name:<{w}} {self.ointr_name}\n'
             )
         if self.output_all:
             s += self.output_all_register_block(ind=ind+1)
@@ -273,17 +276,15 @@ class RegbkGen(SrcGen):
         s += f"{ind.b}end\n"
         return s
     @SVgen.str
-    def rdata_arr_slice_bw (self, reg):
-        """
-        """
-        s = f"localparam {reg.upper()}_NUM_BW = $clog2({reg.upper()}_NUM);\n"
+    def rdata_arr_slice_bw (self, reg, ind=None):
+        s = f"{ind.b}localparam {reg.upper()}_NUM_BW = $clog2({reg.upper()}_NUM);\n"
         return s
     
     @SVgen.str
     def rdata_arr_slice_param_block (self, arr_reg, ind=None):
         s = f"{ind.b}// rdata array selection slice bw\n"
         for v in arr_reg:
-            s += self.rdata_arr_slice_bw (v[0].name, ind=ind)
+            s += self.rdata_arr_slice_bw (v[0].name, ind=ind, spacing=False)
         return s+'\n'
 
 
@@ -301,7 +302,10 @@ class RegbkGen(SrcGen):
 
     @SVgen.str
     def rdata_sel_subtrahend_comb(self, reg, ifelse, ind=None):
-        s = f"{ind.b}{ifelse}({reg.lower()}{self.arr_sel_suf}) begin\n"
+        if ifelse == 'else':
+            s = f"{ind.b}else begin\n"
+        else:
+            s = f"{ind.b}{ifelse}({reg.lower()}{self.arr_sel_suf}) begin\n"
         s += f"{ind[1]}{self.arr_sel_subtrahend} = {reg};\n" 
         s += f"{ind.b}end\n"
         return s
@@ -309,19 +313,21 @@ class RegbkGen(SrcGen):
     @SVgen.str
     def rdata_sel_subtrahend_comb_block(self, arr_reg, ind=None):
         s = f"{ind.b}assign {self.arr_sel} = {self.addr_port_name}{self.addr_slice}-{self.arr_sel_subtrahend};\n"
+        s = f"{ind.b}assign {self.reg_idx_name} = {self.addr_port_name}[{self.addr_slice}];\n"
         s += f"{ind.b}always_comb begin\n"
         ifelse_dic = {0:'unique if', len(arr_reg)-1:'else'}
         for i,v in enumerate(arr_reg):
             ifelse = ifelse_dic.get(i, 'else if')
-            s += self.rdata_sel_subtrahend_comb(v[0].name, ifelse, ind=ind+1)
+            s += self.rdata_sel_subtrahend_comb(v[0].name, ifelse, ind=ind+1, spacing=False)
         s += f"{ind.b}end\n"
         return s
 
     @SVgen.str
     def rdata_address_condition_comb(self, reg, ind=None):
         s = f'{ind.b}assign {reg.lower()}{self.arr_sel_suf} = '
-        s += f'{self.addr_port_name}{self.addr_slice} >= {reg}\n'
-        s += f'{ind[1]}&& {self.addr_port_name}{self.addr_slice} < {reg}+{reg}{self.regbk.arr_num_suf};\n'
+        s += f'{self.reg_idx_name} >= {reg}\n'
+        s += f'{ind[1]}&& {self.reg_idx_name} '
+        s += f'< {reg}+{reg}{self.regbk.arr_num_suf};\n'
         return s
 
     @SVgen.str
@@ -461,7 +467,7 @@ class RegbkGen(SrcGen):
         w = [0,0]
         for reg in self.regbk.addrs.enumls:
             bw, tp = self.get_tpbw(reg)
-            width, rw, arr, *_ = self.regbk.GetAddrCmt(reg.name)
+            width, rw, arr, *_ = self.regbk.get_addr_cmt(reg.name)
             bwstr = "" if bw == 1 else f"[{bw}-1:0] "
             w[0] = max(w[0], len(f'{tp+" "+bwstr}'))
             dim = "" if arr == "" else " [" + reg.name + self.regbk.arr_num_suf + "]"
@@ -471,7 +477,7 @@ class RegbkGen(SrcGen):
     def assign_output_all_block (self, ind=None):
         s = f"{ind.b}// direct control register to output\n"
         for reg in self.regbk.addrs.enumls:
-            s += f"{ind.b} assign r_{reg.name.lower()} = {reg.name.lower()}_r;\n"
+            s += f"{ind.b}assign r_{reg.name.lower()} = {reg.name.lower()}_r;\n"
         return s+'\n'
 
     @SVgen.str
@@ -482,7 +488,7 @@ class RegbkGen(SrcGen):
         s = f'{ind.b}// control register output\n'
         for reg in self.regbk.addrs.enumls:
             bw, tp = self.get_tpbw(reg)
-            width, rw, arr, omit, comb, *_ = self.regbk.GetAddrCmt(reg.name)
+            width, rw, arr, omit, comb, *_ = self.regbk.get_addr_cmt(reg.name)
             if reg.name in self.omitlogiclst or omit:
                 pass
             else:
@@ -503,7 +509,7 @@ class RegbkGen(SrcGen):
         w = self.reg_format_width()
         for reg in self.regbk.addrs.enumls:
             bw, tp = self.get_tpbw(reg)
-            width, rw, arr, omit, comb, *_ = self.regbk.GetAddrCmt(reg.name)
+            width, rw, arr, omit, comb, *_ = self.regbk.get_addr_cmt(reg.name)
             if reg.name in self.omitlogiclst or omit:
                 pass
             else:
@@ -515,7 +521,7 @@ class RegbkGen(SrcGen):
         s = f"{ind.b}// read data address selection condtion\n"
         for reg in self.regbk.addrs.enumls:
             bw, tp = self.get_tpbw(reg)
-            width, rw, arr, omit, comb, *_ = self.regbk.GetAddrCmt(reg.name)
+            width, rw, arr, omit, comb, *_ = self.regbk.get_addr_cmt(reg.name)
             if reg.name in self.omitlogiclst or omit:
                 pass
             else:
@@ -553,9 +559,9 @@ class RegbkGen(SrcGen):
     @SVgen.str
     def intr_comb_str(self, intr_logic, intr_field, dim=None, ind=None):
         dim = "" if dim is None else f"[{dim}]"
-        s = f"{ind.b}if ({self.clr_affix}{intr_logic}_r{dim}) {self.regbk.regintr_name}_w{dim}.{intr_logic} = '0;\n"
+        s = f"{ind.b}if ({self.clr_affix}{intr_logic}_r{dim}) {self.regbk.regintr_name.lower()}_w{dim}.{intr_logic} = '0;\n"
         s += f"{ind.b}else begin\n"
-        s += f"{ind[1]}{self.regbk.regintr_name}_w{dim}.{intr_logic} = {self.regbk.regintr_name}_r{dim}.{intr_logic};//TODO\n"
+        s += f"{ind[1]}{self.regbk.regintr_name.lower()}_w{dim}.{intr_logic} = {self.regbk.regintr_name.lower()}_r{dim}.{intr_logic};//TODO\n"
         s += f"{ind.b}end\n"
         return s
 
@@ -599,15 +605,19 @@ class RegbkGen(SrcGen):
         return s
 
     def get_tpbw(self, reg):
-        tp = self.regbk.GetType(reg.name.lower())
-        bw = self.regbk.GetBWStr(reg.name)
+        reg_pascal = re.sub(rf'_(\w)',
+            lambda x: x.groups()[0].upper(),
+            reg.name.lower())
+        reg_pascal = reg_pascal[0].upper() + reg_pascal[1:]
+        tp = self.regbk.get_type(reg_pascal)
+        bw = self.regbk.get_bw_str(reg.name)
         try:
             bw = int(bw)
         except:
             pass
         bw = reg.name + self.regbk.bw_suf if not bw == 1 else 1
         bw = 1 if tp else bw
-        tp = reg.name.lower() if tp else "logic"
+        tp = reg_pascal if tp else "logic"
         return bw, tp
 
     @SVgen.user_method
@@ -632,7 +642,7 @@ class RegbkGen(SrcGen):
         if not self.regbk.raw_intr_stat:
             self.print("interrupt struct not specified")
         else:
-            width, rw, arr, omit, comb, *_ = self.regbk.GetAddrCmt(
+            width, rw, arr, omit, comb, *_ = self.regbk.get_addr_cmt(
                 self.regbk.regintr_name.upper()
             )
             w[0] = 0
@@ -656,6 +666,7 @@ class RegbkGen(SrcGen):
                         ind=ind,
                     )
             s += "\n"
+        s += f"{ind.b} [{self.reg_idx_bw_name}-1:0] {self.reg_idx_name};"
 
         s += f"{ind.b}// flags\n"
         for l in self.flag_logic_lst:
@@ -683,7 +694,7 @@ class RegbkGen(SrcGen):
             w[1] = max(
                 w[1], len(self.regbk.regbw_name + i.name + self.regbk.bw_suf) + 10
             )
-            width, rw, arr, omit, comb, *_ = self.regbk.GetAddrCmt(i.name)
+            width, rw, arr, omit, comb, *_ = self.regbk.get_addr_cmt(i.name)
             if arr != "":
                 arr_reg.append((i, width, rw, arr, omit, comb))
             else:
@@ -699,7 +710,7 @@ class RegbkGen(SrcGen):
             #for i in arr_reg:
             #    s += self.rdata_arr_idx_comb(i[0].name, ind=ind)
             for i in arr_reg:
-                s += self.rdata_address_condition_comb(i[0].name, ind=ind)
+                s += self.rdata_address_condition_comb(i[0].name, ind=ind, spacing=False)
             s += f"\n"
             s += self.rdata_arr_slice_param_block(arr_reg, ind=ind)
             s += self.rdata_sel_subtrahend_comb_block(arr_reg, ind=ind)
@@ -733,11 +744,11 @@ class RegbkGen(SrcGen):
             const = True if reg in self.omitlogiclst or omit else False
             if i == 0:
                 s += self.rdata_arr_comb(
-                    reg, "unique if", w, rw, comb=comb, const=const, ind=ind + 2
+                    reg, "unique if", w, rw, comb=comb, const=const, ind=ind + 2, spacing=False
                 )
             else:
                 s += self.rdata_arr_comb(
-                    reg, "else if", w, rw, comb=comb, const=const, ind=ind + 2
+                    reg, "else if", w, rw, comb=comb, const=const, ind=ind + 2, spacing=False
                 )
 
         # non-array registers
@@ -786,7 +797,7 @@ class RegbkGen(SrcGen):
         s += f'{ind.b}//{"Array GenVar":=^{w}}\n'
         s += f"{ind.b}genvar {gen};\n\n"
         for reg in self.regbk.addrs.enumls:
-            width, rw, arr, omit, comb, *_ = self.regbk.GetAddrCmt(reg.name)
+            width, rw, arr, omit, comb, *_ = self.regbk.get_addr_cmt(reg.name)
             if reg.name in self.omitlogiclst or omit:
                 continue
             _slice = self.regbk.regslices.get(reg.name)
@@ -817,9 +828,10 @@ class RegbkGen(SrcGen):
         """
         s = ""
         w = 30
+        self.print(reg)
         for intr, field in zip(
-            self.regbk.GetType(reg.lower()),
-            self.regbk.regfields[self.regbk.regintr_name.upper()].enumls,
+            self.regbk.get_type(self.regbk.regintr_type_name),
+            self.regbk.regfields[self.regbk.regintr_name].enumls,
         ):
             s += self.intr_comb_str(intr.name, field.name, dim=dim, ind=ind) + "\n"
         return s
@@ -950,7 +962,7 @@ class RegbkGen(SrcGen):
 
     @SVgen.user_method
     def to_file(self, pkg=None, ind=None, toclip=False, overwrite=False):
-        self.custom()
+        self.display_custom()
         regbktemp = self.swap(pkg)
         ind = self.cur_ind if not ind else ind
         Ind = self.ind_blk()

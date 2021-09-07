@@ -2,6 +2,7 @@ import os
 import inspect
 import logging
 from functools import wraps
+from dataclasses import asdict 
 
 import colorama
 
@@ -78,13 +79,12 @@ class SVutil:
         }
         return trace[sel]
 
-    def custom(self):
+    def display_custom (self):
         self.print(f"{self.cyellow}Customizable variable: {self.creset}", trace=2)
-        w = len(max(self.customlst, key=len))
-        for i in self.customlst:
-            v = self.__dict__[i]
+        w = len(max(asdict(self.custom).keys(), key=len))
+        for k, v in asdict(self.custom).items():
             v = f'"{v}"' if type(v) == str else v.__str__()
-            self.print(f"    {self.cgreen}{i:>{w}}:{self.creset} {v}", trace=2)
+            self.print(f"    {self.cgreen}{k:>{w}}:{self.creset} {v}", trace=2)
 
     # completer
     def __svcompleterattr__(self):

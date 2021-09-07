@@ -238,7 +238,8 @@ class RegbkCustom ():
     regaddrbw_name:str = "REG_ADDR_BW"
     regbsize_name:str = "REG_BSIZE"
     regbsizebw_name:str = "REG_BSIZE_BW"
-    regintr_name:str = "RawIntrStat"
+    regintr_name:str = "RAW_INTR_STAT"
+    regintr_type_name:str = "RawIntrStat"
 
 
 
@@ -261,7 +262,7 @@ class SVRegbk(SVutil):
             "regaddrbw_name",
             "regbsize_name",
             "regbsizebw_name",
-            "regintr_name",
+            "regintr_type_name",
         ]
         self.userfunclst = ["show_addr"]
 
@@ -295,7 +296,7 @@ class SVRegbk(SVutil):
         self.regdefaults = {}
         self.regbws = {}
         self.params = {}
-        self.raw_intr_stat = self.get_type(self.regintr_name)
+        self.raw_intr_stat = self.get_type(self.regintr_type_name)
 
         self.parse_parameter(pkg)
         self.parse_regfield(pkg)

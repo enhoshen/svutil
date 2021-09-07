@@ -60,15 +60,6 @@ class TbPyGen(TestGen):
         s += f"from svutil.sim import NicoUtil\n"
         return s
 
-    @SVgen.str
-    def gzsim_import(self):
-        s  = f"from gzsim.nicobus.bus import *\n"
-        s += f"from gzsim.utils import *\n"
-        s += f"from gzsim.tester import *\n"
-        s += f"from gzsim.sequencer import *\n"
-        s += f"from gzsim.scoreboard import *\n"
-        s += f"from gzsim.protocol import OneWire\n"
-        return s
 
     def nicoutil_import_blk_non_package(self):
         """ deprecated """
@@ -147,11 +138,10 @@ class TbPyGen(TestGen):
         tb = self.tb_blk()
         builtin = self.builtin_import(spacing=True)
         nicoutil = self.nicoutil_import_blk()
-        gzsim = self.gzsim_import(spacing=True)
         svutil = self.svutil_import(spacing=True)
         businit = self.bus_init(module)
         main = self.main_blk()
-        s = self.genlist([(tb,), builtin, (nicoutil,), gzsim, svutil, nicoutil, (businit, main), tb])
+        s = self.genlist([(tb,), builtin, (nicoutil,), svutil, nicoutil, (businit, main), tb])
         if conf.get("copy") == True:
             to_clip(s)
         return s

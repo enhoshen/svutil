@@ -1,6 +1,7 @@
 import os
 import inspect
 from functools import wraps
+from dataclasses import asdict 
 
 from svutil.SVparse import *
 from svutil.SVutil import SVutil
@@ -44,6 +45,9 @@ class SVgen(SVutil):
         self.genpath = './'
 
         self.refresh()
+
+    def __getattr__(self, s):
+        return asdict(self.custom)[s]
 
     def refresh(self):
         self.dutname = GBV.TESTMODULE

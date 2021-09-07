@@ -169,7 +169,7 @@ nWaveRestoreRCDirHistory = "\"/home/enhoshen/research/lpAccel/sim/Address.rc\"" 
 /sim/Peripheral/RTC/apbsyncrtc.rc\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CSlave/PG.rc\"" "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/ahbmastif.rc\""
 nWaveOpenFsdbDirHistory = "\"/home/enhoshen/research/lpAccel/sim/loop.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072205_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_ug_072205\
 _syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest_5ns.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072206_syn_PEt\
-est.fsdb\"" "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/PupilProposalCore_tb_0.fsdb\""
+est.fsdb\"" "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/SvmHogStage_tb_0.fsdb\""
 [Form]
 version = Verdi_Q-2020.03-SP1
 wave/unknownSave.fm = 100,100,575,275
@@ -177,7 +177,9 @@ wave/unknownSave.fm = 100,100,575,275
 autoSaveSession = FALSE
 TclAutoSource = 
 SyncBrowserDir = TRUE
+verdiAppFont = "Bitstream Vera Sans,-1,14,5,50,0,0,0,0,0", ""
 version = Verdi_Q-2020.03-SP1
+verdiMonoFont = "Courier 14"
 SignalCaseInSensitive = FALSE
 cmd_enter_form = FALSE
 ShowWndCtntDuringResizing = FALSE
@@ -265,7 +267,6 @@ Mask_Non_Active_Time_on_Wave = FALSE
 Show_Cycle_Info = TRUE
 [QtDialog]
 aboutVerdiDialog = 221,85,773,641
-QwShortcutDialog = 1731,1217,800,600
 gridOptionsDialog = 1829,1477,421,269
 QwQuestionMsgDlg = 444,366,324,110
 SetWindowTimeUnitDialog = 1822,1572,433,86
@@ -278,8 +279,11 @@ CreateBusDialog = 2459,950,788,709
 ActiveFileDialog = 2506,1719,747,272
 QwWarnMsgDlg = 385,1011,600,250
 QwUserAskDlg = 1270,1293,324,142
-qWaveSignalDialog = 2084,822,1398,1226
-openFileDlg = 2192,1392,1374,484
+QwShortcutDialog = 1734,1243,810,610
+SignalTypeDialog = 2185,1468,540,397
+openFileDlg = 249,282,1434,544
+qWaveSignalDialog = 202,169,1528,770
+monoFontDlg = 236,438,366,432
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile1]
 shortcut = 
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile3]
@@ -491,8 +495,8 @@ PointStyle = FALSE
 SetDefaultRadix = TRUE
 FilterTextField = FALSE
 anaAuto100VertFit = FALSE
-getSignalForm = 2084 822 1398 1226 341 1128 811 276
-viewPort = 2 32 1917 1047 254 131
+getSignalForm = 202 169 1528 770 380 671 902 162
+viewPort = 8 31 1917 1047 254 131
 signalSpacing = 5
 digitalSignalHeight = 15
 analogSignalHeight = 98
@@ -765,23 +769,23 @@ curveWindow_Drag&Drop_Mode = TRUE
 hspiceIncOpenMode = TRUE
 pcSelectMode = FALSE
 hierarchyDelimiter = /
-RecentFile1 = "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/PupilProposalCore_tb_0.fsdb\""
-RecentFile2 = "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/PupilProposalCore_tb_3.fsdb\""
-RecentFile3 = "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/NormStage_tb_0.fsdb\""
-RecentFile4 = "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/HogStage_tb_0.fsdb\""
-RecentFile5 = "\"/home/enho.shen/GZE200/sim/MemorySystem/Gze200MemorySystem/fsdb/AHBRWH_gold.fsdb\""
+RecentFile1 = "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/SvmHogStage_tb_0.fsdb\""
+RecentFile2 = "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/SvmHoxStage_tb_0.fsdb\""
+RecentFile3 = "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/GradientStage_tb_0.fsdb\""
+RecentFile4 = "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/PupilProposalCore_tb_0.fsdb\""
+RecentFile5 = "\"/home/enho.shen/GZE200/sim/Core/PupilProposal/fsdb/PupilProposalCore_tb_3.fsdb\""
 open_file_time_range = FALSE
 value_window_aligment = Right
 signal_window_alignment = Left
 ShowDeltaTime = TRUE
-legend_window_font = -f COURIER12 -c ID_CYAN5
-value_window_font = -f COURIER12 -c ID_CYAN5
-curve_window_font = -f COURIER12 -c ID_CYAN5
-group_name_font = -f COURIER12 -c ID_GREEN5
-ruler_value_font = -f COURIER12 -c ID_CYAN5
-analog_ruler_value_font = -f COURIER12 -c ID_CYAN5
-comment_string_font = -f COURIER12 -c ID_RED5
-getsignal_form_font = -f COURIER12 
+legend_window_font = -f COURIER14 -c ID_CYAN5
+value_window_font = -f COURIER14 -c ID_CYAN5
+curve_window_font = -f COURIER14 -c ID_CYAN5
+group_name_font = -f COURIER14 -c ID_GREEN5
+ruler_value_font = -f COURIER14 -c ID_CYAN5
+analog_ruler_value_font = -f COURIER14 -c ID_CYAN5
+comment_string_font = -f COURIER14 -c ID_RED5
+getsignal_form_font = -f COURIER14 
 SigsCheckNum = on 1000
 filter_synthesized_net = off n
 filterOutNet = on
@@ -845,7 +849,7 @@ showCellBitRangeWithAddr = TRUE
 wordsShownInOneRow = 8
 syncCursorTime = FALSE
 fixCellColumnWidth = FALSE
-font = Courier 12
+font = Courier 24
 [schematics]
 viewport = 178 262 638 516
 schBackgroundColor = black lineSolid

@@ -188,8 +188,6 @@ class StructBusCreator:
         Return StructBus or nicotb Bus based on the type name
         * If the type is a struct, return StructBus
         * If the type is built-in types (EX:logic), return nicotb Bus
-        * If the type is a type alias, 
-
         """
         # buses = {'logic' :  CreateBus( self.createTuple(signalName) )}
         buses = []
