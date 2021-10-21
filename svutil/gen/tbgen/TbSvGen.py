@@ -141,7 +141,7 @@ class TbSvGen(TestGen, SrcGen):
             s += f"{ind.b}int {ccnt};\n"
         for ck in self.clk_domain_lst:
             _aff = ck[0] + "_" if ck[0] != "" else ""
-            s += f"{ind.b}`pos({_aff}rst_out, {_aff}rst{ck[1]})\n"
+            s += f"{ind.b}`Pos({_aff}rst_out, {_aff}rst{ck[1]})\n"
             s += f"{ind.b}`PosIf({_aff}ck_ev , {_aff}clk, {_aff}rst{ck[1]})\n"
         return s
 
