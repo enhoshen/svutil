@@ -126,7 +126,7 @@ class SVhier:
         self.child = {}
         self.paramports = {}
         self.ports = []
-        self.protoPorts = []
+        self.protoports = []
         self.enums = {}
         self.imported = {}
         self.regs = {}
@@ -294,7 +294,7 @@ class SVhier:
         for i in ["io", "name", "dim", "type"]:
             s += f"{i:{w}} "
         s += f'\n{"":=<{4*w}}\n'
-        for io, n in self.protoPorts:
+        for io, n in self.protoports:
             s += f'{io:<{w}}{n:<{w}}{"()":<{w}}\n'
         for io, n, dim, tp, *_ in self.ports:
             s += f"{io:<{w}}{n:<{w}}{dim.__str__():<{w}}{tp:<{w}}\n"
@@ -304,7 +304,7 @@ class SVhier:
     def ShowConnect(self, **conf):
         """ deprecated """
         s = ".*\n" if conf.get("explicit") == True else ""
-        for t, n in self.protoPorts:
+        for t, n in self.protoports:
             if t == "rdyack":
                 s += ",`rdyack_connect(" + n + ",)\n"
             if t == "dval":
@@ -460,8 +460,15 @@ class SVparse(SVutil):
         self.cnt_ifdef = -1
         self.cnt_ifndef = -1
         self.cur_macrodef = None
+
+        # flags
+        # the subsequent code is preceded by `elsif macro
         self.flag_elsif_parsed = False
+        # flag to parse subsequent code when some macro is set
         self.flag_parse = True
+        # current parse is preceded by typedef
+        self.flag_typedef = False
+
         self.cur_cmt = ""
         self.cur_s = SVstr("")
         self.last_pure_cmt = ""
@@ -539,6 +546,7 @@ class SVparse(SVutil):
                     self.cur_s, self.cur_cmt = self.rdline(self.lines)
                     self.cur_cmt = _cmt + self.cur_cmt if self.cur_s == "" else self.cur_cmt
                     continue
+
                 _w = self.cur_s.lsplit()
                 _catch = None
                 if _w in self.parselist:
@@ -550,6 +558,7 @@ class SVparse(SVutil):
                         continue
                     if self.flag_parse or _w in self.alwaysparselist:
                         _catch = self.keyword[_w](self.cur_s, self.lines)
+                        
             self.f = None
 
     def include_read(self, s, lines):
@@ -578,6 +587,7 @@ class SVparse(SVutil):
                     SVparse.session.cur_parse.inclvl = last_parse.inclvl
                     SVparse.session.cur_parse.readfile(path)
                     SVparse.session.visited[pp] = True
+                    last_parse.cur_hier.child[n] = SVparse.session.cur_parse.cur_hier
                 else:
                     self.print(
                         f'{"":>{SVparse.session.path_level*4}}{os.path.normpath(pp)} visited!',
@@ -599,26 +609,38 @@ class SVparse(SVutil):
         commas (multiple identifiers) is not supported...
         """
         # TODO signed keyword
-        self.print(s, verbose=3)
         s.lstrip()
         sign = s.sign_parse()
         packed_dim = s.bracket_parse()
-        bw = SVstr("" if packed_dim == () else packed_dim[-1])
+        bwstr = SVstr("" if packed_dim == () else packed_dim[-1])
         n, d = s.id_dim_arr_parse()
-        tp = ("signed " if sign == True else "") + "logic"
+        if self.cur_key == 'logic':
+            tp = ("signed " if sign == True else "") + "logic"
+        else:
+            tp = self.cur_key
         cmts = [""] if not self.cur_cmt else self.cur_cmt
-        lst = [
-            (
-                _n,
-                bw.slice_to_num(self.cur_hier),
-                self.tuple_to_num(_d)+self.tuple_to_num(packed_dim[:-1]),
+        lst = []
+        for _n, _d in zip(n, d):
+            bw = bwstr.slice_to_num(self.cur_hier)
+            dim = self.tuple_to_num(_d)+self.tuple_to_num(packed_dim[:-1]),
+            lst.append(
+                ( _n,
+                bw,
+                dim,
                 tp,
                 [],  # enumliteral, not used , this fucking needs refactor
-                cmts,
+                cmts,)
             )
-            for _n, _d in zip(n, d)
-        ]
-        self.print(lst, verbose=3)
+            if not self.flag_typedef:
+                self.cur_hier.identifiers[_n] = Identifier(
+                    name = _n,
+                    tp = tp, #TODO
+                    bwstr = bwstr,
+                    bw = bw,
+                    dim = dim,
+                    dimstr = self.tuple_to_str(_d),
+                )
+
         return lst
 
     def vector_parse(self, s, lines):
@@ -708,7 +730,7 @@ class SVparse(SVutil):
 
     def rdyack_parse(self, s, lines):
         _, args = s.function_parse()
-        self.cur_hier.protoPorts.append(("rdyack", args[0]))
+        self.cur_hier.protoports.append(("rdyack", args[0]))
 
     def enum_parse(self, s, lines):
 
@@ -764,6 +786,7 @@ class SVparse(SVutil):
             )
         s.lsplit("}")
         n = s.id_arr_parse()
+        self.cur_s = s
         for _n in n:
             self.cur_hier.enums[_n] = (
                 enum_name,
@@ -887,6 +910,7 @@ class SVparse(SVutil):
 
     def typedef_parse(self, s, lines):
         """ when keyword typedef is met """
+        self.flag_typedef = True
         _w = s.lsplit()
         types = self.cur_hier.AllTypeKeys
         tp = SVstr(_w).type_parse(types)
@@ -915,15 +939,22 @@ class SVparse(SVutil):
                 _catch[2],
                 _w,
             )
+        # struct type 
         if _w == "struct":
             for n in _catch[0]:
                 self.cur_hier.types[n] = _catch[1]
+                self.keyword[n] = self.logic_parse
         else:
+            # enum type 
             if type(_catch) == list:
                 for n in _catch:
                     self.cur_hier.types[n[0]] = [n]
+                    self.keyword[n[0]] = self.logic_parse
+            # alias type 
             else:
                 self.cur_hier.types[_catch[0]] = [_catch]
+                self.keyword[_catch[0]] = self.logic_parse
+        self.flag_typedef = False
 
     def register_parse(self, s, lines):
         endflag = 0
@@ -978,7 +1009,6 @@ class SVparse(SVutil):
                 _k = self.cur_key
                 self.cur_key = _w
                 _catch = self.keyword[_w](self.cur_s, lines)
-                self.print(self.cur_key, ":", self.cur_s, verbose=56)
                 self.cur_key = _k
         self.cur_hier = self.cur_hier.scope
 

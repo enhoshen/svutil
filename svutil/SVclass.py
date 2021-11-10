@@ -226,6 +226,17 @@ class SVEnuml(SVclass):
         return f"<SVEnuml: {self.name}>"
 
 @dataclass
+class Identifier(SVclass):
+    name: str
+    tp: str 
+    bwstr: str
+    bw: int
+    dim: tuple
+    dimstr: str
+
+
+
+@dataclass
 class RegbkCustom ():
     regfield_suf:str = "_regfield"
     default_suf:str = "_DEFAULT"
