@@ -114,7 +114,7 @@ class SVhier:
     enumlfield = enumlfield
     macrofield = macrofield
 
-    def __init__(self, name=None, scope=None, tp=None):
+    def __init__(self, name=None, scope=None, tp: HIERTP=None):
         self.hier = (
             name  # this is fucking ambiguous, but str method use it so it remains
         )
@@ -130,6 +130,7 @@ class SVhier:
         self.enums = {}
         self.imported = {}
         self.regs = {}
+        self.sub_modules = []
 
         self.identifiers = {}
         self.hiertype = tp
@@ -198,9 +199,7 @@ class SVhier:
         idx = self.portfield.name
         return {x[idx]: x for x in self.ports}
 
-    ########################
-    # types
-    ########################
+    ## types ##
     @property
     def SelfTypeKeys(self):
         return {x for x in self.types.keys()}
@@ -227,9 +226,7 @@ class SVhier:
             s += self.type_str(k, v)
         return s
 
-    #########################
-    # parameters
-    #########################
+    ## parameters ##
     @property
     def AllParamKeys(self):
         return {x for i in self.Params for x in i.keys()}
@@ -272,21 +269,17 @@ class SVhier:
         s += self.dict_str(self.AllParamDetails, w)
         return s
 
-    #########################
-    # enums
-    #########################
+    ## enums ##
     @property
     def AllEnums(self):
         return SVEnumDic({k: v for i in self.Enums for k, v in i.items()})
 
-    #########################
-    # macros
-    #########################
+    ## macros ##
     @property
     def AllMacro(self):
         return {k: v for i in self.Macros for k, v in i.items()}
 
-    ##########################
+    ##
     @property
     def ShowPorts(self):
         w = 15
@@ -403,7 +396,7 @@ class SVparse(SVutil):
         if n in SVparse.session_var_lst:
             return getattr(SVparse.session, n)
         else:
-            return hiers[n]
+            return SVparse.session.hiers[n]
 
     def __init__(self, name=None, scope=None, parse=None):
         self.parse = parse
@@ -413,7 +406,7 @@ class SVparse(SVutil):
                 SVsysfunc.cur_hier = self.cur_hier
                 self.gb_hier.child[name] = self.cur_hier
             else:
-                SVhier(name, self.gb_hier, HIERTP.FILE)
+                self.cur_hier = SVhier(name, self.gb_hier, HIERTP.FILE)
             SVparse.session.hiers[name] = self.cur_hier
         self.cur_key = ""
         self.keyword = {
@@ -578,14 +571,13 @@ class SVparse(SVutil):
                         os.path.normpath(pp),
                     )
                 visited = pp
+                n = pp.rsplit("/", maxsplit=1)[1] if "/" in pp else pp
+                n = n.replace(".", "_")
                 if not SVparse.session.visited.get(pp):
                     # path = self.cur_path.rsplit('/',maxsplit=1)[0] + '/' + _s
-                    path = pp
-                    n = path.rsplit("/", maxsplit=1)[1] if "/" in path else path
-                    n = n.replace(".", "_")
                     SVparse.session.cur_parse = SVparse(n, self.cur_hier)
                     SVparse.session.cur_parse.inclvl = last_parse.inclvl
-                    SVparse.session.cur_parse.readfile(path)
+                    SVparse.session.cur_parse.readfile(pp)
                     SVparse.session.visited[pp] = True
                     last_parse.cur_hier.child[n] = SVparse.session.cur_parse.cur_hier
                 else:
@@ -599,6 +591,10 @@ class SVparse(SVutil):
         SVparse.session.path_level -= 1
         for k in SVparse.session.cur_parse.cur_hier.macros:
             last_parse.keyword['`' + k] = self.macro_parse
+        last_parse.cur_hier.sub_modules += [ 
+            m.name for m in SVparse.session.hiers[n].child.values()
+                if m.hiertype == HIERTP.MODULE
+        ] 
         SVparse.session.cur_parse = last_parse
         return
 
@@ -812,7 +808,7 @@ class SVparse(SVutil):
             if search:
                 _pkg, _param = _s.lstrip().rstrip().split(search.group())
             else:
-                self.print("only support importing packages")
+                self.print(f"only support importing packages: \"{_s}\"")
                 return
 
             if _pkg in self.cur_hier.imported:

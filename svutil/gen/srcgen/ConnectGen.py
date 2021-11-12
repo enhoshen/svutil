@@ -89,9 +89,9 @@ class ConnectGen(SrcGen):
         cur_group_name = (
             next(group, self.group_dft) if group is not None else self.group_dft
         )
+
         for p in module.ports:
             p = SVPort(p)
-            self.print(cur_group, p.group)
             if cur_group != p.group:
                 s_port += '\n'
                 cur_group = p.group
