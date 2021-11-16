@@ -209,7 +209,7 @@ class StructBusCreator:
                         else:
                             _dtype = dtype
                         buses.append(
-                            CreateBus(((hier, signalName + "." + n, DIM + dim, _dtype),))
+                            CreateBus(((hier, f"{signalName}.{n}", DIM + dim, _dtype),))
                         )
                     elif t == "enum":
                         buses.append(CreateBus(((hier, signalName, DIM + dim, dtype),)))
@@ -661,7 +661,10 @@ class NicoUtil(PYUtil):
         return {i: SVPort(v) for i, v in self.dut.Portsdic.items()}
 
     def dut_port_dim(self, p):
-        """ Find the port dimension based on the port name from dut module specified by TESTMODULE """
+        """
+            Find the port dimension based on the port name
+            from dut module specified by TESTMODULE
+        """
         d = self.dut_ports[p].dimstrtuple
         return self.tuple_to_num(d)
 

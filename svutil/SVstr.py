@@ -159,7 +159,7 @@ class SVstr(SVutil):
             self.s = self.s.replace("unsigned", "")
         else:
             if "signed" in self.s:
-                self.s = self.s.replace("unsigned", "")
+                self.s = self.s.replace("signed", "")
                 return True
         return False
 

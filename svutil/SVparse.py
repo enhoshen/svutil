@@ -618,7 +618,7 @@ class SVparse(SVutil):
         lst = []
         for _n, _d in zip(n, d):
             bw = bwstr.slice_to_num(self.cur_hier)
-            dim = self.tuple_to_num(_d)+self.tuple_to_num(packed_dim[:-1]),
+            dim = self.tuple_to_num(_d)+self.tuple_to_num(packed_dim[:-1])
             lst.append(
                 ( _n,
                 bw,
@@ -875,7 +875,10 @@ class SVparse(SVutil):
                 _step = _step + 1
                 continue
             if _w in self.keyword:
+                _k = self.cur_key
+                self.cur_key = _w
                 _catch = self.keyword[_w](_s, lines)
+                self.cur_key = _k
                 if type(_catch) == list:
                     attrlist += _catch
                 else:
@@ -916,6 +919,8 @@ class SVparse(SVutil):
                 self.cur_hier.types[tp] = SVparse.session.package[_pkg].types[_param]
             except:
                 pass
+        _k = self.cur_key
+        self.cur_key = _w
         _m = self.keyword.get(_w)
         _catch = ()
 
@@ -935,6 +940,7 @@ class SVparse(SVutil):
                 _catch[2],
                 _w,
             )
+        self.cur_key = _k
         # struct type 
         if _w == "struct":
             for n in _catch[0]:
@@ -1295,7 +1301,7 @@ class SVparseSession(SVutil):
     def file_parse(self, paths=None, inc=True, inclvl=-1):
         """
         Arguments:
-            inc: the paths are include file name (without .sv suffix)
+            inc: the paths are the include file name (without .sv suffix)
             inclvl: the depth at which the included files to be parsed
         """
         if not paths:
