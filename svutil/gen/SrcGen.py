@@ -56,7 +56,7 @@ class SrcGen(SVgen):
     @SVgen.str
     def port_logic(self, w, reg, bw, tp, dim, io):
         bwstr = "" if bw == 1 else f"[{bw}-1:0] "
-        inout = {'i':'input', 'o':'output', 'ro':'input', 'ro':'output'}.get(io)
+        inout = {'i':'input', 'o':'output', 'ri':'input', 'ro':'output'}.get(io)
         return f',{inout} {tp+" "+bwstr:<{w[0]}}{io[0]}_{reg+dim}'
 
     @SVgen.str

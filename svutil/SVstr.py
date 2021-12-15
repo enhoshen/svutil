@@ -236,7 +236,7 @@ class SVstr(SVutil):
         #    _s = _s.replace( _s[_s.find('$'):_s.find(')')+1] , 'int(np.log2('+ _temp + '))')
         sysfunc = SVsysfunc(cur_hier, package)
         _s = _s.replace("$", "sysfunc.")
-        _s = re.sub(rf"(sysfunc.\w*\s*)\((\w*)\)", r'\1("\2")', _s)
+        _s = re.sub(rf"(sysfunc.\w*\s*)\((\w*)\)", r'\1(\2)', _s)
         _s_no_op = SVstr(_s).replace_split(self.op_chars + [",", "'", "{", "}"])
         for w in _s_no_op:
             if "::" in w:
