@@ -580,6 +580,10 @@ class SVparse(SVutil):
                     SVparse.session.cur_parse.readfile(pp)
                     SVparse.session.visited[pp] = True
                     last_parse.cur_hier.child[n] = SVparse.session.cur_parse.cur_hier
+                    last_parse.cur_hier.sub_modules += [ 
+                        m.name for m in SVparse.session.hiers[n].child.values()
+                            if m.hiertype == HIERTP.MODULE
+                    ] 
                 else:
                     self.print(
                         f'{"":>{SVparse.session.path_level*4}}{os.path.normpath(pp)} visited!',
@@ -591,10 +595,6 @@ class SVparse(SVutil):
         SVparse.session.path_level -= 1
         for k in SVparse.session.cur_parse.cur_hier.macros:
             last_parse.keyword['`' + k] = self.macro_parse
-        last_parse.cur_hier.sub_modules += [ 
-            m.name for m in SVparse.session.hiers[n].child.values()
-                if m.hiertype == HIERTP.MODULE
-        ] 
         SVparse.session.cur_parse = last_parse
         return
 

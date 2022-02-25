@@ -378,12 +378,17 @@ class RegbkMaster(SVutil):
         )
 
     def write(self):
-        self.addr.write()
-        self.rw.write()
-        self.wdata.write()
+        self.addr.Write() # nicotb.bus
+        self.rw.Write()
+        self.wdata.Write()
 
     def read(self):
-        self.rdata.read()
+        self.rdata.Read() # nicotb.bus
+
+    def SendIter(self, regseq, rwseq, dataseq):
+        assert self.master, "Specify the protocol master"
+        it = self.proto_it
+        yield from self.master.SendIter(it(self, regseq, rwseq, dataseq))
 
     def send_iter(self, regseq, rwseq, dataseq):
         assert self.master, "Specify the protocol master"
@@ -430,14 +435,14 @@ class RegbkMaster(SVutil):
                 ), "raw register address offset only takes integer data"
                 addr, wdata, regfields = reg, data, "undefined regfields"
             elif type(reg) == tuple:
-                addr, wdata, regfields = self.regbk.RegWrite(reg[0], data)
+                addr, wdata, regfields = self.regbk.reg_write(reg[0], data)
                 offset = reg[1] * self.regbk.regbsize
                 addr += offset
                 offset = f"+{offset}"
                 reg = reg[0]
                 w = max(w, len(reg + offset))
             elif type(reg) == str:
-                addr, wdata, regfields = self.regbk.RegWrite(reg, data)
+                addr, wdata, regfields = self.regbk.reg_write(reg, data)
                 w = max(w, len(reg))
             else:
                 raise TypeError("un-recognized register sequence type")
@@ -445,7 +450,7 @@ class RegbkMaster(SVutil):
             def msg_cb(_):
                 if not rw:
                     self.read()
-                    dlst, rf = self.regbk.RegRead(reg, self.rdata.value[0])
+                    dlst, rf = self.regbk.reg_read(reg, self.rdata.value[0])
                     self.print(
                         self.readfmt(reg, offset, addr, dlst, rf, w),
                         verbose=1,
@@ -484,8 +489,8 @@ class RegbkMaster(SVutil):
             self.write.value = rw
             self.addr.value = addr
             self.wdata.value = wdata
-            self.write.write()
-            self.wdata.write()
+            self.write.Write() # nicobus
+            self.wdata.Write() # nicobus
             yield self.addr.value
 
     def ahb_reg_read_write_it(self, regseq, rwseq, dataseq):
