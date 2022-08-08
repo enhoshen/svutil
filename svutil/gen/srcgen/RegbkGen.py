@@ -45,9 +45,12 @@ class Customlst:
 
 @SVgen.user_class
 class RegbkGen(SrcGen):
-    r"""
-    This class saves you effort on reptitive but non-trivial part of your source system verilog code,
-    like register bank related logics.
+    """Generate register bank from system verilog package
+    For basic usage, create a RegbkGen object from a SVparseSession object.
+    If REGBK environment variable is given, the package in the session is used to
+    create a SVRegbk object. From here on, use *_to_file/*_to_clip functions to
+    generate various register bank related code block to xclip, file or std output.
+
     Common function arguments:
         pkg: the name of the register bank package used to create a SVRegbk object from
             corresponding SVhier object. Default: self.regbk
@@ -78,54 +81,6 @@ class RegbkGen(SrcGen):
         self.regbk = SVRegbk(self.regbkhier) if self.regbkhier else None
         self.custom = Customlst()
         self.customlst += asdict(self.custom).keys()
-        #    "protocol",
-        #    "wrdata_style",
-        #    "addr_port_name",
-        #    "addr_name",
-        #    "write_name",
-        #    "wdata_name",
-        #    "rdata_name",
-        #    "ointr_name",
-        #    "addr_slice",
-        #    "write_cond",
-        #    "read_cond",
-        #    "cg_cond",
-        #    "wo_cg_cond",
-        #    "ro_cg_cond",
-        #    "arr_sel_subtrahend",
-        #    "arr_sel",
-        #    "arr_sel_suf",
-        #    "arr_idx_suf",
-        #    "output_all",
-        #    "omitlogiclst",
-        #]
-        #self.protocol = None
-        #self.wrdata_style = None
-        #self.disable_style = None
-        #self.omitlogiclst = ["VERSION"]
-
-        #self.addr_name = "addr"
-        #self.addr_port_name = f"i_{self.addr_name}"
-        #self.write_name = "i_write"
-        #self.wdata_name = "i_wdata"
-        #self.rdata_name = "rdata"
-        #self.ointr_name = "o_intr"
-        #self.addr_slice = (
-        #    f"[{self.regbk.regaddrbw_name}-1:{(self.regbk.regbsizebw_name)}]"
-        #)
-        #self.write_cond = "write_valid"
-        #self.read_cond = "read_valid"
-        #self.cg_cond = "ce"
-        #self.wo_cg_cond = "wo_ce"
-        #self.ro_cg_cond = "ro_ce"
-
-        #self.arr_sel_subtrahend = "arr_sel_subtrahend"
-        #self.arr_sel_suf = "_sel"
-        #self.arr_sel = "arr_sel"
-        #self.arr_idx_suf = "arr_idx"
-
-        #self.output_all = True
-
 
         self.flag_logic_lst = [
             self.write_cond,

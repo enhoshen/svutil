@@ -561,14 +561,14 @@ class EventTrigger(SVutil):
     def sv_sig_trigger_level(self, name, high=True):
         ev_bus = CreateBus((name,))
         ev_bus.value[0] = 1 if high else 0
-        ev_bus.write()
+        ev_bus.Write()
         yield self.clk
         self.print(f"Event bus {name} level triggered", trace=3)
 
     def sv_sig_trigger_edge(self, name, high=True):
         ev_bus = CreateBus((name,))
         ev_bus.value[0] = 1 if high else 0
-        ev_bus.write()
+        ev_bus.Write()
         yield self.clk
         self.print(f"Event bus {name} edge triggered", trace=3)
         ev_bus.value[0] = 0
@@ -577,7 +577,7 @@ class EventTrigger(SVutil):
     def sv_sig_trigger_pulse(self, name, high=True):
         ev_bus = CreateBus((name,))
         ev_bus.value[0] = 1 if high else 0
-        ev_bus.write()
+        ev_bus.Write()
         yield self.clk
         self.print(f"Event bus {name} pulse triggered", trace=3)
         yield from itertools.repeat(self.clk, self.width - 1)

@@ -564,8 +564,9 @@ class SVRegbk(SVutil):
             datalst = [datalst]
         else:
             pass
-        for f, d in zip(regfieldlst, datalst):
-            data = data + (d << f)
+        zip_obj = zip([*regfieldlst[1:], self.regbw], regfieldlst, datalst)
+        for f1, f, d in zip_obj:
+            data = data + (((1<<f1)-1) & (d << f))
         msk = (1 << self.regbw) - 1
         data = data & msk
         return data

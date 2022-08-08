@@ -47,7 +47,10 @@ class SVgen(SVutil):
         self.refresh()
 
     def __getattr__(self, s):
-        return asdict(self.custom)[s]
+        try:
+            asdict(self.custom).get(s)
+        except:
+            raise AttributeError
 
     def refresh(self):
         self.dutname = GBV.TESTMODULE
