@@ -3,6 +3,8 @@ import re
 
 from dataclasses import dataclass, field
 
+import numpy as np
+
 VERBOSE = os.environ.get("VERBOSE", 0)
 
 
@@ -171,6 +173,9 @@ class SVType(SVclass):
         module = type_.__module__
         qualname = type_.__qualname__
         return f"<{module}.{qualname} {self.name} at {hex(id(self))}>"
+
+    def bits(self):
+        return np.prod([self.bw, *self.dim])
 
     @property
     def show_data(self):
@@ -438,8 +443,11 @@ class SVRegbk(SVutil):
             regfield.cmts.append(i.cmts)
             regfield.nums += [num]
             regfield.names += [f"{name}_{i.name}".upper()]
-            regslice += [(i.name.upper(), [(num, num + i.bw - 1)])]
-            num += i.bw
+            tp = self.get_type(i.tp)
+            tp_bw = 1 if tp is None else np.prod([i.bits() for i in tp]) 
+            bw = int(i.bw * tp_bw * np.prod(i.dim))
+            regslice += [(i.name.upper(), [(num, num + bw - 1)])]
+            num += bw
         if num < self.regbw - 1:
             regfield.nums += [num]
             regfield.names += [f"{name.upper()}_RESERVED"]
