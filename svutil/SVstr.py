@@ -18,7 +18,10 @@ class SVsysfunc (SVutil):
 
     def clog2(self, s):
         if isinstance(s, str):
-            num = self.cur_hier.params[s] 
+            try:
+                num = int(s)
+            except:
+                num = self.cur_hier.params[s] 
         else:
             num = s
         return int(np.ceil((np.log2(num))))
@@ -28,7 +31,7 @@ class SVsysfunc (SVutil):
             bits = 0
             for i in self.cur_hier.types.get(s):
                 i = SVType(i)
-                bits += i.bw
+                bits += i.bits()
             return bits
 
 
@@ -235,8 +238,6 @@ class SVstr(SVutil):
         #    _temp = self.s.split('(')[1].split(')')[0]
         #    _s = _s.replace( _s[_s.find('$'):_s.find(')')+1] , 'int(np.log2('+ _temp + '))')
         sysfunc = SVsysfunc(cur_hier, package)
-        _s = _s.replace("$", "sysfunc.")
-        _s = re.sub(rf"(sysfunc.\w*\s*)\((\w*)\)", r'\1(\2)', _s)
         _s_no_op = SVstr(_s).replace_split(self.op_chars + [",", "'", "{", "}"])
         for w in _s_no_op:
             if "::" in w:
@@ -251,6 +252,8 @@ class SVstr(SVutil):
                     _s = re.sub(rf"\b{w}\b", str(p[w]), _s)
                     # _s = _s.replace( w , str(p[w]) )
                     break
+        _s = _s.replace("$", "sysfunc.")
+        _s = re.sub(rf"(sysfunc.\w*\s*)\((\w*)\)", r'\1("\2")', _s)
         _s = (
             _s.replace("'{", " [ ")
             .replace("{", " [ ")
@@ -265,13 +268,14 @@ class SVstr(SVutil):
             _n, _ = SVstr(v).base_convert()
             slist[i] = _n if _n else slist[i]
         _s = " ".join(slist)
-        # _s = _s.replace('\'','')
         try:
             return eval(ps.expr(_s).compile("file.py"))
-        except:
+        except Exception as e:
             if _s != "":
                 self.print(
-                    f"to_num {_s} failed, return original string: {self.s}", verbose=3
+                    f"to_num {_s} failed with {e},"
+                    "return original string: {self.s}"
+                    , verbose=3
                 )
             return _s
 
