@@ -10,7 +10,7 @@ ext_args = {
 }
 setup(
      name='svutil'
-    ,version='0.9.2'
+    ,version='0.9.3'
     #,description='Python Distribution Utilities'
     ,author='En-Ho Shen'
     ,author_email='enhoshen@media.ee.ntu.edu.tw'

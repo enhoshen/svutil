@@ -170,7 +170,7 @@ nWaveRestoreRCDirHistory = "\"/home/enhoshen/research/lpAccel/sim/Address.rc\"" 
 fsdb/signal.rc\""
 nWaveOpenFsdbDirHistory = "\"/home/enhoshen/research/lpAccel/sim/loop.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072205_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_ug_072205\
 _syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest_5ns.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072206_syn_PEt\
-est.fsdb\"" "\"/tmp/Gze200Chip_test_dma_0816.bsim.fsdb\"" "\"/home/enho.shen/worktree/GZE200/syn/sim/MemorySystem/Gze200MemorySystem/fsdb/Gze200MemorySystem_tb_AHBDC.fsdb\""
+est.fsdb\"" "\"/home/enho.shen/worktree/GZE200/top_test/sim/Top/SimBhv/fsdb/Gze200Chip_bsim_test_hm01b0_bring_up_000.fsdb\""
 [Form]
 version = Verdi_Q-2020.03-SP1
 wave/unknownSave.fm = 140,255,575,275
@@ -282,9 +282,9 @@ restoreSigDlg = 2607,1441,561,448
 saveSigDlg = 2614,1566,611,446
 QwWarnMsgDlg = 449,1259,600,250
 QwUserAskDlg = 1273,1319,324,163
-openFileDlg = 4388,1190,1464,574
 ActiveFileDialog = 4746,1340,997,275
-qWaveSignalDialog = 4262,993,1715,969
+openFileDlg = 1695,942,1464,574
+qWaveSignalDialog = 1569,745,1715,969
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile1]
 shortcut = 
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile3]
@@ -496,8 +496,8 @@ PointStyle = FALSE
 SetDefaultRadix = TRUE
 FilterTextField = FALSE
 anaAuto100VertFit = FALSE
-getSignalForm = 4262 993 1715 969 435 870 1034 212
-viewPort = 3840 784 2560 1387 445 131
+getSignalForm = 1569 745 1715 969 435 870 1034 212
+viewPort = 1147 536 2560 1387 445 131
 signalSpacing = 5
 digitalSignalHeight = 15
 analogSignalHeight = 98
@@ -742,7 +742,7 @@ maskIsolation = TRUE
 maskRetention = TRUE
 maskDrivingPowerOff = TRUE
 maskToggle = TRUE
-autoBackupSignals = off 5 "\"/home/enho.shen/worktree/GZE200/syn/sim/MemorySystem/Gze200MemorySystem/nWaveLog\"" "\"novas_autosave_sig\""
+autoBackupSignals = off 5 "\"/home/enho.shen/worktree/GZE200/top_test/sim/Top/SimBhv/nWaveLog\"" "\"novas_autosave_sig\""
 signal_rc_attribute = 65535
 signal_rc_alias_attribute = 0
 ConvertAttr1 = -inc FALSE
@@ -770,11 +770,11 @@ curveWindow_Drag&Drop_Mode = TRUE
 hspiceIncOpenMode = TRUE
 pcSelectMode = FALSE
 hierarchyDelimiter = /
-RecentFile1 = "\"/tmp/Gze200Chip_test_dma_0816.bsim.fsdb\""
-RecentFile2 = "\"/home/enho.shen/worktree/GZE200/syn/sim/MemorySystem/Gze200MemorySystem/fsdb/Gze200MemorySystem_tb_AHBDC.fsdb\""
-RecentFile3 = "\"/home/enho.shen/worktree/GZE200/pupil_prop/sim/Core/PupilProposal/fsdb/PupilProposalEngine_tb_10.fsdb\""
-RecentFile4 = "\"/home/enho.shen/worktree/GZE200/scheduler/sim/Core/PupilReconstruction/EllipseFitting/fsdb/signal.rc\""
-RecentFile5 = "\"/home/enho.shen/worktree/GZE200/scheduler/sim/Core/PupilReconstruction/EllipseFitting/fsdb/TestEllipseModel_tb_0.fsdb\""
+RecentFile1 = "\"/home/enho.shen/worktree/GZE200/top_test/sim/Top/SimBhv/fsdb/Gze200Chip_bsim_test_hm01b0_bring_up_000.fsdb\""
+RecentFile2 = "\"/tmp/Gze200Chip_test_dma_0816.bsim.fsdb\""
+RecentFile3 = "\"/home/enho.shen/worktree/GZE200/syn/sim/MemorySystem/Gze200MemorySystem/fsdb/Gze200MemorySystem_tb_AHBDC.fsdb\""
+RecentFile4 = "\"/home/enho.shen/worktree/GZE200/pupil_prop/sim/Core/PupilProposal/fsdb/PupilProposalEngine_tb_10.fsdb\""
+RecentFile5 = "\"/home/enho.shen/worktree/GZE200/scheduler/sim/Core/PupilReconstruction/EllipseFitting/fsdb/signal.rc\""
 open_file_time_range = FALSE
 value_window_aligment = Right
 signal_window_alignment = Left

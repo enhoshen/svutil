@@ -143,7 +143,7 @@ class MemmapGen(XLGen):
         self.cur_sh.write_row(self.field_row, self.col_start, self.cols, self.fieldfmt)
 
     def add_reg(self, regbk, regenum, rowidx):
-        _, rw, *_ = regbk.GetCmt(regenum.cmt)
+        _, rw, *_ = regbk.get_cmt(regenum.cmt)
         dft = regbk.regdefaults.get(regenum.name.upper())
         dft = dft.num if dft else "TODO"
         if type(dft) == list:
@@ -156,7 +156,7 @@ class MemmapGen(XLGen):
         self.add_reg_field(regbk, regenum.name)
 
     def add_reg_field(self, regbk, name):  # TODO set level, collapsed
-        _, regrw, *_ = regbk.GetCmt(regbk.regaddrsdict[name].cmt)
+        _, regrw, *_ = regbk.get_cmt(regbk.regaddrsdict[name].cmt)
         slices = regbk.regslices.get(name.upper())
         field = regbk.regfields.get(name.upper())
         dft = regbk.regdefaults.get(name.upper())
@@ -168,7 +168,7 @@ class MemmapGen(XLGen):
             if type(dft) == int:
                 dft = self.dft_convert(regbk, name, dft)
             for n, c in zip(field.names, field.cmts):
-                _, rw, *_ = regbk.GetCmt(c)
+                _, rw, *_ = regbk.get_cmt(c)
                 acc_dic[n] = rw if rw != "" else regrw
                 acc_dic[re.sub(rf"{name.upper()}_", "", n)] = rw if rw != "" else regrw
                 acc_dic["RESERVED"] = "RO"
@@ -220,10 +220,10 @@ class MemmapGen(XLGen):
         if type(dft) == str:
             return dft
         if type(dft) == list:
-            _, dft, _ = regbk.RegWrite(regname, dft)
+            _, dft, _ = regbk.reg_write(regname, dft)
             return dft
         if type(dft) == int:
-            dft, _ = regbk.RegRead(regname, dft)
+            dft, _ = regbk.reg_read(regname, dft)
             return dft
         return dft
 
