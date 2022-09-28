@@ -1,7 +1,9 @@
 import os
 import sys
-from svutil.gen.XLGen import *
+import logging
 import xlsxwriter as xl
+
+from svutil.gen.XLGen import *
 
 
 @SVgen.user_class
@@ -32,6 +34,7 @@ class MemmapGen(XLGen):
         self.regfield_lvl = 2
         self.dft_fmt()
         self.dft_col_wid()
+        self.logger = logging.getLogger(f'{__name__}.MemmapGen')
 
     def dft_fmt(self):
         self.regfieldfmt = self.wb.add_format(
@@ -143,12 +146,22 @@ class MemmapGen(XLGen):
         self.cur_sh.write_row(self.field_row, self.col_start, self.cols, self.fieldfmt)
 
     def add_reg(self, regbk, regenum, rowidx):
-        _, rw, *_ = regbk.get_cmt(regenum.cmt)
+        _, rw, arr, *_ = regbk.get_cmt(regenum.cmt)
         dft = regbk.regdefaults.get(regenum.name.upper())
         dft = dft.num if dft else "TODO"
         if type(dft) == list:
             dft = self.dft_convert(regbk, regenum.name, dft)
-        data = [hex(regenum.num * regbk.regbsize), regenum.name, rw, dft, "TODO"]
+        # array regsiter
+
+        if arr: 
+            dim_name = f"{regenum.name.upper()}{regbk.arr_num_suf}"
+            dim = regbk.params.get(dim_name)
+            dim = dim.num - 1 if dim else dim_name
+            reg_name = f"{regenum.name}_{0}\n- {regenum.name}_{dim}" 
+            self.logger.debug(f"Array register: {dim_name}, {dim}, {reg_name}")
+        else:
+            reg_name = regenum.name
+        data = [hex(regenum.num * regbk.regbsize), reg_name, rw, dft, "TODO"]
         for i, d, f in zip(range(len(data)), data, self.regfmt_lst):
             self.cur_sh.write(rowidx, self.col_start + i, d, f)
         # self.set_group(self.cur_row, self.regfield_lvl)

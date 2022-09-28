@@ -165,12 +165,11 @@ StickSet-TextColor = black
 [FSM_Dlg-Print]
 Orientation = Landscape
 [FileBrowser]
-nWaveRestoreRCDirHistory = "\"/home/enhoshen/research/lpAccel/sim/Address.rc\"" "\"/home/enhoshen/research/lpAccel/sim/novas.rc\"" "\"/home/enhoshen/research/lpAccel/sim/Controls.rc\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/I2cMaster_test1.rc\"" "\"/home/enho.shen/GZE200\
-/sim/Peripheral/RTC/apbsyncrtc.rc\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CSlave/PG.rc\"" "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/ahbmastif.rc\"" "\"/home/enho.shen/worktree/GZE200/scheduler/sim/Core/PupilReconstruction/EllipseFitting/\
-fsdb/signal.rc\""
 nWaveOpenFsdbDirHistory = "\"/home/enhoshen/research/lpAccel/sim/loop.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072205_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_ug_072205\
 _syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3_ultra_cg_070813_syn_PEtest_5ns.fsdb\"" "\"/home/enhoshen/research/lpAccel/sim/PE_3ns_ultra_cg_noug_072206_syn_PEt\
-est.fsdb\"" "\"/home/enho.shen/worktree/GZE200/top_test/sim/Top/SimBhv/fsdb/Gze200Chip_bsim_test_hm01b0_bring_up_000.fsdb\""
+est.fsdb\"" "\"/home/enho.shen/worktree/GZE200/top_test/sim/Top/SimBhv/Gze200Chip_bsim_test_pupil_proposal_000.fsdb\""
+nWaveRestoreRCDirHistory = "\"/home/enhoshen/research/lpAccel/sim/Address.rc\"" "\"/home/enhoshen/research/lpAccel/sim/novas.rc\"" "\"/home/enhoshen/research/lpAccel/sim/Controls.rc\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CMaster/I2cMaster_test1.rc\"" "\"/home/enho.shen/GZE200\
+/sim/Peripheral/RTC/apbsyncrtc.rc\"" "\"/home/enho.shen/GZE200/sim/Peripheral/I2CSlave/PG.rc\"" "\"/home/enho.shen/GZE200/sim/Communication/Fabric/DMA/ahbmastif.rc\"" "\"/home/enho.shen/worktree/GZE200/top_test/sim/Top/SimBhv/signal.rc\""
 [Form]
 version = Verdi_Q-2020.03-SP1
 wave/unknownSave.fm = 140,255,575,275
@@ -278,13 +277,13 @@ QwInfoMsgDlg = 190,213,750,250
 CreateBusDialog = 572,200,788,709
 QwShortcutDialog = 1734,1243,810,610
 monoFontDlg = 244,469,366,432
-restoreSigDlg = 2607,1441,561,448
 saveSigDlg = 2614,1566,611,446
-QwWarnMsgDlg = 449,1259,600,250
 QwUserAskDlg = 1273,1319,324,163
 ActiveFileDialog = 4746,1340,997,275
-openFileDlg = 1695,942,1464,574
-qWaveSignalDialog = 1569,745,1715,969
+restoreSigDlg = 679,307,561,448
+QwWarnMsgDlg = 1980,83,600,250
+openFileDlg = 228,244,1464,574
+qWaveSignalDialog = 102,47,1715,969
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile1]
 shortcut = 
 [QwSettings.QwMainWindow.shortcuts.nWave.RestoreFile3]
@@ -496,8 +495,8 @@ PointStyle = FALSE
 SetDefaultRadix = TRUE
 FilterTextField = FALSE
 anaAuto100VertFit = FALSE
-getSignalForm = 1569 745 1715 969 435 870 1034 212
-viewPort = 1147 536 2560 1387 445 131
+getSignalForm = 102 47 1715 969 435 870 1034 212
+viewPort = 0 23 1920 1017 445 131
 signalSpacing = 5
 digitalSignalHeight = 15
 analogSignalHeight = 98
@@ -770,11 +769,11 @@ curveWindow_Drag&Drop_Mode = TRUE
 hspiceIncOpenMode = TRUE
 pcSelectMode = FALSE
 hierarchyDelimiter = /
-RecentFile1 = "\"/home/enho.shen/worktree/GZE200/top_test/sim/Top/SimBhv/fsdb/Gze200Chip_bsim_test_hm01b0_bring_up_000.fsdb\""
-RecentFile2 = "\"/tmp/Gze200Chip_test_dma_0816.bsim.fsdb\""
-RecentFile3 = "\"/home/enho.shen/worktree/GZE200/syn/sim/MemorySystem/Gze200MemorySystem/fsdb/Gze200MemorySystem_tb_AHBDC.fsdb\""
-RecentFile4 = "\"/home/enho.shen/worktree/GZE200/pupil_prop/sim/Core/PupilProposal/fsdb/PupilProposalEngine_tb_10.fsdb\""
-RecentFile5 = "\"/home/enho.shen/worktree/GZE200/scheduler/sim/Core/PupilReconstruction/EllipseFitting/fsdb/signal.rc\""
+RecentFile1 = "\"/home/enho.shen/worktree/GZE200/top_test/sim/Top/SimBhv/Gze200Chip_bsim_test_pupil_proposal_000.fsdb\""
+RecentFile2 = "\"/home/enho.shen/worktree/GZE200/top_test/sim/Top/SimBhv/signal.rc\""
+RecentFile3 = "\"/home/enho.shen/worktree/GZE200/top_test/sim/Top/SimBhv/fsdb/Gze200Chip_bsim_test_hm01b0_bring_up_000.fsdb\""
+RecentFile4 = "\"/tmp/Gze200Chip_test_dma_0816.bsim.fsdb\""
+RecentFile5 = "\"/home/enho.shen/worktree/GZE200/syn/sim/MemorySystem/Gze200MemorySystem/fsdb/Gze200MemorySystem_tb_AHBDC.fsdb\""
 open_file_time_range = FALSE
 value_window_aligment = Right
 signal_window_alignment = Left
