@@ -840,17 +840,14 @@ class SVparse(SVutil):
                     ].paramsdetail[_param]
                 if _param in SVparse.session.package[_pkg].types:
                     tp = SVparse.session.package[_pkg].types[_param]
-                    f = SVhier.typefield
-                    if len(tp) == 1:
-                        _tp = SVparse.session.package[_pkg].types.get(tp[0][f.tp])
+                    self.keyword[_param] = self.logic_parse
+                    for t in tp:
+                        # register each imported type to types
+                        t = SVType(t)
+                        _tp = SVparse.session.package[_pkg].types.get(t.tp)
                         if _tp:
-                            self.cur_hier.types[tp[0][f.tp]] = _tp
-                    else:
-                        for t in tp:
-                            _tp = SVparse.session.package[_pkg].types.get(t[f.tp])
-                            if _tp:
-                                self.print(t[f.tp], verbose="import_parse")
-                                self.cur_hier.types[t[f.tp]] = _tp
+                            self.cur_hier.types[t.tp] = _tp
+                            self.keyword[t.tp] = self.logic_parse
                     self.cur_hier.types[_param] = tp
                 if _param in SVparse.session.package[_pkg].enums:
                     self.cur_hier.enums[_param] = SVparse.session.package[_pkg].enums[

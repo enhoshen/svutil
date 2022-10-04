@@ -48,7 +48,7 @@ class SVgen(SVutil):
 
     def __getattr__(self, s):
         try:
-            asdict(self.custom).get(s)
+            return asdict(self.custom)[s]
         except:
             raise AttributeError
 

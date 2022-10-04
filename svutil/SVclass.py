@@ -184,6 +184,12 @@ class SVType(SVclass):
             s += d.ShowData
         return s
 
+    @property
+    def is_alias(self):
+        # TODO 
+        return len(self.data) == 4
+
+
 
 class SVPort(SVclass):
     field = portfield
@@ -349,14 +355,19 @@ class SVRegbk(SVutil):
         can be useful.
         """
         for i, v in pkg.types.items():
+            self.print(i, v)
+            # expand single item type
             while True:
-                _v = v[0]
-                subt = pkg.types.get(SVType(_v).tp)
+                _v = SVType(v[0])
+                if not _v.is_alias:
+                    break
+                subt = pkg.types.get(_v.tp)
                 if len(v) == 1 and subt:
                     v = subt
                 else:
                     break
             # get struct
+            self.print(v)
             _v = [SVType(vv) for vv in v]
             tt = [self.get_type(vv.tp) for vv in _v]
 
@@ -444,7 +455,7 @@ class SVRegbk(SVutil):
             regfield.nums += [num]
             regfield.names += [f"{name}_{i.name}".upper()]
             tp = self.get_type(i.tp)
-            tp_bw = 1 if tp is None else np.prod([i.bits() for i in tp]) 
+            tp_bw = 1 if tp is None else np.sum([i.bits() for i in tp]) 
             bw = int(i.bw * tp_bw * np.prod(i.dim))
             regslice += [(i.name.upper(), [(num, num + bw - 1)])]
             num += bw

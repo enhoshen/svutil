@@ -80,7 +80,6 @@ class RegbkGen(SrcGen):
         self.regbkhier = self.regbk
         self.regbk = SVRegbk(self.regbkhier) if self.regbkhier else None
         self.custom = Customlst()
-        self.customlst += asdict(self.custom).keys()
 
         self.flag_logic_lst = [
             self.write_cond,
