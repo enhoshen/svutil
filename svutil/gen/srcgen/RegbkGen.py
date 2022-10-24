@@ -267,7 +267,7 @@ class RegbkGen(SrcGen):
     @SVgen.str
     def rdata_sel_subtrahend_comb_block(self, arr_reg, ind=None):
         s = f"{ind.b}assign {self.arr_sel} = {self.addr_port_name}{self.addr_slice}-{self.arr_sel_subtrahend};\n"
-        s = f"{ind.b}assign {self.reg_idx_name} = {self.addr_port_name}[{self.addr_slice}];\n"
+        s += f"{ind.b}assign {self.reg_idx_name} = {self.addr_port_name}{self.addr_slice};\n"
         s += f"{ind.b}always_comb begin\n"
         ifelse_dic = {0:'unique if', len(arr_reg)-1:'else'}
         for i,v in enumerate(arr_reg):
@@ -493,7 +493,7 @@ class RegbkGen(SrcGen):
         s = f"{ind.b}// read data address selection\n"
         s += self.logic_str(
             (0,0), self.arr_sel,
-            bw = self.regbk.regaddrbw_name,
+            bw = self.reg_idx_bw_name,
             tp = 'logic',
             arr=None,
             comb=True,
@@ -501,7 +501,7 @@ class RegbkGen(SrcGen):
         )
         s += self.logic_str(
             (0,0), self.arr_sel_subtrahend,
-            bw = self.arr_sel_subtrahend.upper()+'_BW',
+            bw = self.reg_idx_bw_name,
             tp = 'logic',
             arr=None,
             comb=True,
@@ -620,7 +620,7 @@ class RegbkGen(SrcGen):
                         ind=ind,
                     )
             s += "\n"
-        s += f"{ind.b} [{self.reg_idx_bw_name}-1:0] {self.reg_idx_name};"
+        s += f"{ind.b}logic [{self.reg_idx_bw_name}-1:0] {self.reg_idx_name};\n"
 
         s += f"{ind.b}// flags\n"
         for l in self.flag_logic_lst:
@@ -658,6 +658,7 @@ class RegbkGen(SrcGen):
             s += self.assign_output_all_block(ind=ind)
 
         if arr_reg != []:
+            s += self.rdata_arr_slice_param_block(arr_reg, ind=ind)
             s += f"{ind.b}// array register read data index\n"
             #for i in arr_reg:
             #    s += self.rdata_arr_idx_logic(i[0].name, ind=ind)
@@ -666,7 +667,6 @@ class RegbkGen(SrcGen):
             for i in arr_reg:
                 s += self.rdata_address_condition_comb(i[0].name, ind=ind, spacing=False)
             s += f"\n"
-            s += self.rdata_arr_slice_param_block(arr_reg, ind=ind)
             s += self.rdata_sel_subtrahend_comb_block(arr_reg, ind=ind)
 
             s += f"\n"

@@ -355,7 +355,6 @@ class SVRegbk(SVutil):
         can be useful.
         """
         for i, v in pkg.types.items():
-            self.print(i, v)
             # expand single item type
             while True:
                 _v = SVType(v[0])
@@ -367,7 +366,6 @@ class SVRegbk(SVutil):
                 else:
                     break
             # get struct
-            self.print(v)
             _v = [SVType(vv) for vv in v]
             tt = [self.get_type(vv.tp) for vv in _v]
 
