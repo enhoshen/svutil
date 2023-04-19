@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from svutil.SVparse import *
 import sys
 import SVutil.SVutilCompleter
