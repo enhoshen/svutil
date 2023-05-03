@@ -1,0 +1,23 @@
+# VCS
+csrc/
+simv.daidir/
+simv*
+nWaveLog*
+verdiLog*
+*.log
+protocol/__pycache__/
+*.key
+*BSSLib.lib++
+**/*.rc
+
+# Top simulation
+Top/SimBvh/SimBhvDefines.sv
+Top/SimBvh/*.dat
+Top/SimBvh/vc_hdrs.h
+**/vc_hdrs.h
+
+# coverage
+**/vdCovLog/
+**/AN.DB/
+**/.fsm.sch.verilog.xml
+
