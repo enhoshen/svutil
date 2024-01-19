@@ -91,5 +91,5 @@ I can fix this by update the Makefile to the drive, but I remove the prerequisit
 * I came across this issue where I create a file named `struct.py`, which appears to be a built-in file(?) for 
 python to read, resulting constant compile error within this file even if I were just testing stuff using the python console!  
 **Careful naming excluding any built-in names is a must, be more specific**, for example this file has something to do with systemverilog,
-so I should have used name like `SVstruct.py` or so.
+so I should have used name like `Stringuct.py` or so.
 * Two-finger tap on laptop touchscreen as middle mouse button, in linux it works as paste, in nWave it pulls up a menu.

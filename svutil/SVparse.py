@@ -1,5 +1,5 @@
 import numpy as np
-import parser as ps
+import ast as ps
 import re
 import os
 from collections import namedtuple
@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 from svutil.SVutil import SVutil, v_
 from svutil.SVclass import *
-from svutil.SVstr import *
+from svutil.string import *
 
 @dataclass
 class GBV(SVutil):
@@ -403,7 +403,7 @@ class SVparse(SVutil):
         if name:
             if scope != None:
                 self.cur_hier = SVhier(name, scope, HIERTP.FILE)
-                SVsysfunc.cur_hier = self.cur_hier
+                SysFunc.cur_hier = self.cur_hier
                 self.gb_hier.child[name] = self.cur_hier
             else:
                 self.cur_hier = SVhier(name, self.gb_hier, HIERTP.FILE)
@@ -463,14 +463,14 @@ class SVparse(SVutil):
         self.flag_typedef = False
 
         self.cur_cmt = ""
-        self.cur_s = SVstr("")
+        self.cur_s = String("")
         self.last_pure_cmt = ""
         self.last_end = False
         self.inclvl = -1
 
     @classmethod
     def args_parse(cls):
-        s = SVARGstr(GBV.ARGS)
+        s = Arg(GBV.ARGS)
         l = s.plus_split()
         for _l in l:
             func = _l[0]
@@ -608,7 +608,7 @@ class SVparse(SVutil):
         s.lstrip()
         sign = s.sign_parse()
         packed_dim = s.bracket_parse()
-        bwstr = SVstr("" if packed_dim == () else packed_dim[-1])
+        bwstr = String("" if packed_dim == () else packed_dim[-1])
         n, d = s.id_dim_arr_parse()
         if self.cur_key == 'logic':
             tp = ("signed " if sign == True else "") + "logic"
@@ -646,7 +646,7 @@ class SVparse(SVutil):
         return (name, "", self.tuple_to_num(dim), "")
 
     def param_parse(self, s, lines):
-        # TODO type parse (in SVstr) , array parameter
+        # TODO type parse (in String) , array parameter
         # TODO multi-line statement, it has to know if it's parameter port... where
         # the end of the statement is not indicated by ;
         sign = s.sign_parse()
@@ -666,7 +666,7 @@ class SVparse(SVutil):
                 _s, cmt = self.rdline(lines)
                 s += _s
         numstr = s.rstrip().rstrip(";").rstrip(",").s.lstrip("=").lstrip()
-        numstrlst = SVstr(numstr).to_lst()
+        numstrlst = String(numstr).to_lst()
         # num =self.cur_hier.params[name]=s.lstrip('=').to_num(self.cur_hier.Params)
         num = self.cur_hier.params[name] = s.num_parse(self.cur_hier, self.package)
         self.cur_hier.paramsdetail[name] = (
@@ -702,7 +702,7 @@ class SVparse(SVutil):
                 if "reged" in i:
                     self.cur_hier.regs[name] = "N/A"
         bwstr = self.tuple_to_str(bw)
-        bw = SVstr("" if bw == () else bw[0]).slice_to_num(self.cur_hier)
+        bw = String("" if bw == () else bw[0]).slice_to_num(self.cur_hier)
         dim = s.bracket_parse()
         dimstrtuple = dim
         dimstr = self.tuple_to_str(dim)
@@ -733,10 +733,10 @@ class SVparse(SVutil):
         if "logic" in s:
             s.lsplit()
         bw = s.bracket_parse()
-        bw = SVstr("" if bw == () else bw[0])
+        bw = String("" if bw == () else bw[0])
         cmt = self.cur_cmt
         cmts = []
-        _s = SVstr(s.s).lsplit("}") if "}" in s else s.s
+        _s = String(s.s).lsplit("}") if "}" in s else s.s
         enums = [i for i in re.split(r"{ *| *, *", _s) if i is not ""]
         groups = [
             list([""]) if self.last_pure_cmt == "" else [list(self.last_pure_cmt)]
@@ -763,7 +763,7 @@ class SVparse(SVutil):
         cmts = [p[1] for p in _pair]
         self.print(enums, cmts, verbose="enum_parse")
         # _s = s.lsplit('}')
-        # enums = SVstr(_s).replace_split(['{',','] )
+        # enums = String(_s).replace_split(['{',','] )
         enum_name, enum_num, cmts, idxs, sizes, name_bases, groups = self.enum2_num(
             enums, cmts, groups
         )
@@ -882,7 +882,7 @@ class SVparse(SVutil):
                     attrlist.append(_catch)
                 continue
             types = self.cur_hier.AllTypeKeys
-            tp = SVstr(_w).type_parse(types)
+            tp = String(_w).type_parse(types)
             if not tp == "":
                 if "::" in tp:
                     _pkg, _param = tp.split("::")
@@ -909,7 +909,7 @@ class SVparse(SVutil):
         self.flag_typedef = True
         _w = s.lsplit()
         types = self.cur_hier.AllTypeKeys
-        tp = SVstr(_w).type_parse(types)
+        tp = String(_w).type_parse(types)
         if not tp == "":
             try:
                 _pkg, _param = tp.split("::")
@@ -1054,10 +1054,10 @@ class SVparse(SVutil):
         _s = s.s
         reobj = re.search(r"^[(]", _s)
         if reobj:
-            span = SVstr(_s).first_bracket_span()
+            span = String(_s).first_bracket_span()
             try:
                 s.s = (
-                    SVstr(k + _s[: span[1] + 1]).macro_func_expand(self.cur_hier.AllMacro)
+                    String(k + _s[: span[1] + 1]).macro_func_expand(self.cur_hier.AllMacro)
                     + s.s[span[1] + 1 :]
                 )
             except:
@@ -1065,7 +1065,7 @@ class SVparse(SVutil):
             self.print(k + _s[: span[1] + 1], verbose="macro_parse")
             self.print(s.s, verbose="macro_parse")
         else:
-            s.s = SVstr(k).simple_macro_expand(self.cur_hier.AllMacro) + s.s
+            s.s = String(k).simple_macro_expand(self.cur_hier.AllMacro) + s.s
         self.print(k, verbose=3)
 
     def if_def_parse(self, s, lines):
@@ -1139,11 +1139,11 @@ class SVparse(SVutil):
     def rdline(self, lines):
         s = next(lines, None)
         # line number TODO
-        # return SVstr(s.lstrip().split('//')[0].rstrip().strip(';')) if s != None else None
-        # return SVstr(s.lstrip().split('//')[0].rstrip()) if s != None else None
+        # return String(s.lstrip().split('//')[0].rstrip().strip(';')) if s != None else None
+        # return String(s.lstrip().split('//')[0].rstrip()) if s != None else None
         if s == None:
             return (None, None)
-        _s = SVstr(s.lstrip())
+        _s = String(s.lstrip())
         cmt = _s.comment_parse()
         self.cur_s = _s
         self.cur_cmt = cmt
@@ -1164,18 +1164,18 @@ class SVparse(SVutil):
         _t = []
         for i in t:
             if ':' in i:
-                _t.append(SVstr(i).slice_to_num(self.cur_hier, self.package))
+                _t.append(String(i).slice_to_num(self.cur_hier, self.package))
             else:
-                _t.append(SVstr(i).num_parse(self.cur_hier, self.package))
+                _t.append(String(i).num_parse(self.cur_hier, self.package))
         return tuple(_t)
-        #return tuple(map(lambda x: SVstr(x).num_parse(self.cur_hier, self.package), t))
+        #return tuple(map(lambda x: String(x).num_parse(self.cur_hier, self.package), t))
         # num_parse(params=self.cur_hier.Params, macros=self.cur_hier.AllMacro, package=self.package)
 
     def tuple_to_str(self, t):
         return reduce(lambda x, y: x + f"[{y}]", t, "")
 
     def bw2num(self, bw):
-        return SVstr("" if bw == () else bw[0]).slice_to_num(self.cur_hier)
+        return String("" if bw == () else bw[0]).slice_to_num(self.cur_hier)
 
     def enum2_num(self, enum, cmt, group):
         ofs = 0
@@ -1189,13 +1189,13 @@ class SVparse(SVutil):
         import copy
 
         for e, c, g in zip(enum, cmt, group):
-            _s = SVstr(e)
+            _s = String(e)
             _name = _s.id_parse()
             bw = _s.bracket_parse()
             bw = (
-                SVstr(bw[0]).slice_to_two_num(self.cur_hier)
+                String(bw[0]).slice_to_two_num(self.cur_hier)
                 if bw
-                else SVstr("").slice_to_two_num(self.cur_hier)
+                else String("").slice_to_two_num(self.cur_hier)
             )
             _num = _s.num_parse(self.cur_hier, SVparse.session.package)
             if type(bw) == tuple:
@@ -1339,7 +1339,7 @@ if __name__ == "__main__":
 
     # sv = SVparse('SVparse',None)
     # print (sv.gb_hier.child)
-    # ss = SVstr
+    # ss = String
     # print(ss('[3]').bracket_parse() )
     # print(sv.param_parse(ss('DW  =4;'))  )
     # print(ss(' happy=4;').id_parse())
@@ -1358,7 +1358,7 @@ if __name__ == "__main__":
     # for i in SVparse.session.hiers.keys():
     #    print (i)
     # print(SVparse.session.hiers['PECtlCfg'])
-    SVstr.verbose = VERBOSE
+    String.verbose = VERBOSE
     SVparse.session.verbose = VERBOSE
     S = SVparseSession()
     S.parse_first_argument()

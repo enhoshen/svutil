@@ -460,7 +460,7 @@ class LatexGen(SVgen):
         if not s:
             return s
         s = self.l_(s)
-        s = SVstr(s).replace_split([",", "'{", "{", "}"])
+        s = String(s).replace_split([",", "'{", "{", "}"])
         return s
 
 

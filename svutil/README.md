@@ -121,7 +121,7 @@ SVparse.hiers and can be accessed by `hiers`
 
 #### hiers
 
-#### SVstr
+#### String
 
 ### to_clip
 

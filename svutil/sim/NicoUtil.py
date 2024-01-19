@@ -649,16 +649,16 @@ class NicoUtil(PYUtil):
 
     def macro_to_num(self, s):
         _s = s
-        _s = SVstr(_s).multi_macro_expand(self.top.AllMacro)
-        _s = SVstr(_s).to_num(self.top)
+        _s = String(_s).multi_macro_expand(self.top.AllMacro)
+        _s = String(_s).to_num(self.top)
         reobj = True
         while reobj:
             if type(_s) == int:
                 break
             reobj = re.search(r"`(\w+)\b", _s)
             if reobj:
-                _s = SVstr(_s).multi_macro_expand(self.top.AllMacro)
-                _s = SVstr(_s).to_num(self.top)
+                _s = String(_s).multi_macro_expand(self.top.AllMacro)
+                _s = String(_s).to_num(self.top)
         return _s
 
     @property

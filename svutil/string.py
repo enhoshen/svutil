@@ -1,5 +1,5 @@
 import numpy as np
-import parser as ps
+import ast as ps
 import re
 import os
 from subprocess import Popen, PIPE
@@ -9,7 +9,7 @@ from svutil.SVclass import *
 VERBOSE = os.environ.get("VERBOSE", 0)
 # verilog system function implementation
 # to_num can evaulate the functions directly
-class SVsysfunc (SVutil):
+class SysFunc(SVutil):
     # current SVhier
     def __init__(self, cur_hier, package):
         super().__init__()
@@ -35,7 +35,7 @@ class SVsysfunc (SVutil):
             return bits
 
 
-class SVstr(SVutil):
+class String(SVutil):
     """ String wrapper for parsing systemverilog code
     Note that *_parse methods will parse and change the string in-place
     """
@@ -50,7 +50,7 @@ class SVstr(SVutil):
         return self.s
 
     def __add__(self, foo):
-        return SVstr(self.s + foo.s)
+        return String(self.s + foo.s)
 
     def __iadd__(self, foo):
         self.s += foo.s
@@ -74,7 +74,7 @@ class SVstr(SVutil):
             return ""
         _s = self.s
         if sep == None:
-            _idx = SVstr(_s).first_s_pchar()
+            _idx = String(_s).first_s_pchar()
             _spidx = _s.find(" ")
             if _idx != -1 and (_idx < _spidx or _spidx == -1):
                 if _idx == 0:
@@ -186,7 +186,7 @@ class SVstr(SVutil):
 
     def type_parse(self, typekeylist):
         tp = ""
-        temp = SVstr(self.s).lsplit()
+        temp = String(self.s).lsplit()
         if temp in typekeylist or "::" in temp:
             tp = temp
             self.lsplit()
@@ -207,7 +207,7 @@ class SVstr(SVutil):
             return func, []
         if self.s[0] == "(":
             _s, self.s = self.split(")", maxsplit=1)
-            args = SVstr(_s).replace_split(["(", ","])
+            args = String(_s).replace_split(["(", ","])
             return func, args
         else:
             return func, []
@@ -222,7 +222,7 @@ class SVstr(SVutil):
         """
         _s = self.lstrip("=")
         # if cur_hier.AllMacro:
-        _s = SVstr(_s.multi_macro_expand(cur_hier.AllMacro))
+        _s = String(_s.multi_macro_expand(cur_hier.AllMacro))
 
         num = _s.to_num(cur_hier, package)
         self.s = ""
@@ -237,8 +237,8 @@ class SVstr(SVutil):
         # if '$clog2' in _s:
         #    _temp = self.s.split('(')[1].split(')')[0]
         #    _s = _s.replace( _s[_s.find('$'):_s.find(')')+1] , 'int(np.log2('+ _temp + '))')
-        sysfunc = SVsysfunc(cur_hier, package)
-        _s_no_op = SVstr(_s).replace_split(self.op_chars + [",", "'", "{", "}"])
+        sysfunc = SysFunc(cur_hier, package)
+        _s_no_op = String(_s).replace_split(self.op_chars + [",", "'", "{", "}"])
         for w in _s_no_op:
             if "::" in w:
                 _pkg, _param = w.split("::")
@@ -265,7 +265,7 @@ class SVstr(SVutil):
         _s = re.sub(rf"/([^/])", rf"//\1", _s)
         slist = _s.split()
         for i, v in enumerate(slist):
-            _n, _ = SVstr(v).base_convert()
+            _n, _ = String(v).base_convert()
             slist[i] = _n if _n else slist[i]
         _s = " ".join(slist)
         try:
@@ -298,7 +298,7 @@ class SVstr(SVutil):
         # TODO
         if not "{" in self.s:
             return [self.s]
-        _s = SVstr(self.s.replace("'{", "{"))
+        _s = String(self.s.replace("'{", "{"))
         while True:
             span = _s.deepest_bracket_span()
             if not span:
@@ -329,7 +329,7 @@ class SVstr(SVutil):
         _idx = _temp.find(":")
         _s, _e = self.s[0:_idx], self.s[_idx + 1 :]
         try:
-            return SVstr(_s).num_parse(cur_hier, package) - SVstr(_e).num_parse(cur_hier, package) + 1
+            return String(_s).num_parse(cur_hier, package) - String(_e).num_parse(cur_hier, package) + 1
         except (TypeError):
             self.print("slice_to_num fail, TypeError", verbose=3)
             self.print(self.s, verbose="Slice2Num")
@@ -342,7 +342,7 @@ class SVstr(SVutil):
         self.print(_idx, verbose="slice_to_two_num")
         _s, _e = self.s[0:_idx] if _idx != -1 else "", self.s[_idx + 1 :]
         self.print(_s, _e, verbose="slice_to_two_num")
-        return (SVstr(_s).num_parse(cur_hier, package), SVstr(_e).num_parse(cur_hier, package))
+        return (String(_s).num_parse(cur_hier, package), String(_e).num_parse(cur_hier, package))
 
     def simple_macro_expand(self, macros):
         """
@@ -423,7 +423,7 @@ class SVstr(SVutil):
                     try:
                         exp = (
                             exp[0 : span[0]]
-                            + SVstr(exp[span[0] : rbkt]).simple_macro_expand(macros)
+                            + String(exp[span[0] : rbkt]).simple_macro_expand(macros)
                             + exp[rbkt:]
                         )
                     except:
@@ -432,7 +432,7 @@ class SVstr(SVutil):
                 else:
                     exp = (
                         exp[0 : span[0]]
-                        + SVstr(exp[span[0] : rbkt + 1]).macro_func_expand(macros)
+                        + String(exp[span[0] : rbkt + 1]).macro_func_expand(macros)
                         + exp[rbkt + 1 :]
                     )
                 nested = -1
@@ -495,7 +495,7 @@ class SVstr(SVutil):
         return self.s == ""
 
 
-class SVARGstr(SVstr):
+class Arg(String):
     def pluslsplit(self):
         bcnt = False
         prvc = ""
