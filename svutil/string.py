@@ -1,5 +1,5 @@
 import numpy as np
-import ast as ps
+import ast
 import re
 import os
 from subprocess import Popen, PIPE
@@ -269,7 +269,7 @@ class String(SVutil):
             slist[i] = _n if _n else slist[i]
         _s = " ".join(slist)
         try:
-            return eval(ps.expr(_s).compile("file.py"))
+            return eval(_s)
         except Exception as e:
             if _s != "":
                 self.print(
@@ -315,7 +315,7 @@ class String(SVutil):
             _s = _s.span_replace(span, spans)
         self.print(_s, verbose=46)
         try:
-            return eval(ps.expr(_s.s).compile("file.py"))
+            return eval(_s.s)
         except:
             self.print(
                 f"to_lst {_s.s} failed, return original string: {self.s}", verbose=3
@@ -359,7 +359,7 @@ class String(SVutil):
                 m = reobj.group(1)
                 exp = re.sub(rf"{m0}\b", f"macros['{m}'][2]()", exp)
         try:
-            return eval(ps.expr(exp).compile("file.py"))
+            return eval(exp)
         except:
             self.print("macro expansion error", verbose=2)
 
@@ -393,7 +393,7 @@ class String(SVutil):
                     exp = re.sub(rf"{m0}\b", f"macros['{m}'][2]", exp)
             self.print(exp, verbose=3)
         try:
-            return eval(ps.expr(exp).compile("file.py"))
+            return eval(exp)
         except:
             self.print("macro function expansion error", verbose=2)
 

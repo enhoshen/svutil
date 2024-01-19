@@ -136,7 +136,7 @@ class SVhier:
         self.hiertype = tp
         self._scope = scope
         self.valuecb = int
-        if scope != None:
+        if scope is not None:
             scope.child[name] = self
 
     @property
@@ -149,7 +149,7 @@ class SVhier:
 
     @property
     def Params(self):
-        if self._scope == None:
+        if self._scope is None:
             return deque([h.params for _, h in self.child.items()])
         else:
             _l = self._scope.Params
@@ -158,7 +158,7 @@ class SVhier:
 
     @property
     def Enums(self):
-        if self._scope == None:
+        if self._scope is None:
             return deque([h.enums for _, h in self.child.items()])
         else:
             _l = self._scope.Enums
@@ -167,7 +167,7 @@ class SVhier:
 
     @property
     def ParamsDetail(self):
-        if self._scope == None:
+        if self._scope is None:
             return deque([h.paramsdetail for _, h in self.child.items()])
         else:
             _l = self._scope.ParamsDetail
@@ -176,7 +176,7 @@ class SVhier:
 
     @property
     def Types(self):
-        if self._scope == None:
+        if self._scope is None:
             _l = deque([h.types for _, h in self.child.items()])
             return _l
         else:
